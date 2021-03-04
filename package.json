@@ -1,0 +1,20 @@
+{
+  "name": "stakecubeprotocol",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-packager ./ \"StakeCube Protocol\" --icon=\"logo.ico\""
+  },
+  "author": "StakeCube",
+  "license": "MPL-2.0",
+  "devDependencies": {
+    "electron": "^8.0.3"
+  },
+  "dependencies": {
+    "bitcoin-rpc-promise": "^2.1.6",
+    "lodash": "^4.17.21",
+    "regedit": "^3.0.3"
+  }
+}
