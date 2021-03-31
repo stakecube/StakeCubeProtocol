@@ -16,7 +16,7 @@ let mainWindow;
 function createWindow () {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 820,
+    width: 1050,
     height: 675,
     minWidth: 820,
     minHeight: 675,
@@ -27,7 +27,7 @@ function createWindow () {
   })
 
   // and load the index.html of the app.
-  mainWindow.loadFile('index.html')
+  mainWindow.loadFile('webwallet.html')
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()

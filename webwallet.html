@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+  <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=9" />
+  <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
+  <title>SCC Web3 wallet</title>
+  <meta name="description" content="An open-source, cryptographically-secure web wallet designed for the future of self-sovereign and adoption-friendly cryptocurrency.">
+  <meta name="keywords" content="web,wallet,webwallet,crypto,cryptocurrency,opensource,oss">
+  <meta property="og:image" content="assets/logo.png">
+  <meta property="og:site" content="SCC Web3 wallet">
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <meta name="msapplication-TileColor" content="#0a43b5">
+  <meta name="theme-color" content="#0a43b5">
+  <link rel="canonical" href="https://stakecubecoin.net/">
+  <meta name="description" content="An open-source, cryptographically-secure web wallet designed for the future of self-sovereign and adoption-friendly cryptocurrency.">
+  <meta name="keywords" content="web,wallet,webwallet,crypto,cryptocurrency,opensource,oss">
+  <meta name="twitter:site" content="@stakecube">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SCC Web3 wallet">
+  <meta name="twitter:description" content="An open-source, cryptographically-secure web wallet designed for the future of self-sovereign and adoption-friendly cryptocurrency.">
+  <meta name="twitter:image" content="assets/logo.png">
+  <meta property="og:title" content="SCC Web3 wallet">
+  <meta property="og:description" content="An open-source, cryptographically-secure web wallet designed for the future of self-sovereign and adoption-friendly cryptocurrency.">
+  <meta property="og:url" content="https://stakecubecoin.net/">
+  <meta property="og:site_name" content="SCC Web3 wallet">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:image" content="assets/logo.png">
+
+  <link rel="stylesheet" type="text/css" href="assets/bootstrap-4.5.0/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="assets/fontawesome/css/all.min.css">
+  <link rel="stylesheet" type="text/css" href="assets/style/style.css">
+  <script type="text/javascript" src="scripts/libs/jdenticon.min.js"></script>
+  <script type="text/javascript" src="assets/bootstrap-4.5.0/js/jquery.js"></script>
+  <script type="text/javascript" src="assets/bootstrap-4.5.0/js/bootstrap.js"></script>
+
+  <!--- IMPORTANT: CHAIN PARAMS BELOW, DO NOT EDIT UNLESS YOU'RE ABSOLUTELY CERTAIN YOU KNOW WHAT YOU'RE DOING  --->
+  <script>
+      // In most BTC-derived coins, the below parameters can be found in the 'src/chainparams.cpp' Mainnet configuration.
+      // These below params share the same names as the CPP params, so finding and editing these is easy-peasy!
+
+      /* chainparams */
+      const PUBKEY_ADDRESS = 125;
+      const SCRIPT_ADDRESS = 117;
+      const SECRET_KEY     = 253;
+  </script>
+</head>
+
+<!-- SCP LIBRARY GOES BELOW -->
+<script src="./lib/index.js"></script>
+<!-- SCP LIBRARY GOES ABOVE -->
+
+<body>
+  <div id="page-container">
+    <div id="content-wrap">
+      <nav class="navbar navbar-expand-lg sticky-top navbar-light navbarSpecial">
+        <img class="navbar-brand noselect" src='assets/logo.svg' alt="SCC" style='vertical-align: middle;width:150px;display:inline;padding-right:10px;'>
+        <button id="navbarToggler" class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarNav"
+          aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse noselect" id="navbarNav">
+          <ul class="navbar-nav mr-auto" style="cursor: pointer;">
+            <li style="color: #ffffff;"><a style="opacity: 0.7;" id='start' class="nav-link tablinks" onclick="openTab(event, 'home')">About</a></li>
+            <li style="color: #ffffff;"><a style="opacity: 0.7;" class="nav-link tablinks"
+                onclick="openTab(event, 'keypair')">Dashboard</a></li>
+            <li style="color: #ffffff;"><a style="opacity: 0.7;" id="txTab" class="nav-link tablinks" onclick="openTab(event, 'Transaction')">Create
+                Transaction</a></li>
+            <li style="display: none;" style="color: #ffffff;"><a style="opacity: 0.7;" class="nav-link tablinks"
+                onclick="startNetworkTest();openTab(event, 'WalletData');">Network Data</a></li>
+            <li style="color: #ffffff;"><a style="opacity: 0.7;" class="nav-link tablinks"
+                onclick="openTab(event, 'Settings');">Settings</a></li>
+          </ul>
+          <div class="form-inline my-2 my-lg-0">
+            <ul class="navbar-nav mr-auto">
+              <li class="nav-item"><a style="opacity: 1 !important; color: white;" class="nav-link keychainify-checked"><span id="Network"><i class="fas fa-wifi" style="padding-right: 5px;"></i>Network Enabled</span></a></li>
+              <li class="nav-item"><a style="opacity: 1 !important; color: white;" class="nav-link keychainify-checked"><span id="Debug"></span></a></li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+      <br>
+      <div style='display:none;background-color:red;margin-bottom:15px;' id='outdated'>WARNING: your version is outdated,
+        please update to the newest stable version at the <a href='https://github.com/JSKitty/scc-web3/releases'>SCC Web3.0 Github</a>
+      </div>
+      
+      <div class="modal fade" id="qrModal" tabindex="-1" role="dialog" aria-labelledby="qrModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content" style="max-width: 90%">
+            <div class="modal-header">
+              <h5 class="modal-title" id="qrModalLabel">Address QR</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body"  style="text-align: center;">
+              <p id="ModalQRLabel" style="font-family: monospace; font-size: small; position: relative; top: 20px;"></p>
+              <div id="ModalQR" style="width: 100%; height: auto;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="container-fluid">
+        <div class="row no-gutters">
+          <div class='col-md-1'>
+          </div>
+          <div class='col-md-10'>
+            <div id="home" class="tabcontent">
+              <center>
+                <h3>Welcome to the SCC Web3 wallet!</h3>
+              </center>
+              <h4>Be your own Bank!</h4>
+              <h5 style='text-indent: 30px;'>
+                The SCC Web3 wallet has <b>no custody</b> over your funds. You are in full ownership of your keys and your SCC.
+                With this wallet, you can use SCC across the web, on-the-go, with full safety of your funds in your very 
+                own protection. The wallet has many customization options, can be downloaded and ran locally, has a dedicated 
+                offline mode, and can be cloned directly from GitHub!
+              </h5>
+              <br>
+              <h4>Universal and Portable</h4>
+              <h5 style='text-indent: 30px;'>
+                With our built-in tools, you can generate cryptographically-secure addresses with the power of your browser and 
+                hardware. You can generate 'random' addresses or you can generate vanity addresses with your own custom prefixes. 
+                In addition, <b>all</b> keys are entirely universal and can be imported/exported directly to and from SCC Core to this 
+                web wallet.
+              </h5>
+            </div>
+            <div id="keypair" class="tabcontent">
+              <input style="width: 0px; height: 0px; opacity: 0;" type="text" id="clipboard">
+              <div id='importWallet' style='display:none;'>
+                <input type="text" id='privateKey' placeholder="Private Key">
+                <button onclick="importWallet()">Import wallet</button>
+              </div>
+              <div id='generateWallet'>
+                <button onclick="generateWallet()">Create A New Wallet</button>
+              </div>
+              <br>
+              <div id='generateVanityWallet'>
+                <input style="display:none;" type="text" id='prefix' placeholder="Address Prefix">
+                <button onclick="generateVanityWallet()">Create A Vanity Wallet<br>(experimental!)</button>
+              </div>
+              <br>
+              <button id='wToggle' onclick='toggleWallet()'>Access My Wallet</button>
+              <br>
+              <br>
+              <div id='genKeyWarning' style='display: none;' class="alert alert-danger" role="alert">
+                <h4><b>WARNING:</b> if you don't save your private key you
+                  will lose access to your funds!<br><br>
+                  Would you like to encrypt & save your wallet in your browser?<br><br>
+                  <button onclick="encryptWallet();">Encrypt Wallet</button>
+                </h4>
+              </div>
+              <br>
+              <div id="guiWallet" style="display: none;">
+                <div id="banners" style="height: 160px; width: 100%; display: flex; flex-wrap: wrap; color: white; margin-bottom: 250px;">
+                  <div class="graybox" style="height: 99%; width: 300px; background: linear-gradient(50deg, #0d84f4 0%, #0a43b5 80%);"">
+                    <h3 class="noselect" style="margin: 10px; position: relative; left: 165px; cursor: default;">Address</h3>
+                    <br>
+                    <div>
+                      <canvas id="identicon" class="innerShadow" width="65" height="65" data-jdenticon-value="" style="background-color: white; border-color: white; border-width: 3px; border-style: solid; border-radius: 1000px; position: relative; top: -30px; left: 15px;"></canvas>
+                      <b id="guiAddress" style="line-break: anywhere; width: 60%; display: inline-block; right: -30px; position: relative; font-size: smaller; bottom: 50px; word-break: break-all; font-family: monospace; font-weight: 300;">---</b>
+                      <b id="guiQRButton" style=" width: 60%; display: inline-block; right: -105px; position: relative; font-size: large; bottom: 40px;">
+                        <i data-toggle="modal" data-target="#qrModal" style="cursor: pointer; margin-right: 15px;" class="fas fa-qrcode"></i>
+                        <i onclick="toClipboard('guiAddress', 'guiAddressCopy')" id="guiAddressCopy" style="cursor: pointer; margin-right: 15px;" class="fas fa-clipboard" ></i>
+                      </b>
+                    </div>
+                  </div>
+                  <div class="graybox" style="height: 99%; width: 300px; background: linear-gradient(50deg, #0a43b5 0%, #0d84f4 90%);"">
+                    <h3 class="noselect" style="margin: 10px; position: relative; left: 135px; cursor: default;">Balance &nbsp;&nbsp;<span id="balanceReload" class="reload noselect" onclick="refreshChainData()">&#x21bb;</span></h3>
+                    <div>
+                      <div style="display: inline-block; position: relative; width: 65px; height: 65px; left: 30px; bottom: 5px; border-style: solid; border-radius: 1000px; border-width: 3px; background-size: cover; background-color: white; background-image: url(assets/circular-logo.png);"></div>
+                      <p id="guiBalanceBox" style="display: inline-block; width: 50%; position: relative; right: -70px; bottom: 25px; font-size: x-large;"><b id="guiBalance">---</b> SCC</p>
+                    </div>
+                  </div>
+                </div>
+                <div style="display: inline;">
+                  <button id="guiViewKey" onclick="toggleKeyView()">View Private Key</button>
+                  <div id="PrivateQR"  style="display: none; padding: 10px;"></div>
+                  <div id="PublicQR"   style="display: none; padding: 10px;"></div>
+                </div>
+                <div id='PrivateTxt' style="display: none;"></div>
+              </div>
+            </div>
+            <div id="Transaction" class="tabcontent">
+              <div id='errorNotice'></div>
+              <div class='pullDown' style='clear:both;'>
+                <div id="simpleTransactionsDropdown" onclick='toggleDropDown("simpleTransactions")'>Create Simple Transactions<span
+                    style='float:right;'>▼</span></div>
+                <div id='simpleTransactions' style='display:none'>
+                  <label>Address</label>
+                  <input style="min-width: 375px; max-width: 90%; font-family: monospace; text-align: center;" type="text" id="address1s">
+                  <br>
+                  <label>Amount</label>
+                  <input style="text-align: center;" type="number" min="0" step="0.01" id="value1s">
+                  <br>
+                  <div id="reqDescDisplay" style="display: none;">
+                    <label>Description (from the merchant)</label><br>
+                    <input style="text-align: center;" type="text" disabled id="reqDesc">
+                  </div>
+                  <br>
+                  <div id='HumanReadable'></div>
+                  <br>
+                  <button onclick="createSimpleTransation()" id='genIt'>Send Transaction</button>
+                </div>
+                <div id='transactionFinal'></div>
+              </div>
+              <br>
+              <div class='pullDown' style='clear:both;'>
+                <div onclick='toggleDropDown("advTransactions")'>Create Manual Transactions<span
+                    style='float:right;'>▼</span></div>
+                <div id='advTransactions' style='display:none'>
+                  <h2>Inputs</h2>
+                  <label>Trx Hash</label>
+                  <input type="text" id="prevTrxHash">
+                  <label>Index</label>
+                  <input type="text" id="index">
+                  <label>Script</label>
+                  <input type="text" id="script">
+                  <h2>Outputs</h2>
+                  <label>Output Address 1</label>
+                  <input type="text" id="address1">
+                  <label>Amount</label>
+                  <input type="text" id="value1">
+                  <br />
+                  <label>Output address 2</label>
+                  <input type="text" id="address2">
+                  <label>Amount</label>
+                  <input type="text" id="value2">
+                  <h2>WIF Key</h2>
+                  <label>key</label>
+                  <input type="text" id="wif">
+                  <br /><br />
+                  <b>WARNING: ANY FUNDS NOT ALLOCATED WILL BE USED AS FEES</b>
+                  <br>
+                  <button onclick="createRawTransaction()">Create Raw Signed Transction</button>
+                  <br /><br /><br />
+                  <h2>Signed Raw Transaction</h2>
+                  <textarea rows="15" cols="70" id="rawTrx"></textarea>
+                  <h3>Don't understand how this works? <a target='_blank'
+                      href='https://github.com/JSKitty/scc-web3#transaction'>Tutorial Here</a>
+                    <h4>Advanced Details: <br>locktime is set to 0, sequence is set to max. SIGHASH_ALL option is chosen
+                      for signing raw Transaction.</h4>
+                </div>
+              </div>
+            </div>
+            <div id="Settings" class="tabcontent">
+              <form action="javascript:setExplorer()">
+                <label for="explorer">Choose an explorer:</label>
+                <select id="explorer" name="explorer">
+                  <option value="main">https://stakecubecoin.net/</option>
+                  <option value="custom">custom (In Development)</option>
+                </select>
+                <br>
+                <input type="submit">
+              </form>
+              <br>
+              <button type="submit" onclick='toggleDebug()'>Toggle Debug mode</button>
+              <button type="submit" onclick='toggleNetwork()'>Toggle Networking mode</button>
+            </div>
+            <div id="WalletData" class="tabcontent">
+              <div id='networkingNotices'></div>
+              <div id='readout' style='display:none'>
+                <div style='float:left;'>
+                  Wallet Details
+                  <hr>
+                  Balance: <span id='balance'></span> | Total Received: <span id='totalReceived'></span> | Total Sent:
+                  <span id='totalSent'></span>
+                  <br>
+                  <div class='pullDown' style='clear:both;'>
+                    <div onclick='toggleDropDown("Transactions")'>Transactions:<span
+                        id='TransactionNumber'>▼</span><span style='float:right;'>▼</span></div>
+                    <div style='background-color:#D0D0D0; width:100%'><span style='display:none;'
+                        id='Transactions'></span></div>
+                    <br>
+                    <br>
+                  </div>
+                </div>
+                <!--Right -->
+                <div id='NetworkDataAddrs'>
+                  <span style='margin-left:1px;'>Address Response</span>
+                  <hr>
+                  <span id='addrStr' style='margin-left:1px;'></span><br>
+                  <span id='addrStrQR' style='margin-left:1px;'></span>
+                </div>
+                <div class='pullDown' style='clear:both;'>
+                  <div onclick='toggleDropDown("NetworkingJson")'>Pure json:<span style='float:right;'>▼</span></div>
+                  <div style='background-color:#D0D0D0; width:100%'>
+                    <textarea rows="15" cols="50" id="NetworkingJson"
+                      style='display:none;font-size:4vw;width:99%;overflow:hidden;background-color:#D0D0D0;'></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class='col-md-1'>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <div class="footer-line"></div>
+      <div style='display:inline;' id='dcfooter'></div>
+    </div>
+  </div>
+  <!-- Functional Libraries (Cryptography, Hashing, Encryption, Encoding, etc) -->
+  <script type="text/javascript" src="scripts/libs/aes-gcm.js"></script>
+  <script type="text/javascript" src="scripts/libs/crypto-min.js"></script>
+  <script type="text/javascript" src="scripts/libs/crypto-sha256.js"></script>
+  <script type="text/javascript" src="scripts/libs/crypto-sha256-hmac.js"></script>
+  <script type="text/javascript" src="scripts/libs/ripemd160.js"></script>
+  <script type="text/javascript" src="scripts/libs/jsbn.js"></script>
+  <script type="text/javascript" src="scripts/libs/ellipticcurve.js"></script>
+  <script type="text/javascript" src="scripts/libs/script.js"></script>
+  <script type="text/javascript" src="scripts/libs/qrcode.js"></script>
+  <script type="text/javascript" src="scripts/libs/sha256.js"></script>
+
+  <!-- Core Libraries (Script OPCodes, etc) -->
+  <script type="text/javascript" src="scripts/libs/core-lib/script.js"></script>
+
+  <!-- Interface Framework Libraries (GUI, wallet management, networking, etc) -->
+  <script type="text/javascript" src="scripts/settings.js"></script>
+  <script type="text/javascript" src="scripts/wallet.js"></script>
+  <script type="text/javascript" src="scripts/network.js"></script>
+  <script type="text/javascript" src="scripts/bitTrx.js"></script>
+
+  <script>
+    // WALLET STATE DATA
+    let cachedUTXOs = [];
+    let cachedBlockCount = 0;
+
+    function getBalance(updateGUI = false) {
+      let nBalance = 0;
+      for (const nUTXO of cachedUTXOs) {
+        // Calculate the balance from our UTXO cache
+        console.log(nUTXO.satoshis / 100000000);
+        nBalance += Number((nUTXO.satoshis / 100000000).toFixed(8));
+      }
+
+      // Update the GUI too, if chosen
+      if (updateGUI) {
+        // Set the balance, and adjust font-size for large balance strings
+        document.getElementById("guiBalance").innerHTML = nBalance;
+        document.getElementById("guiBalanceBox").style.fontSize = nBalance.toString().length > 8 ? "large" : "x-large";
+      }
+
+      return Number(nBalance.toFixed(8));
+    }
+
+    // URL-Query request processing
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    let requestTo;
+    let requestAmount;
+    // Check for a payment request
+    if (urlParams.has('pay') && urlParams.has('amount')) {
+      requestTo     = urlParams.get('pay');
+      requestAmount = parseFloat(urlParams.get('amount'));
+      console.log(requestTo + " " + requestAmount);
+      // We have our payment request info, wait until the page is fully loaded then display the payment request via .onload
+    }
+
+    function toClipboard(element, caller) {
+      let nCopy = document.getElementById(element);
+      caller = document.getElementById(caller);
+      let nClipboard = document.getElementById('clipboard');
+      nClipboard.value = nCopy.value || nCopy.innerHTML;
+      nClipboard.select();
+      nClipboard.setSelectionRange(0, 99999);
+      document.execCommand("copy");
+      caller.className += " fa-check";
+      caller.className = caller.className.replace(/ fa-clipboard/g, '');
+      caller.style.cursor = "default";
+      setTimeout(() => {
+        caller.className += " fa-clipboard";
+        caller.className = caller.className.replace(/ fa-check/g, '');
+        caller.style.cursor = "pointer";
+      }, 1000);
+    }
+
+    let viewPrivKey = false;  
+    function toggleKeyView() {
+      viewPrivKey = !viewPrivKey;
+      document.getElementById('guiViewKey').innerHTML     = viewPrivKey  ? 'View Public Key' : 'View Private Key';
+      document.getElementById('PrivateTxt').style.display = viewPrivKey  ? 'block' : 'none';
+      document.getElementById('PrivateQR').style.display  = viewPrivKey  ? 'block' : 'none';
+      document.getElementById('PublicQR').style.display   = !viewPrivKey ? 'block' : 'none';
+    }
+    function toggleWallet() {
+      var toggle = document.getElementById("wToggle").innerHTML;
+      // Hide and Reset the Vanity address input
+      document.getElementById('prefix').value = "";
+      document.getElementById('prefix').style.display = 'none';
+      if (toggle === "Access My Wallet") {
+        if (!hasEncryptedWallet()) {
+          // No local wallet found
+            document.getElementById("generateWallet").style.display = 'none';
+            document.getElementById("importWallet").style.display = 'block';
+            document.getElementById("wToggle").innerHTML = "Create A New Wallet";
+            return;
+        }
+        // We have a local wallet! Display the decryption prompt
+        decryptWallet().then(hasWallet => {
+          if (hasWallet) {
+            document.getElementById("generateWallet").style.display = 'none';
+            document.getElementById("importWallet").style.display = 'block';
+            document.getElementById("wToggle").innerHTML = "Create A New Wallet";
+          } else {
+            document.getElementById("generateWallet").style.display = 'block';
+            document.getElementById("importWallet").style.display = 'none';
+            document.getElementById("wToggle").innerHTML = "Access My Wallet";
+          }
+        }).catch(e => {
+          document.getElementById("generateWallet").style.display = 'none';
+          document.getElementById("importWallet").style.display = 'block';
+          document.getElementById("wToggle").innerHTML = "Create A New Wallet";
+        });
+      } else {
+        document.getElementById("generateWallet").style.display = 'block';
+        document.getElementById("importWallet").style.display = 'none';
+        document.getElementById("wToggle").innerHTML = "Access My Wallet";
+      }
+    }
+    async function generateVanityWallet() {
+      // Generate a vanity address with the given prefix
+      let strPrefix = document.getElementById('prefix');
+      if (strPrefix.value.length === 0 || strPrefix.style.display === 'none') {
+        // No prefix, display the intro!
+        strPrefix.style.display = 'block';
+        document.getElementById('genKeyWarning').style.display = 'block';
+        document.getElementById('PrivateTxt').innerHTML = "---";
+        document.getElementById('guiAddress').innerHTML = "---";
+      } else {
+        // We also don't want users to be mining addresses for years... so cap the letters to four until the generator is more optimized
+        if (strPrefix.value.length > 4) return alert("This is a long name! This would take a LONG time to find, please choose a shorter name!");
+        // Cache a lowercase equivilent for lower-entropy comparisons (a case-insensitive search is ALOT faster!) and strip accidental spaces
+        const nInsensitivePrefix = strPrefix.value.toLowerCase().replace(/ /g, "");
+        let attempts = 0;
+        // Begin the search, cap'n!!!
+        while (true) {
+          let nWallet = await generateWallet(nInsensitivePrefix);
+          // Check if the prefix matches the pubkey...
+          if (nWallet.vanity_match) return console.log("VANITY: Found an address after " + attempts + " attempts!");
+          // No match, bump the attempts
+          attempts++;
+        }
+      }
+    }
+    function toggleDropDown(id) {
+      var openClosed = document.getElementById(id).style.display;
+      if (openClosed === 'block') {
+        document.getElementById(id).style.display = 'none';
+      } else {
+        document.getElementById(id).style.display = 'block';
+      }
+    }
+    function startNetworkTest() {
+      if (networkEnabled) {
+        if (typeof publicKeyForNetwork !== 'undefined') {
+          checkPubKey(); //readout
+          document.getElementById("readout").style.display = 'block';
+          document.getElementById("networkingNotices").innerHTML = '';
+        } else {
+          document.getElementById("networkingNotices").innerHTML = 'No public key';
+        }
+      } else {
+        document.getElementById("networkingNotices").innerHTML = 'Network disabled';
+      }
+    }
+    function loadUnspendInputs() {
+      if (publicKeyForNetwork) {
+        getUnspentTransactions();
+        document.getElementById("simpleTransactions").style.display = 'block';
+        document.getElementById("genIt").style.display = 'block';
+      } else {
+        alert("You need a wallet to transact with! Please import a wallet via the 'Dashboard --> Access my wallet' menu");
+      }
+    }
+    function createSimpleTransation() {
+      if (!networkEnabled) return alert("Cannot create Simple Transactions in offline mode; this requires an explorer to sync your balance (UTXOs), please enable Networking to use this feature! Otherwise, use 'Advanced Transactions'");
+      if (!publicKeyForNetwork) {
+        if (hasEncryptedWallet())
+          alert("Please unlock your wallet before sending transactions!");
+        else
+          alert("Please import/create your wallet before sending transactions!");
+        return;
+      }
+      let address = document.getElementById("address1s").value;
+      let value = Number(document.getElementById("value1s").value);
+      let genIt = document.getElementById("genIt");
+      if (genIt.innerHTML === 'Continue') {
+        genIt.innerHTML = 'Send Transaction';
+        document.getElementById("HumanReadable").innerHTML = "";
+        document.getElementById("value1s").value = "";
+        document.getElementById("address1s").value = "";
+        document.getElementById('reqDesc').value = '';
+        document.getElementById('reqDescDisplay').style.display = 'none';
+        return;
+      }
+      let nBalance = getBalance();
+      if (value > nBalance) return alert("Balance is too small! (" + nBalance + " - " + value + " = " + (nBalance - value).toFixed(8) + ")");
+      console.log("Constructing TX of value: " + value + " SCC");
+      // Loop our cached UTXOs and construct a TX
+      trx = bitjs.transaction();
+      let txValue = 0;
+      for (const UTXO of cachedUTXOs) {
+        if (txValue > value) {
+          // Required Coin Control value met, yahoo!
+          console.log("Coin Control: TX Constructed! Selected " + trx.inputs.length + " input(s) (" + txValue + " SCC)");
+          break;
+        }
+        trx.addinput(UTXO.txid, UTXO.outputIndex, UTXO.script);
+        txValue += Number((UTXO.satoshis / 100000000).toFixed(8));
+        txValue = Number(txValue.toFixed(8));
+        console.log("Coin Control: Selected input " + UTXO.txid.substr(0, 6) + "(" + UTXO.outputIndex + ")... (Added " + (UTXO.satoshis / 100000000).toFixed(8) + " SCC - Total: " + txValue + ")");
+      }
+
+      if (address != '' && value != '') {
+        calculatefee(trx.serialize().length);
+        //trx.addoutput(address, value); //Sending to this address
+        //trx.addoutputburn(value, "8a7a767b5b6fb8ed3b95dc9d8af3e482c747dabd354599542652e8af2b8b7008 send 1 sLmT6TC68j4yPdCvA4vrqh6AZ4JURW64oN");
+        trx.addoutputburn(value, "8a7a767b5b6fb8ed3b95dc9d8af3e482c747dabd354599542652e8af2b8b7008 mint 9");
+        addresschange = publicKeyForNetwork;
+        totalSent = (parseFloat(fee) + parseFloat(value)).toFixed(8);
+        valuechange = (parseFloat(txValue) - parseFloat(totalSent)).toFixed(8);
+        if (totalSent <= balance) {
+          document.getElementById("HumanReadable").innerHTML = "Balance: " + balance.toFixed(8) + "<br>Fee: " + fee + "<br>To: " + address + "<br>Sent: " + value.toFixed(8) + "<br>Change Address: " + addresschange + "<br>Change: " + valuechange;
+          trx.addoutput(addresschange, valuechange); //Change Address
+          if (typeof privateKeyForTransactions !== 'undefined') {
+            var wif = privateKeyForTransactions;
+            sendTransaction(trx.sign(wif, 1));
+            genIt.innerHTML = "Continue";
+          } else {
+            console.log("No private key");
+          }
+        } else {
+          console.warn("Amount: " + value + "\nFee: " + fee + "\nChange: " + valuechange + "\nTOTAL: " + totalSent);
+          document.getElementById("HumanReadable").innerHTML = "You are trying to send more than you have!";
+        }
+      } else {
+        console.log("No address or value");
+      }
+    }
+    function createRawTransaction() {
+      //advanced transaction creation and signing
+      var trx = bitjs.transaction();
+      var txid = document.getElementById("prevTrxHash").value;
+      var index = document.getElementById("index").value;
+      var script = document.getElementById("script").value;
+      trx.addinput(txid, index, script);
+      var address = document.getElementById("address1").value;
+      var value = document.getElementById("value1").value;
+      trx.addoutput(address, value);
+      var address = document.getElementById("address2").value;
+      var value = document.getElementById("value2").value;
+      trx.addoutput(address, value);
+      var wif = document.getElementById("wif").value;
+      var textArea = document.getElementById("rawTrx");
+      textArea.value = trx.sign(wif, 1); //SIGHASH_ALL DEFAULT 1
+    }
+    function openTab(evt, tabName) {
+      var i, tabcontent, tablinks;
+      tabcontent = document.getElementsByClassName("tabcontent");
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+      }
+      tablinks = document.getElementsByClassName("tablinks");
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+        tablinks[i].style.color = "#ffffff";
+        tablinks[i].style.opacity = 0.7;
+      }
+      document.getElementById(tabName).style.display = "block";
+      if (!evt.currentTarget.className.includes("active")) {
+        evt.currentTarget.className += " active";
+        evt.currentTarget.style.opacity = 1;
+      }
+
+      // Close the navbar if it's not already closed
+      if (!document.getElementById("navbarToggler").className.includes("collapsed"))
+        document.getElementById("navbarToggler").click();
+    }
+    document.getElementById("start").click();
+
+    function refreshChainData() {
+      // If in offline mode: don't sync ANY data or connect to the internet
+      if (!networkEnabled) return console.warn("Offline mode: For your security, the wallet will avoid ALL internet requests in offline mode.");
+
+      // Update identicon
+      document.getElementById("identicon").dataset.jdenticonValue = publicKeyForNetwork;
+      //jdenticon();
+      // Play reload anim
+      document.getElementById("balanceReload").className += " playAnim";
+      // Fetch block count + UTXOs
+      getBlockCount();
+    }
+
+    window.onload = (() => {
+      // Configure Identicon
+      /*jdenticon.configure({
+        saturation: {
+          color: 0.8
+        }
+      });*/
+      init();
+      // Configure payment processor
+      if (requestTo && requestAmount) {
+          // Open 'Create Transaction' menu
+          document.getElementById('txTab').click();
+          if (document.getElementById("simpleTransactions").style.display === 'none')
+            document.getElementById("simpleTransactionsDropdown").click();
+          // Pre-fill inputs
+          document.getElementById('address1s').value = requestTo;
+          document.getElementById('value1s').value  = requestAmount;
+          // Payment request 'desc' is optional
+          if (urlParams.has('desc')) {
+            document.getElementById('reqDescDisplay').style.display = 'block';
+            document.getElementById('reqDesc').value = urlParams.get('desc');
+          } else {
+            document.getElementById('reqDesc').value = '';
+            document.getElementById('reqDescDisplay').style.display = 'none';
+          }
+        }
+    });
+
+    setInterval(refreshChainData, 15000);
+  </script>
+</body>
+
+</html>
