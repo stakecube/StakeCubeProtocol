@@ -177,6 +177,8 @@
                     </div>
                   </div>
                 </div>
+
+                <br><br>
                 <div style="display: inline;">
                   <button id="guiViewKey" onclick="toggleKeyView()">View Private Key</button>
                   <div id="PrivateQR"  style="display: none; padding: 10px;"></div>
@@ -332,6 +334,10 @@
     let cachedUTXOs = [];
     let cachedBlockCount = 0;
 
+    // Cached UI DOMs
+    //let domSendToken = document.getElementById("sendtokens");
+    //domSendToken.style.display = "none";
+
     function getBalance(updateGUI = false) {
       let nBalance = 0;
       for (const nUTXO of cachedUTXOs) {
@@ -345,6 +351,48 @@
         // Set the balance, and adjust font-size for large balance strings
         document.getElementById("guiBalance").innerHTML = nBalance;
         document.getElementById("guiBalanceBox").style.fontSize = nBalance.toString().length > 8 ? "large" : "x-large";
+
+        let knownTokens = TOKENS.getTokensByAccount(publicKeyForNetwork);
+        /*for (const token of knownTokens) {
+          let tokenList = $("tokenlist");
+          let tokenListContent = $("tokenListContent");
+
+          // Add the token's menu button (if it doesn't already exist)
+          let tokenButton = document.getElementById("tokenbutton-" + token.token.contract);
+          var tokenA, tokenText;
+          if (!tokenButton) {
+            tokenA = document.createElement("a");
+            tokenA.classList = "list-group-item list-group-item-action";
+            tokenA.setAttribute("href", "#token-" + token.token.contract);
+            tokenA.setAttribute("id", "tokenbutton-" + token.token.contract);
+            tokenA.setAttribute("data-toggle", "list");
+            tokenA.setAttribute("role", "tab");
+            tokenText = document.createTextNode(token.token.ticker);
+            tokenA.appendChild(tokenText);
+            document.getElementById("tokenlist").appendChild(tokenA);
+          }
+
+          // Content here!
+          let contentHTML = [
+            "Name: " + token.token.name + " (" + token.token.ticker + ")<br>",
+            "Contract: <code style=\"font-size:small;\">" + token.token.contract + "</code><br>",
+            "<b>Balance:</b> " + (token.account.balance / 100000000).toFixed(8) + " " + token.token.ticker + "<br>",
+            "<button type=\"button\" class=\"btn btn-primary\" onclick=\"prepareSendTokens('" + token.token.contract + "')\">Send</button>"
+          ].join("");
+          // Add the token's tab contents (or update it if it already exists)
+          let tokenContent = document.getElementById("token-" + token.token.contract);
+          if (!tokenContent) {
+            var tabA = document.createElement("div");
+            tabA.classList = "tab-pane fade";
+            tabA.setAttribute("id", "token-" + token.token.contract);
+            tabA.setAttribute("data-toggle", "list");
+            tabA.setAttribute("role", "tabpanel");
+            tabA.innerHTML = contentHTML;
+            document.getElementById("tokenListContent").appendChild(tabA);
+          } else {
+            tokenContent.innerHTML = contentHTML;
+          }
+        }*/
       }
 
       return Number(nBalance.toFixed(8));
@@ -380,6 +428,17 @@
         caller.style.cursor = "pointer";
       }, 1000);
     }
+
+    /*function prepareSendTokens(contract) {
+      let cToken = TOKENS.getToken(contract);
+      let cAccount = cToken.getAccount(publicKeyForNetwork);
+      // Update token-send UI accordingly
+      domSendToken.style.display = "";
+      document.getElementById("tokenreceivertitle").innerHTML = "Send " + cToken.ticker + " To";
+      document.getElementById("tokenamounttitle").innerHTML = "Amount of " + cToken.ticker;
+      let amountField = document.getElementById("tokenamount");
+      amountField.setAttribute("max", (cAccount.balance / 100000000).toFixed(8));
+    }*/
 
     let viewPrivKey = false;  
     function toggleKeyView() {
@@ -449,6 +508,10 @@
         }
       }
     }
+    /*$('#tokenlist a').on('click', function (e) {
+      e.preventDefault()
+      $(this).tab('show')
+    });*/
     function toggleDropDown(id) {
       var openClosed = document.getElementById(id).style.display;
       if (openClosed === 'block') {

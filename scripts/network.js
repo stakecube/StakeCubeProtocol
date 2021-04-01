@@ -66,6 +66,8 @@ if (networkEnabled) {
         console.log('No unspent Transactions');
         document.getElementById("errorNotice").innerHTML = '<div class="alert alert-danger" role="alert"><h4>Note:</h4><h5>You don\'t have any funds, get some coins first!</h5></div>';
         cachedUTXOs = [];
+        // Update SCP-1 token balances anyway!
+        balance = getBalance(true);
       } else {
         cachedUTXOs = [];
         amountOfTransactions = data.length;
