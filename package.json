@@ -10,10 +10,12 @@
   "author": "StakeCube",
   "license": "MPL-2.0",
   "devDependencies": {
-    "electron": "^8.0.3"
+    "electron": "^8.0.3",
+    "electron-reloader": "^1.2.0"
   },
   "dependencies": {
     "bitcoin-rpc-promise": "^2.1.6",
+    "jquery": "^3.6.0",
     "lodash": "^4.17.21",
     "regedit": "^3.0.3"
   }

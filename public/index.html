@@ -1,0 +1,219 @@
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SCC Web3 wallet</title>
+
+  <link rel="canonical" href="https://getbootstrap.com/docs/5.0/examples/carousel/">
+
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+  <link href="fontawesome/css/fontawesome.min.css" rel="stylesheet">
+  <link href="fontawesome/css/all.min.css" rel="stylesheet">
+</head>
+
+<body>
+
+  <header>
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top navbar-color font-weight-bold">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#"><img src="logo.svg" height="30"></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
+          aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+          <ul class="navbar-nav me-auto mb-2 mb-md-0">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="#" onclick="switchToDashboard()"><i
+                  class="fas fa-tachometer-alt"></i></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" onclick="switchToSend()"><i class="fas fa-paper-plane"></i></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" onclick="switchToReceive()"><i class="fas fa-money-check"></i></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <div class="container marketing pt-navbar" id="dashboardPage">
+
+      <h4 class="mb-5 theme-color-secondary font-weight-bold">Dashboard</h4>
+
+      <div class="row">
+        <div class="col-7">
+
+          <div class="card card-prop mb-4">
+            <div class="card-body">
+              <div class="card-title font-gray font-weight-bold">Balance<span
+                  class="float-end theme-color refresh-button"><i class="fas fa-redo-alt"></i></span></div>
+              <div class="mt-4 theme-color-secondary font-weight-bold">
+                <div class="float-end"><span class="font-balance">2,420.00</span> <span
+                    class="font-size-ticker">SCC</span></div><br><br>
+                <div class="float-end balance-usd-props"><span
+                    class="font-balance-usd font-gray font-weight-normal">12,503.00</span> <span
+                    class="font-size-ticker-usd font-gray font-weight-normal">USD</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card card-prop mb-4">
+            <div class="card-body">
+              <div class="card-title font-gray font-weight-bold">Activity</div>
+
+              <div class="mt-4">
+                <div class="float-start text-center">JAN<br>14</div>
+                <span class="float-end plus-balance-color font-weight-bold" style="position:relative; top:11px;">
+                  +420.00 SCC
+                </span>
+              </div><br><br>
+              <hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">
+
+              <div>
+                <div class="float-start text-center">JAN<br>14</div>
+                <span class="float-end plus-balance-color font-weight-bold" style="position:relative; top:11px;">
+                  +420.00 SCC
+                </span>
+              </div><br><br>
+              <hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">
+
+              <div>
+                <div class="float-start text-center">JAN<br>14</div>
+                <span class="float-end plus-balance-color font-weight-bold" style="position:relative; top:11px;">
+                  +420.00 SCC
+                </span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="col-5">
+
+          <div class="card card-prop mb-4">
+            <div class="card-body">
+              <div class="card-title font-gray font-weight-bold">Overview</div>
+              <div class="mt-4 theme-color-secondary font-weight-bold font-size-overview">
+                <span class="font-gray">Price:</span>
+                <span class="float-end">$0,52.28</span><br>
+                <span class="font-gray">Marketcap:</span>
+                <span class="float-end">$23,284,249.02</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="card card-prop mb-4">
+            <div class="card-body">
+              <div class="card-title font-gray font-weight-bold" style="margin-bottom:30px;">Tokens</div>
+
+              <div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px;">
+                <img src="circular-logo.png" style="width:32px; height:32px;">
+                <span style="margin-left:10px;">StakeCubeCoin (SCC)</span>
+                <span class="float-end">2,420.00 SCC</span>
+              </div>
+
+              <div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px;">
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/BTC_Logo.svg/2000px-BTC_Logo.svg.png"
+                  style="width:32px; height:32px;">
+                <span style="margin-left:10px;">Bitcoin (BTC)</span>
+                <span class="float-end">402.28573029 BTC</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
+    </div>
+
+    <div class="container marketing pt-navbar" id="sendPage">
+      <h4 class="mb-5 theme-color-secondary font-weight-bold">Send</h4>
+
+      <div class="row">
+        <div class="col-2"></div>
+        <div class="col-8">
+
+          <div class="card card-prop mb-4">
+            <div class="card-body">
+              <div class="card-title font-gray font-weight-bold">Withdraw</div>
+
+              <div class="alert alert-danger" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> &nbsp;Please make sure to enter the correct address. Transactions cannot be reversed.</div><br>
+
+              <div class="row">
+                <div class="col-6">
+                  <label for="exampleFormControlInput1" class="form-label" style="margin-bottom:0px">Coin/Token:</label>
+                  <select class="vodiapicker">
+                    <option value="scc" class="test" data-thumbnail="circular-logo.png">StakeCubeCoin (SCC)</option>
+                    <option value="btc" data-thumbnail="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/BTC_Logo.svg/2000px-BTC_Logo.svg.png">Bitcoin (BTC)</option>
+                  </select>
+                  <div class="lang-select input-shadow">
+                    <button class="btn-select" value=""></button>
+                    <div class="b">
+                      <ul id="a"></ul>
+                    </div>
+                  </div>
+                </div>
+              </div><br>
+
+              <div class="row">
+                <div class="col-6">
+                  <label for="exampleFormControlInput1" class="form-label" style="margin-bottom:0px">Amount:</label>
+                  <input type="text" class="form-control input-shadow"><br>
+                </div>
+                
+                <div class="col-6">
+                  <label for="exampleFormControlInput1" class="form-label" style="margin-bottom:0px">SCC Address:</label>
+                  <input type="text" class="form-control input-shadow"><br>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div class="col-2"></div>
+      </div>
+
+    </div>
+
+    <div class="container marketing pt-navbar" id="receivePage">
+      <h4 class="mb-5 theme-color-secondary font-weight-bold">Receive</h4>
+
+      <div class="row">
+        <div class="col-2"></div>
+        <div class="col-8">
+
+          <div class="card card-prop mb-4">
+            <div class="card-body">
+              <div class="card-title font-gray font-weight-bold">Deposit address</div><br>
+
+              <center><span class="font-weight-bold">sPne9e26XWxgwh9NmxvAKPrWozaPA6F3kw</span><span
+                  style="padding-left:6px;"><i class="far fa-copy refresh-button"></i></span><br><br></center>
+              <div class="alert alert-danger" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> Please
+                make sure to only send StakeCubeProtocol tokens to this address. Other coins will be lost and cannot be
+                reversed.</div>
+              <center><img src="qr.png"></center>
+            </div>
+          </div>
+
+        </div>
+        <div class="col-2"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="js/bootstrap.bundle.min.js"></script>
+  <script src="js/switchPages.js"></script>
+  <script>window.$ = window.jQuery = require('jquery');</script>
+  <script src="js/select.js"></script>
+
+</body>
+
+</html>

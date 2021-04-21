@@ -1,0 +1,170 @@
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SCC Web3 wallet</title>
+
+  <link rel="canonical" href="https://getbootstrap.com/docs/5.0/examples/carousel/">
+
+  <link href="css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+  <link href="css/begin.css" rel="stylesheet">
+  <link href="fontawesome/css/fontawesome.min.css" rel="stylesheet">
+  <link href="fontawesome/css/all.min.css" rel="stylesheet">
+
+  <script>
+    function createWalletStepChange(step) {
+      if(step == 1) {
+        document.getElementById('createWalletStepCount').innerHTML = "1";
+      } else if(step == 2) {
+        document.getElementById('createWalletStepCount').innerHTML = "2";
+        document.getElementById('createWalletStepPage1').style.display = "none";
+        document.getElementById('createWalletStepPage2').style.display = "block";
+      }
+    }
+
+  </script>
+</head>
+
+<body class="navbarSpecial">
+  <main>
+    <div class="container marketing" id="mainPage">
+      <div class="verticalalign">
+        <div class="vertical-center color-white">
+          <center>
+            <img src="logo.svg" style="height:100px;"><br><br>
+
+            <h3>Create or import your wallet</h3><br><br>
+
+            <button class="btn btn-success btn-layout" onclick="switchToCreate();" style="margin-right:20px;">Create
+              wallet</button>
+            <button class="btn btn-success btn-layout" onclick="switchToImport();">Import wallet</button>
+          </center>
+        </div>
+      </div>
+    </div>
+
+    <div class="container marketing" id="createPage" style="display:none;">
+      <div class="verticalalign">
+        <div class="vertical-center color-white">
+          <center>
+            <img src="logo.svg" style="height:50px;"><br><br>
+          </center>
+
+            <div class="row">
+              <div class="col-2"></div>
+              <div class="col-8">
+
+                <div class="card card-prop2 mb-4">
+                  <div class="card-body font-gray">
+                    <div class="card-title color-white font-weight-bold mb-3"
+                      style="background:linear-gradient(90deg, #6fb0ef, #5481da 100%)!important; margin-left:-16px; margin-right:-16px; margin-top:-16px; border-top-right-radius:15px; border-top-left-radius:15px; padding:18px;">
+                      <center>Create your wallet&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id="createWalletStepCount">1</span> <span style="color:#ffffff87">/ 2</span></center>
+                    </div>
+                    
+                    <div style="padding:30px; color:#5a5a5a" id="createWalletStepPage1">
+                      <h5 class="mb-3">Create a password for your wallet</h5>
+
+                      <label for="exampleFormControlInput1" class="form-label" style="font-size:14px;">Set a password</label>
+                      <input type="password" class="form-control mb-2">
+
+                      <table class="mb-4" border="0">
+                        <tr style="color:#2973cf; font-size:14px;">
+                          <td>
+                            <i class="fas fa-info-circle"></i>
+                          </td>
+                          <td>
+                            Make sure to enter at least 8 and max 200 characters, including one upper-case letter, a symbol and a number
+                          </td>
+                        </tr>
+                      </table>
+
+                      <label for="exampleFormControlInput1" class="form-label" style="font-size:14px;">Re-enter password</label>
+                      <input type="password" class="form-control mb-4">
+
+                      <center><button class="btn btn-success btn-layout" onclick="createWalletStepChange(2);">Next</button></center>
+                    </div>
+
+                    <div style="padding:30px; color:#5a5a5a; display:none" id="createWalletStepPage2">
+                      <h5 class="mb-3">Save your seed to a safe location</h5>
+
+                      <center>
+                        <table class="mb-4" border="0">
+                          <tr style="color:#d64a4a; font-size:14px;">
+                            <td>
+                              <i class="fas fa-exclamation-triangle"></i>
+                            </td>
+                            <td>
+                              Make sure to write down your seed and roll it up in a glass jar and stick it up your arse
+                            </td>
+                          </tr>
+                        </table>
+
+                        <span style="color:#2973cf; font-weight:bold;">exotic welders because alarms rapid tepid potato zoom somewhere dehydrate syndrome waffle metro lopped napkin february joking nabbing jeopardy inquest welders vessel gusts hover hover</span>
+                        <br><br>
+
+                        <button class="btn btn-success btn-layout" onclick="createWalletStepChange(2);">Next</button>
+                      </center>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+              <div class="col-2"></div>
+            </div>
+
+
+        </div>
+      </div>
+    </div>
+
+    <div class="container marketing" id="importPage" style="display:none;">
+      <div class="verticalalign">
+        <div class="vertical-center color-white">
+          <center>
+            <img src="logo.svg" style="height:100px;"><br><br>
+
+            <h3>Import your Private Key</h3><br><br>
+
+            <input type="text" id="inputPrivkey" placeholder="Your SCC Private Key...">
+          </center>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function switchToMain() {
+      // Hide
+      document.getElementById('createPage').style.display = "none";
+      document.getElementById('importPage').style.display = "none";
+
+      // Show
+      document.getElementById('mainPage').style.display = "block";
+    }
+    function switchToCreate() {
+      // Hide
+      document.getElementById('mainPage').style.display = "none";
+      document.getElementById('importPage').style.display = "none";
+
+      // Show
+      document.getElementById('createPage').style.display = "block";
+    }
+    function switchToImport() {
+      // Hide
+      document.getElementById('mainPage').style.display = "none";
+      document.getElementById('createPage').style.display = "none";
+
+      // Show
+      document.getElementById('importPage').style.display = "block";
+    }
+  </script>
+  <script src="js/bootstrap.bundle.min.js"></script>
+  <script src="js/switchPages.js"></script>
+  <script>window.$ = window.jQuery = require('jquery');</script>
+  <script src="js/select.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,170 @@
+@font-face {
+  font-family: 'SiteFont';
+  src: url('../font/SweetSansPro-Regular.ttf')  format('truetype');
+}
+
+body {
+  font-family: 'SiteFont';
+}
+
+.navbar-color {
+  background: linear-gradient(90deg, #0d84f4, #0a43b5 100%);
+}
+
+.pt-navbar {
+  padding-top: 80px;
+}
+
+.font-weight-bold {
+  font-weight: bold;
+}
+
+.font-weight-normal {
+  font-weight: normal!important;
+}
+
+.font-gray {
+  color:#8e98a4;
+}
+
+
+.font-gray-2 {
+  color:#74787d;
+}
+
+.refresh-button {
+  cursor: pointer;
+}
+
+.theme-color {
+  color: #0087ea;
+}
+
+.theme-color-secondary {
+  color: #304258!important;
+}
+
+.font-balance {
+  font-size: 30px;
+}
+
+.font-size-ticker {
+  font-size: 18px;
+}
+
+.font-balance-usd {
+  font-size: 20px;
+}
+
+.font-size-ticker-usd {
+  font-size: 12px;
+}
+
+.balance-usd-props {
+  position: relative;
+  top: -10px;
+}
+
+.card-prop {
+  border: none;
+  border-radius: 15px;
+  -moz-box-shadow: 0 0 40px #eaeaea;
+  -webkit-box-shadow: 0 0 40px #eaeaea;
+  box-shadow: 0 0 40px #eaeaea;
+}
+
+.font-size-overview {
+  font-size:15px;
+  line-height:30px;
+}
+
+.plus-balance-color {
+  color:#26cfcf;
+}
+
+
+
+
+
+
+
+.vodiapicker{
+  display: none; 
+}
+
+#a{
+  margin-bottom:0px;
+  padding-left: 0px;
+}
+
+#a img, .btn-select img{
+  width: 23px;
+  
+}
+
+#a li{
+  list-style: none;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+#a li:hover{
+ background-color: #F4F3F3;
+}
+
+#a li img{
+  margin: 5px;
+}
+
+#a li span, .btn-select li span{
+  margin-left: 30px;
+}
+
+.b{
+  display: none;
+  width: 100%;
+  max-width: 350px;
+  box-shadow: 0 6px 12px rgba(0,0,0,.175);
+  border: 1px solid rgba(0,0,0,.15);
+  border-radius: 5px;
+  position: absolute;
+  background-color:white;
+  
+}
+
+.open{
+  display: show !important;
+}
+
+.btn-select{
+  width: 100%;
+  max-width: 350px;
+  height: 40px;
+  border-radius: 5px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+}
+.btn-select li{
+  list-style: none;
+  float: left;
+}
+
+.btn-select:hover li{
+  margin-left: 0px;
+}
+
+.btn-select:hover{
+  background-color: #F4F3F3;
+  border: 1px solid transparent;
+  box-shadow: inset 0 0px 0px 1px #ccc;
+}
+
+.btn-select:focus{
+   outline:none;
+}
+
+.input-shadow {
+  -moz-box-shadow: 0 0 10px #eaeaea;
+  -webkit-box-shadow: 0 0 10px #eaeaea;
+  box-shadow: 0 0 10px #eaeaea;
+}

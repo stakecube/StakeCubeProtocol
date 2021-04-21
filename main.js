@@ -8,6 +8,9 @@
 // Modules to control application life and create native browser window
 const {app, BrowserWindow} = require('electron')
 const path = require('path')
+try {
+  require('electron-reloader')(module)
+} catch (_) {}
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -16,19 +19,22 @@ let mainWindow;
 function createWindow () {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 1050,
-    height: 675,
-    minWidth: 820,
-    minHeight: 675,
+    width: 1880, // 1024
+    height: 576,
+    minWidth: 960,
+    minHeight: 540,
     webPreferences: {
       nodeIntegration: true
     },
     backgroundColor: "#f4f6f8"
   })
 
-  // and load the index.html of the app.
-  mainWindow.loadFile('webwallet.html')
+  mainWindow.openDevTools();
 
+  // and load the index.html of the app.
+  //mainWindow.loadFile('public/index.html')
+  mainWindow.loadFile('public/begin.html')
+  
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()
 
