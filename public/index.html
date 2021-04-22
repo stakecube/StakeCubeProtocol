@@ -11,10 +11,46 @@
   <link href="css/style.css" rel="stylesheet">
   <link href="fontawesome/css/fontawesome.min.css" rel="stylesheet">
   <link href="fontawesome/css/all.min.css" rel="stylesheet">
+
+  <!--- IMPORTANT: CHAIN PARAMS BELOW, DO NOT EDIT UNLESS YOU'RE ABSOLUTELY CERTAIN YOU KNOW WHAT YOU'RE DOING  --->
+  <script>
+    // In most BTC-derived coins, the below parameters can be found in the 'src/chainparams.cpp' Mainnet configuration.
+    // These below params share the same names as the CPP params, so finding and editing these is easy-peasy!
+
+    /* chainparams */
+    const PUBKEY_ADDRESS = 125;
+    const SCRIPT_ADDRESS = 117;
+    const SECRET_KEY     = 253;
+  </script>
+  
+  <!-- Functional Libraries (Cryptography, Hashing, Encryption, Encoding, etc) -->
+  <script type="text/javascript" src="../scripts/libs/aes-gcm.js"></script>
+  <script type="text/javascript" src="../scripts/libs/crypto-min.js"></script>
+  <script type="text/javascript" src="../scripts/libs/crypto-sha256.js"></script>
+  <script type="text/javascript" src="../scripts/libs/crypto-sha256-hmac.js"></script>
+  <script type="text/javascript" src="../scripts/libs/ripemd160.js"></script>
+  <script type="text/javascript" src="../scripts/libs/jsbn.js"></script>
+  <script type="text/javascript" src="../scripts/libs/ellipticcurve.js"></script>
+  <script type="text/javascript" src="../scripts/libs/script.js"></script>
+  <script type="text/javascript" src="../scripts/libs/qrcode.js"></script>
+  <script type="text/javascript" src="../scripts/libs/sha256.js"></script>
+
+  <!-- Core Libraries (Script OPCodes, etc) -->
+  <script type="text/javascript" src="../scripts/libs/core-lib/script.js"></script>
+
+  <!-- Interface Framework Libraries (GUI, wallet management, networking, etc) -->
+  <script type="text/javascript" src="../scripts/settings.js"></script>
+  <script type="text/javascript" src="../scripts/wallet.js"></script>
+  <script type="text/javascript" src="../scripts/network.js"></script>
+  <script type="text/javascript" src="../scripts/bitTrx.js"></script>
+  <script type="text/javascript" src="js/switchPages.js"></script>
+
+  <!-- SCP LIBRARY GOES BELOW -->
+  <script src="../lib/index.js"></script>
+  <!-- SCP LIBRARY GOES ABOVE -->
 </head>
 
 <body>
-
   <header>
     <nav class="navbar navbar-expand-md navbar-dark fixed-top navbar-color font-weight-bold">
       <div class="container-fluid">
@@ -41,6 +77,43 @@
     </nav>
   </header>
 
+  <script>
+    // WALLET STATE DATA
+    let cachedUTXOs = [];
+    let cachedBlockCount = 0;
+
+    function getBalance(updateGUI = false) {
+      let nBalance = 0;
+      for (const nUTXO of cachedUTXOs) {
+        // Calculate the balance from our UTXO cache
+        console.log(nUTXO.satoshis / 100000000);
+        nBalance += Number((nUTXO.satoshis / 100000000).toFixed(8));
+      }
+
+      // Update the GUI too, if chosen
+      if (updateGUI) {
+        // Set the balance, and adjust font-size for large balance strings
+        document.getElementById("guiBalance").innerHTML = nBalance;
+        document.getElementById("guiBalance").style.fontSize = nBalance.toString().length > 8 ? "large" : "x-large";
+      }
+
+      return Number(nBalance.toFixed(8));
+    }
+
+    onload = () => {
+      // Now, we initiate the SCP backend!
+      init();
+      // Load the Dashboard screen
+      switchToDashboard();
+      // TODO:
+      // Here we should check if there's a temporary password stored from the setup screen
+      // ... and if so, we derive a new private key and immediately encrypt it with this
+      // ... password, then remove the password from storage, this will safely encrypt the
+      // ... private key without any unencrypted WIF copies.
+      console.log(localStorage.getItem("tmppass"));
+    }
+  </script>
+
   <main>
     <div class="container marketing pt-navbar" id="dashboardPage">
 
@@ -54,7 +127,7 @@
               <div class="card-title font-gray font-weight-bold">Balance<span
                   class="float-end theme-color refresh-button"><i class="fas fa-redo-alt"></i></span></div>
               <div class="mt-4 theme-color-secondary font-weight-bold">
-                <div class="float-end"><span class="font-balance">2,420.00</span> <span
+                <div class="float-end"><span id="guiBalance" class="font-balance">0</span> <span
                     class="font-size-ticker">SCC</span></div><br><br>
                 <div class="float-end balance-usd-props"><span
                     class="font-balance-usd font-gray font-weight-normal">12,503.00</span> <span
@@ -210,7 +283,6 @@
   </main>
 
   <script src="js/bootstrap.bundle.min.js"></script>
-  <script src="js/switchPages.js"></script>
   <script>window.$ = window.jQuery = require('jquery');</script>
   <script src="js/select.js"></script>
 
