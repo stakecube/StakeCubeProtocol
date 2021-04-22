@@ -14,16 +14,23 @@
   <link href="fontawesome/css/all.min.css" rel="stylesheet">
 
   <script>
-    function createWalletStepChange(step) {
-      if(step == 1) {
-        document.getElementById('createWalletStepCount').innerHTML = "1";
-      } else if(step == 2) {
-        document.getElementById('createWalletStepCount').innerHTML = "2";
-        document.getElementById('createWalletStepPage1').style.display = "none";
-        document.getElementById('createWalletStepPage2').style.display = "block";
-      }
-    }
+    function finishWalletCreation() {
+      let errorMsg = document.getElementById("createWalletError");
+      errorMsg.innerText = "";
+      const nFirstPass = document.getElementById("pass1").value;
+      const nSecondPass = document.getElementById("pass2").value;
 
+      // Check the password meets minimum requirements
+      if (nFirstPass.length < 8)      return errorMsg.innerText = "Password is too short, please use a minimum of 8 characters!";
+      if (nFirstPass.length > 200)    return errorMsg.innerText = "Password is too long, please use a maximum of 200 characters!";
+
+      // Check the password is correct on re-type
+      if (nFirstPass !== nSecondPass) return errorMsg.innerText = "Passwords do not match, please carefully re-type your password!";
+
+      // Success! - Temp save the pass for key derivation and auto-encryption in the next phase.
+      localStorage.setItem("tmppass", nFirstPass);
+      window.location.href = "index.html";
+    }
   </script>
 </head>
 
@@ -60,19 +67,19 @@
                   <div class="card-body font-gray">
                     <div class="card-title color-white font-weight-bold mb-3"
                       style="background:linear-gradient(90deg, #6fb0ef, #5481da 100%)!important; margin-left:-16px; margin-right:-16px; margin-top:-16px; border-top-right-radius:15px; border-top-left-radius:15px; padding:18px;">
-                      <center>Create your wallet&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span id="createWalletStepCount">1</span> <span style="color:#ffffff87">/ 2</span></center>
+                      <center>Create your wallet</center>
                     </div>
                     
-                    <div style="padding:30px; color:#5a5a5a" id="createWalletStepPage1">
+                    <div style="padding:30px; color:#5a5a5a" id="createWallet">
                       <h5 class="mb-3">Create a password for your wallet</h5>
 
-                      <label for="exampleFormControlInput1" class="form-label" style="font-size:14px;">Set a password</label>
-                      <input type="password" class="form-control mb-2">
+                      <label class="form-label" style="font-size:14px;">Set a password</label>
+                      <input id="pass1" type="password" class="form-control mb-2">
 
                       <table class="mb-4" border="0">
                         <tr style="color:#2973cf; font-size:14px;">
                           <td>
-                            <i class="fas fa-info-circle"></i>
+                            <i class="fas fa-info-circle" style="margin-right: 10px;"></i>
                           </td>
                           <td>
                             Make sure to enter at least 8 and max 200 characters, including one upper-case letter, a symbol and a number
@@ -80,31 +87,12 @@
                         </tr>
                       </table>
 
-                      <label for="exampleFormControlInput1" class="form-label" style="font-size:14px;">Re-enter password</label>
-                      <input type="password" class="form-control mb-4">
-
-                      <center><button class="btn btn-success btn-layout" onclick="createWalletStepChange(2);">Next</button></center>
-                    </div>
-
-                    <div style="padding:30px; color:#5a5a5a; display:none" id="createWalletStepPage2">
-                      <h5 class="mb-3">Save your seed to a safe location</h5>
+                      <label class="form-label" style="font-size:14px;">Re-enter password</label>
+                      <input id="pass2" type="password" class="form-control mb-4">
 
                       <center>
-                        <table class="mb-4" border="0">
-                          <tr style="color:#d64a4a; font-size:14px;">
-                            <td>
-                              <i class="fas fa-exclamation-triangle"></i>
-                            </td>
-                            <td>
-                              Make sure to write down your seed and roll it up in a glass jar and stick it up your arse
-                            </td>
-                          </tr>
-                        </table>
-
-                        <span style="color:#2973cf; font-weight:bold;">exotic welders because alarms rapid tepid potato zoom somewhere dehydrate syndrome waffle metro lopped napkin february joking nabbing jeopardy inquest welders vessel gusts hover hover</span>
-                        <br><br>
-
-                        <button class="btn btn-success btn-layout" onclick="createWalletStepChange(2);">Next</button>
+                        <p id="createWalletError" style="opacity: 0.8; color: red"></p>
+                        <button class="btn btn-success btn-layout" onclick="finishWalletCreation();">Next</button>
                       </center>
                     </div>
                   </div>
@@ -161,7 +149,6 @@
     }
   </script>
   <script src="js/bootstrap.bundle.min.js"></script>
-  <script src="js/switchPages.js"></script>
   <script>window.$ = window.jQuery = require('jquery');</script>
   <script src="js/select.js"></script>
 

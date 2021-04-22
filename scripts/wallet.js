@@ -80,7 +80,6 @@ var from_b58 = function (
   return new Uint8Array(b) //return the final byte array in Uint8Array format
 }
 var randArr = new Uint8Array(32) //create a typed array of 32 bytes (256 bits)
-document.getElementById('dcfooter').innerHTML = '© Copyright StakeCube 2018-2021. All rights reserved. <br><a href="https://github.com/JSKitty/scc-web3">SCC Web Wallet - v' + wallet_version + '</a>';
 //Wallet Import
 importWallet = function (newWif = false) {
   if (walletAlreadyMade != 0) {
@@ -171,9 +170,6 @@ importWallet = function (newWif = false) {
     // Set view key as public and refresh QR code
     viewPrivKey = true;
     toggleKeyView();
-    // Update identicon
-    document.getElementById("identicon").dataset.jdenticonValue = publicKeyForNetwork;
-    //jdenticon();
     if (!newWif) {
         // Hide the encryption warning
       document.getElementById('genKeyWarning').style.display = 'block';
@@ -314,10 +310,6 @@ generateWallet = async function (strPrefix = false) {
       modalQR.firstChild.style.height = "auto";
       modalQR.firstChild.style.imageRendering = "crisp-edges";
       document.getElementById('clipboard').value = pubKey;
-
-      // Update identicon
-      document.getElementById("identicon").dataset.jdenticonValue = publicKeyForNetwork;
-      //jdenticon();
       
       document.getElementById('guiWallet').style.display = 'block';
       viewPrivKey = false;
