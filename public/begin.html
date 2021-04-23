@@ -147,6 +147,14 @@
       // Show
       document.getElementById('importPage').style.display = "block";
     }
+
+    onload = () => {
+      // Check if we have an encrypted wallet
+      if (localStorage.getItem("encwif")) {
+        // Take the user to the login screen
+        window.location.href = "index.html";
+      }
+    }
   </script>
   <script src="js/bootstrap.bundle.min.js"></script>
   <script>window.$ = window.jQuery = require('jquery');</script>

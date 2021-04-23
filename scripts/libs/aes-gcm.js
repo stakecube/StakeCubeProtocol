@@ -6,16 +6,16 @@ const base64_to_buf = (b64) =>
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
-async function encrypt(data) {
-  const password = window.prompt("Please enter your wallet encryption password");
+async function encrypt(data, forcedPassword = false) {
+  const password = forcedPassword || window.prompt("Please enter your wallet encryption password");
   if (typeof password !== "string") return false;
   const encryptedData = await encryptData(data, password);
   console.log("Encrypted: '" + encryptedData + "'");
   return encryptedData;
 }
 
-async function decrypt(data) {
-  const password = window.prompt("Please enter your wallet unlock password");
+async function decrypt(data, forcedPassword = false) {
+  const password = forcedPassword || window.prompt("Please enter your wallet unlock password");
   if (typeof password !== "string") return false;
   const decryptedData = await decryptData(data, password);
   if (decryptedData)
@@ -90,7 +90,7 @@ async function decryptData(encryptedData, password) {
     );
     return dec.decode(decryptedContent);
   } catch (e) {
-    console.log(`Error - ${e}`);
+    console.error(e);
     return "";
   }
 }

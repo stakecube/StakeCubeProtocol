@@ -51,7 +51,67 @@
 </head>
 
 <body>
-  <header>
+  <div id="loginPage" style="width: 100%; height: 100%; background: linear-gradient(90deg, #0d84f4, #0a43b5 100%); display: none;">
+    <div class="container marketing">
+      <div class="verticalalign" style="padding-top: 5%;">
+        <div class="vertical-center color-white">
+          <center>
+            <img src="logo.svg" style="height:50px;"><br><br>
+          </center>
+            <div class="row">
+              <div class="col-2"></div>
+              <div class="col-8">
+                <div class="card card-prop2 mb-4">
+                  <div class="card-body font-gray">
+                    <div style="padding:30px; color:#5a5a5a" id="createWallet">
+                      <center><h5 class="mb-3">Unlock your wallet</h5></center>
+
+                      <label class="form-label" style="font-size:14px;">Password</label>
+                      <input id="pass1" type="password" class="form-control mb-2">
+
+                      <table class="mb-4" border="0">
+                        <tr style="color:#2973cf; font-size:14px;">
+                          <td>
+                            <i class="fas fa-info-circle" style="margin-right: 10px;"></i>
+                          </td>
+                          <td>
+                            Please remember to write down your password, if you lose it, StakeCube cannot recover your funds!
+                          </td>
+                        </tr>
+                      </table>
+
+                      <center>
+                        <p id="unlockError" style="opacity: 0.8; color: red"></p>
+                        <button class="btn btn-success btn-layout" onclick="finishLogin();">Unlock</button>
+                      </center>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-2"></div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Script>
+    function finishLogin() {
+      let nPass = document.getElementById("pass1").value;
+      let nLoginError = document.getElementById("unlockError");
+      decryptWallet(nPass).then(done => {
+        if (done) {
+          nLoginError.innerText = "";
+          switchToDashboard();
+          console.log("Login successful!");
+        } else {
+          nLoginError.innerText = "Incorrect Password!";
+        }
+      });
+    }
+  </Script>
+
+  <header id="guiHeader">
     <nav class="navbar navbar-expand-md navbar-dark fixed-top navbar-color font-weight-bold">
       <div class="container-fluid">
         <a class="navbar-brand" href="#"><img src="logo.svg" height="30"></a>
@@ -82,6 +142,20 @@
     let cachedUTXOs = [];
     let cachedBlockCount = 0;
 
+    // Privkey storage
+    let privkeyDecrypted = null;
+    let privkeyEncrypted = null;
+
+    // Cached DOM elements
+    let domHeader;
+    let domLoginPage;
+    let domDashboardPage;
+    let domSendPage;
+    let domReceivePage;
+
+    let domReceiveAddress;
+    let domBalance;
+
     function getBalance(updateGUI = false) {
       let nBalance = 0;
       for (const nUTXO of cachedUTXOs) {
@@ -93,24 +167,55 @@
       // Update the GUI too, if chosen
       if (updateGUI) {
         // Set the balance, and adjust font-size for large balance strings
-        document.getElementById("guiBalance").innerHTML = nBalance;
-        document.getElementById("guiBalance").style.fontSize = nBalance.toString().length > 8 ? "large" : "x-large";
+        domBalance.innerHTML = nBalance;
+        domBalance.style.fontSize = nBalance.toString().length > 8 ? "large" : "x-large";
+        // And update the Receive page pubkey
+        domReceiveAddress.innerText = publicKeyForNetwork;
       }
 
       return Number(nBalance.toFixed(8));
     }
 
     onload = () => {
+      // Cache all our UI elements
+      domHeader = document.getElementById("guiHeader");
+      domLoginPage = document.getElementById("loginPage");
+      domDashboardPage = document.getElementById('dashboardPage');
+      domSendPage = document.getElementById('sendPage');
+      domReceivePage = document.getElementById('receivePage');
+      domReceiveAddress = document.getElementById("receiveAddress");
+      domBalance = document.getElementById("guiBalance");
       // Now, we initiate the SCP backend!
       init();
-      // Load the Dashboard screen
-      switchToDashboard();
-      // TODO:
-      // Here we should check if there's a temporary password stored from the setup screen
-      // ... and if so, we derive a new private key and immediately encrypt it with this
-      // ... password, then remove the password from storage, this will safely encrypt the
-      // ... private key without any unencrypted WIF copies.
-      console.log(localStorage.getItem("tmppass"));
+      // Check for an encrypted wallet, if one exists, pull up the login screen!
+      let encwif = localStorage.getItem("encwif");
+      if (encwif && encwif.length > 1) {
+        console.log("Encrypted key found: " + encwif);
+        privkeyEncrypted = encwif;
+        switchToLogin();
+      } else {
+        // No privkey available, derive a new one and encrypt using the temppass
+        let tmppass = localStorage.getItem("tmppass");
+        if (!tmppass) throw "Unable to find encwif, and no tmppass available, bailing out!";
+        console.log("Unable to find encrypted keys, but tmppass is available, deriving new key...");
+        generateWallet().then(objWallet => {
+          // Save decrypted copy in memory
+          privkeyDecrypted = objWallet.privkey;
+          // Encrypt wallet and save it to disk
+          encryptWallet(tmppass).then(newEncwif => {
+            console.log("Encrypted wallet!");
+            console.log(newEncwif);
+            console.log(tmppass);
+            privkeyEncrypted = newEncwif;
+            localStorage.setItem("encwif", privkeyEncrypted);
+            // Erase the tmppass from disk and memory
+            tmppass = null;
+            localStorage.removeItem("tmppass");
+            // Load the Dashboard screen
+            switchToDashboard();
+          });
+        });
+      }
     }
   </script>
 
@@ -187,7 +292,7 @@
               <div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px;">
                 <img src="circular-logo.png" style="width:32px; height:32px;">
                 <span style="margin-left:10px;">StakeCubeCoin (SCC)</span>
-                <span class="float-end">2,420.00 SCC</span>
+                <span class="float-end">0 SCC</span>
               </div>
 
               <div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px;">
@@ -195,7 +300,7 @@
                   src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/BTC_Logo.svg/2000px-BTC_Logo.svg.png"
                   style="width:32px; height:32px;">
                 <span style="margin-left:10px;">Bitcoin (BTC)</span>
-                <span class="float-end">402.28573029 BTC</span>
+                <span class="float-end">0 BTC</span>
               </div>
             </div>
           </div>
@@ -266,10 +371,10 @@
             <div class="card-body">
               <div class="card-title font-gray font-weight-bold">Deposit address</div><br>
 
-              <center><span class="font-weight-bold">sPne9e26XWxgwh9NmxvAKPrWozaPA6F3kw</span><span
+              <center><span id="receiveAddress" class="font-weight-bold"></span><span
                   style="padding-left:6px;"><i class="far fa-copy refresh-button"></i></span><br><br></center>
               <div class="alert alert-danger" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> Please
-                make sure to only send StakeCubeProtocol tokens to this address. Other coins will be lost and cannot be
+                make sure to only send SCC or StakeCubeProtocol tokens to this address. Other coins will be lost and cannot be
                 reversed.</div>
               <center><img src="qr.png"></center>
             </div>

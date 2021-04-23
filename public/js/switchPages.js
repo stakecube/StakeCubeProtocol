@@ -1,26 +1,44 @@
-function switchToSend() {
+function switchToLogin() {
   // Hide
-  document.getElementById('dashboardPage').style.display = "none";
-  document.getElementById('receivePage').style.display = "none";
+  domHeader.style.display = "none";
+  domDashboardPage.style.display = "none";
+  domReceivePage.style.display = "none";
+  domSendPage.style.display = "none";
 
   // Show
-  document.getElementById('sendPage').style.display = "block";
+  domLoginPage.style.display = "block";
+}
+
+function switchToSend() {
+  // Hide
+  domDashboardPage.style.display = "none";
+  domReceivePage.style.display = "none";
+  domLoginPage.style.display = "none";
+
+  // Show
+  domSendPage.style.display = "block";
+  domHeader.style.display = "block";
 }
 
 function switchToDashboard() {
   // Hide
-  document.getElementById('sendPage').style.display = "none";
-  document.getElementById('receivePage').style.display = "none";
+  domSendPage.style.display = "none";
+  domReceivePage.style.display = "none";
+  domLoginPage.style.display = "none";
 
   // Show
-  document.getElementById('dashboardPage').style.display = "block";
+  domDashboardPage.style.display = "block";
+  domHeader.style.display = "block";
 }
 
 function switchToReceive() {
   // Hide
-  document.getElementById('sendPage').style.display = "none";
-  document.getElementById('dashboardPage').style.display = "none";
+  domSendPage.style.display = "none";
+  domDashboardPage.style.display = "none";
+  domLoginPage.style.display = "none";
+  getBalance(true);
 
   // Show
-  document.getElementById('receivePage').style.display = "block";
+  domReceivePage.style.display = "block";
+  domHeader.style.display = "block";
 }

@@ -91,7 +91,7 @@ importWallet = function (newWif = false) {
     walletAlreadyMade++;
     //Wallet Import Format to Private Key
     var privateKeyWIF = newWif || document.getElementById("privateKey").value;
-    privateKeyForTransactions = privateKeyWIF;
+    privkeyDecrypted = privateKeyWIF;
     if (!newWif) {
       document.getElementById("privateKey").value = "";
       toggleWallet();
@@ -141,38 +141,9 @@ importWallet = function (newWif = false) {
     var pubKey = to_b58(hexStringToByte(pubKeyPreBase), MAP)
     publicKeyForNetwork = pubKey;
     console.log(pubKey);
-    //Display Text
-    document.getElementById('guiAddress').innerHTML = pubKey;
-    document.getElementById('guiWallet').style.display = 'block';
-    document.getElementById('PrivateTxt').innerHTML = privateKeyWIF;
-    document.getElementById('guiAddress').innerHTML = pubKey;
-    //QR Codes
-    var typeNumber = 4;
-    var errorCorrectionLevel = 'L';
-    var qr = qrcode(typeNumber, errorCorrectionLevel);
-    qr.addData(privateKeyWIF);
-    qr.make();
-    document.getElementById('PrivateQR').innerHTML = qr.createImgTag();
-    var typeNumber = 4;
-    var errorCorrectionLevel = 'L';
-    var qr = qrcode(typeNumber, errorCorrectionLevel);
-    qr.addData(pubKey);
-    qr.make();
-    document.getElementById('PublicQR').innerHTML = qr.createImgTag();
-    document.getElementById('ModalQRLabel').innerHTML = 'scc:' + pubKey;
-    let modalQR = document.getElementById('ModalQR');
-    modalQR.innerHTML  = qr.createImgTag();
-    modalQR.firstChild.style.width = "100%";
-    modalQR.firstChild.style.height = "auto";
-    modalQR.firstChild.style.imageRendering = "crisp-edges";
-    document.getElementById('clipboard').value = pubKey;
-
-    // Set view key as public and refresh QR code
-    viewPrivKey = true;
-    toggleKeyView();
     if (!newWif) {
         // Hide the encryption warning
-      document.getElementById('genKeyWarning').style.display = 'block';
+      //document.getElementById('genKeyWarning').style.display = 'block';
     }
     // Load UTXOs from explorer
     if (networkEnabled)
@@ -207,7 +178,7 @@ generateWallet = async function (strPrefix = false) {
     var checksum = String(hash).substr(0, 8).toUpperCase()
     var keyWithChecksum = privateKeyAndVersion + checksum
     var privateKeyWIF = to_b58(hexStringToByte(keyWithChecksum), MAP)
-    privateKeyForTransactions = privateKeyWIF;
+    privkeyDecrypted = privateKeyWIF;
     //Public Key Generation
     var privateKeyBigInt = BigInteger.fromByteArrayUnsigned(Crypto.util.hexToBytes(byteToHexString(privateKeyBytes).toUpperCase()));
     var curve = EllipticCurve.getSECCurveByName("secp256k1");
@@ -281,67 +252,44 @@ generateWallet = async function (strPrefix = false) {
       vanity_match: false
     }
     if (strPrefix === false || (strPrefix !== false && pubKey.toLowerCase().startsWith(strPrefix))) {
-      //Display Text
-      document.getElementById('genKeyWarning').style.display = 'block';
-      document.getElementById('PrivateTxt').innerHTML = privateKeyWIF;
-      document.getElementById('guiAddress').innerHTML = pubKey;
-      // New address... so there definitely won't be a balance
-      document.getElementById('guiBalance').innerHTML = "0";
-      document.getElementById('guiBalanceBox').style.fontSize = "x-large";
       //QR Codes
+      /*
       var typeNumber = 4;
       var errorCorrectionLevel = 'L';
       var qr = qrcode(typeNumber, errorCorrectionLevel);
       qr.addData('scc:' + privateKeyWIF);
       qr.make();
       document.getElementById('PrivateQR').innerHTML = qr.createImgTag();
-      document.getElementById('PrivateQR').style.display = 'none';
-      var typeNumber = 4;
-      var errorCorrectionLevel = 'L';
-      var qr = qrcode(typeNumber, errorCorrectionLevel);
-      qr.addData('scc:' + pubKey);
-      qr.make();
-      document.getElementById('PublicQR').innerHTML = qr.createImgTag();
-      document.getElementById('PublicQR').style.display = 'block';
-      document.getElementById('ModalQRLabel').innerHTML = 'scc:' + pubKey;
-      let modalQR = document.getElementById('ModalQR');
-      modalQR.innerHTML  = qr.createImgTag();
-      modalQR.firstChild.style.width = "100%";
-      modalQR.firstChild.style.height = "auto";
-      modalQR.firstChild.style.imageRendering = "crisp-edges";
-      document.getElementById('clipboard').value = pubKey;
-      
-      document.getElementById('guiWallet').style.display = 'block';
-      viewPrivKey = false;
+      */
+
       // VANITY ONLY: If we reached here during a vanity search, we found our match!
       nRet.pubkey       = pubKey;
       nRet.privkey      = privateKeyWIF;
-      nRet.vanity_match = true;
+      if (strPrefix)
+        nRet.vanity_match = true;
     }
     return nRet;
   }
 }
 
-encryptWallet = async function () {
+encryptWallet = async function (forcedPass = false) {
   // Encrypt the wallet WIF with AES-GCM and a user-chosen password - suitable for browser storage
-  let encWIF = await encrypt(privateKeyForTransactions);
+  let encWIF = await encrypt(privkeyDecrypted, forcedPass);
   if (typeof encWIF !== "string") return false;
   // Set the encrypted wallet in localStorage
   localStorage.setItem("encwif", encWIF);
-  // Hide the encryption warning
-  document.getElementById('genKeyWarning').style.display = 'none';
+  return encWIF;
 }
 
-decryptWallet = async function () {
+decryptWallet = async function (forcedPass = false) {
   // Check if there's any encrypted WIF available, if so, prompt to decrypt it
   let encWif = localStorage.getItem("encwif");
   if (!encWif || encWif.length < 1) {
     console.log("No local encrypted wallet found!");
     return false;
   }
-  let decWif = await decrypt(encWif);
+  let decWif = await decrypt(encWif, forcedPass);
   if (decWif === "decryption failed!") {
-    alert("Incorrect password!");
     return false;
   }
   importWallet(decWif);
