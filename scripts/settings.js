@@ -4,7 +4,6 @@ var explorer = 'explorer.dogec.io';
 var networkEnabled = true;
 //Users need not look below here.
 //------------------------------
-var publicKeyForNetwork;
 var trx;
 var amountOfTransactions;
 var balance;

@@ -1,56 +1,16 @@
 if (networkEnabled) {
   var url = 'https://' + explorer
-  var githubRepo = 'https://api.github.com/repos/dogecash/dogecash-web-wallet/releases';
-  var checkPubKey = function () {
-    // Create a request variable and assign a new XMLHttpRequest object to it.
-    var request = new XMLHttpRequest()
-    // Open a new connection, using the GET request on the URL endpoint
-    request.open('GET', url + '/api/v1/address/' + publicKeyForNetwork, true)
-    request.onload = function () {
-      var data = JSON.parse(this.response)
-      document.getElementById("balance").innerHTML = data['balance'];
-      document.getElementById("totalReceived").innerHTML = data['totalReceived'];
-      document.getElementById("totalSent").innerHTML = data['totalSent'];
-      var typeNumber = 4;
-      var errorCorrectionLevel = 'L';
-      var qr = qrcode(typeNumber, errorCorrectionLevel);
-      qr.addData('scc:' + data['addrStr']);
-      qr.make();
-      document.getElementById("addrStrQR").innerHTML = qr.createImgTag();
-      document.getElementById("addrStr").innerHTML = data['addrStr'];
-      //Transactions
-      document.getElementById("TransactionNumber").innerHTML = data['txApperances'];
-      if (data['txApperances'] > 0) {
-        var dataTransactions = JSON.stringify(data['transactions']).replace("[", "").replace("]", "").replace(/"/g, "");
-        const splits = dataTransactions.split(',')
-        var transactionLinks;
-        for (i = 0; i < splits.length; i++) {
-          if (i == 0) {
-            transactionLinks = '<a href="' + url + '/api/v1/tx/' + splits[i] + '">' + splits[i] + '</a><br>';
-          } else {
-            transactionLinks += '<a href="' + url + '/api/v1/tx/' + splits[i] + '">' + splits[i] + '</a><br>';
-          }
-        }
-        document.getElementById("Transactions").innerHTML = transactionLinks;
-      }
-      document.getElementById("NetworkingJson").innerHTML = this.response;
-      console.log(data)
-      console.log()
-    }
-    // Send request
-    request.send()
-  }
+  var githubRepo = 'https://api.github.com/repos/stakecube/StakeCubeProtocol/releases';
+
   var getBlockCount = function() {
     var request = new XMLHttpRequest();
     request.open('GET', "https://stakecubecoin.net/web3/blocks", true);
     request.onload = function () {
       let data = Number(this.response);
       // If the block count has changed, refresh all of our data!
-      let reloader = document.getElementById("balanceReload");
-      reloader.className = reloader.className.replace(/ playAnim/g, "");
       if (data > cachedBlockCount) {
         console.log("New block detected! " + cachedBlockCount + " --> " + data);
-        if (publicKeyForNetwork)
+        if (pubkeyMain)
           getUnspentTransactions();
       }
       cachedBlockCount = data;
@@ -59,12 +19,11 @@ if (networkEnabled) {
   }
   var getUnspentTransactions = function () {
     var request = new XMLHttpRequest()
-    request.open('GET', "https://stakecubecoin.net/web3/getutxos?addr=" + publicKeyForNetwork, true)
+    request.open('GET', "https://stakecubecoin.net/web3/getutxos?addr=" + pubkeyMain, true)
     request.onload = function () {
       data = JSON.parse(this.response)
       if (data.length === 0) {
         console.log('No unspent Transactions');
-        document.getElementById("errorNotice").innerHTML = '<div class="alert alert-danger" role="alert"><h4>Note:</h4><h5>You don\'t have any funds, get some coins first!</h5></div>';
         cachedUTXOs = [];
         // Update SCP-1 token balances anyway!
         balance = getBalance(true);
@@ -72,18 +31,17 @@ if (networkEnabled) {
         cachedUTXOs = [];
         amountOfTransactions = data.length;
         if (amountOfTransactions > 0)
-          document.getElementById("errorNotice").innerHTML = '';
+          //document.getElementById("errorNotice").innerHTML = '';
         if (amountOfTransactions <= 1000) {
           for (i = 0; i < amountOfTransactions; i++) {
             cachedUTXOs.push(data[i]);
           }
           // Update the GUI with the newly cached UTXO set
           balance = getBalance(true);
-          document.getElementById("guiBalance").innerHTML = balance;
         } else {
           //Temporary message for when there are alot of inputs
           //Probably use change all of this to using websockets will work better
-          document.getElementById("errorNotice").innerHTML = '<div class="alert alert-danger" role="alert"><h4>Note:</h4><h5>This address has over 1000 UTXOs, which may be problematic for the wallet to handle, transact with caution!</h5></div>';
+          //document.getElementById("errorNotice").innerHTML = '<div class="alert alert-danger" role="alert"><h4>Note:</h4><h5>This address has over 1000 UTXOs, which may be problematic for the wallet to handle, transact with caution!</h5></div>';
         }
       }
       console.log('Total Balance:' + balance);

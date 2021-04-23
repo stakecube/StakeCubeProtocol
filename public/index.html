@@ -145,6 +145,7 @@
     // Privkey storage
     let privkeyDecrypted = null;
     let privkeyEncrypted = null;
+    let pubkeyMain = null;
 
     // Cached DOM elements
     let domHeader;
@@ -170,11 +171,16 @@
         domBalance.innerHTML = nBalance;
         domBalance.style.fontSize = nBalance.toString().length > 8 ? "large" : "x-large";
         // And update the Receive page pubkey
-        domReceiveAddress.innerText = publicKeyForNetwork;
+        domReceiveAddress.innerText = pubkeyMain;
       }
 
       return Number(nBalance.toFixed(8));
     }
+
+    setInterval(() => {
+      // Check block count + UTXO sync every 10 seconds
+      getBlockCount();
+    }, 10000);
 
     onload = () => {
       // Cache all our UI elements

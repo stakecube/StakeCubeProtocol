@@ -139,7 +139,7 @@ importWallet = function (newWif = false) {
     var checksumPubKey = String(pubKeyHashingSF).substr(0, 8).toUpperCase()
     var pubKeyPreBase = pubKeyHashNetwork + checksumPubKey
     var pubKey = to_b58(hexStringToByte(pubKeyPreBase), MAP)
-    publicKeyForNetwork = pubKey;
+    pubkeyMain = pubKey;
     console.log(pubKey);
     if (!newWif) {
         // Hide the encryption warning
@@ -211,7 +211,7 @@ generateWallet = async function (strPrefix = false) {
     var checksumPubKey = String(pubKeyHashingSF).substr(0, 8).toUpperCase()
     var pubKeyPreBase = pubKeyHashNetwork + checksumPubKey
     var pubKey = to_b58(hexStringToByte(pubKeyPreBase), MAP)
-    publicKeyForNetwork = pubKey;
+    pubkeyMain = pubKey;
     //Debug Console
     if (debug && strPrefix === false) {
       console.log("Private Key")
