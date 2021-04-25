@@ -17,6 +17,39 @@ if (networkEnabled) {
     }
     request.send();
   }
+
+  var getCoinValue = function() {
+    var request = new XMLHttpRequest();
+    request.open('GET', "https://stakecube.io/api/v2/exchange/spot/arbitrageInfo?ticker=SCC", true);
+    request.onload = function () {
+      let data = JSON.parse(this.response);
+      if (data.success && data.result && data.result[0]) {
+        // Pull the price from StakeCube.net
+        for (const nMarket of data.result) {
+          // BTC only
+          if (nMarket.base !== "SCC" || nMarket.target !== "BTC") continue;
+          // StakeCube Exchange only
+          if (nMarket.market.identifier !== "stake_cube") continue;
+          valueUSD = nMarket.converted_last.usd;
+        }
+      }
+    }
+    request.send();
+  }
+
+  var getCoinSupply = function() {
+    var request = new XMLHttpRequest();
+    request.open('GET', "https://stakecubecoin.net/api/supply/total", true);
+    request.onload = function () {
+      let data = Number(this.response);
+      if (isFinite(data)) {
+        currentSupply = data;
+      }
+    }
+    request.send();
+  }
+
+
   var getUnspentTransactions = function () {
     var request = new XMLHttpRequest()
     request.open('GET', "https://stakecubecoin.net/web3/getutxos?addr=" + pubkeyMain, true)
