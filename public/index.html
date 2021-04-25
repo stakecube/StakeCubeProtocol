@@ -182,7 +182,6 @@
       let nBalance = 0;
       for (const nUTXO of cachedUTXOs) {
         // Calculate the balance from our UTXO cache
-        console.log(nUTXO.satoshis / 100000000);
         nBalance += Number((nUTXO.satoshis / 100000000).toFixed(8));
       }
 
@@ -198,6 +197,11 @@
       }
 
       return Number(nBalance.toFixed(8));
+    }
+
+    function sendTransactionGUI() {
+      let coinSelection = document.getElementById("sendingCoin");
+      console.log(coinSelection);
     }
 
     function import2FA() {
@@ -225,7 +229,8 @@
         let authCode = authenticator.generate(strSecret);
         if (lastAuthCode !== authCode)
           domAuthCode.innerText = authCode;
-        domAuthTime.innerText = authenticator.timeRemaining() + " seconds remaining until next code";
+        let authTimeRemaining = authenticator.timeRemaining()
+        domAuthTime.innerText = authTimeRemaining + " second" + (authTimeRemaining === 1 ? "" : "s") + " remaining until next code";
         lastAuthCode = authCode;
       }
     }
@@ -407,8 +412,8 @@
 
               <div class="row">
                 <div class="col-6">
-                  <label for="exampleFormControlInput1" class="form-label" style="margin-bottom:0px">Coin/Token:</label>
-                  <select class="vodiapicker">
+                  <label class="form-label" style="margin-bottom:0px">Coin/Token:</label>
+                  <select id="sendingCoin" class="vodiapicker">
                     <option value="scc" class="test" data-thumbnail="circular-logo.png">StakeCubeCoin (SCC)</option>
                     <option value="btc" data-thumbnail="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/BTC_Logo.svg/2000px-BTC_Logo.svg.png">Bitcoin (BTC)</option>
                   </select>
@@ -423,13 +428,17 @@
 
               <div class="row">
                 <div class="col-6">
-                  <label for="exampleFormControlInput1" class="form-label" style="margin-bottom:0px">Amount:</label>
+                  <label class="form-label" style="margin-bottom:0px">Amount:</label>
                   <input type="text" class="form-control input-shadow"><br>
                 </div>
                 
                 <div class="col-6">
-                  <label for="exampleFormControlInput1" class="form-label" style="margin-bottom:0px">SCC Address:</label>
+                  <label class="form-label" style="margin-bottom:0px">SCC Address:</label>
                   <input type="text" class="form-control input-shadow"><br>
+                </div>
+
+                <div class="col">
+                  <center><button class="btn btn-success btn-layout" onclick="sendTransactionGUI()">Send Transaction</button><br></center>
                 </div>
               </div>
             </div>
