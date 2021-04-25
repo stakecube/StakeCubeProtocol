@@ -131,6 +131,9 @@
             <li class="nav-item">
               <a class="nav-link" href="#" onclick="switchToReceive()"><i class="fas fa-money-check"></i></a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" onclick="switchToAuth()"><i class="fas fa-fingerprint"></i></a>
+            </li>
           </ul>
         </div>
       </div>
@@ -138,6 +141,9 @@
   </header>
 
   <script>
+    // GUI module imports
+    let authenticator = require("otplib").authenticator;
+
     // WALLET STATE DATA
     let cachedUTXOs = [];
     let cachedBlockCount = 0;
@@ -153,9 +159,15 @@
     let domDashboardPage;
     let domSendPage;
     let domReceivePage;
+    let domAuthPage;
 
     let domReceiveAddress;
     let domBalance;
+    let domAuthDisplay;
+    let domAuthImport;
+    let domAuthTitle;
+    let domAuthCode;
+    let domAuthTime;
 
     function getBalance(updateGUI = false) {
       let nBalance = 0;
@@ -177,10 +189,43 @@
       return Number(nBalance.toFixed(8));
     }
 
+    function import2FA() {
+      let strNewSecret = document.getElementById("authSecretImport").value;
+      let testToken = authenticator.generate(strNewSecret);
+      if (testToken && testToken.toString().length === 6) {
+        localStorage.setItem("authsecret", strNewSecret);
+      }
+    }
+
+    let lastAuthCode = null;
+    function refreshAuthenticator() {
+      let strSecret = localStorage.getItem("authsecret");
+      if (!strSecret) {
+        // No authentication linked
+        domAuthImport.style.display = "";
+        domAuthDisplay.style.display = "none";
+        domAuthTitle.innerText = "Setup your 2FA";
+      } else {
+        // Auth code already imported
+        domAuthImport.style.display = "none";
+        domAuthDisplay.style.display = "";
+        domAuthTitle.innerText = "Login using 2FA";
+        // Fetch the current code
+        let authCode = authenticator.generate(strSecret);
+        if (lastAuthCode !== authCode)
+          domAuthCode.innerText = authCode;
+        domAuthTime.innerText = authenticator.timeRemaining() + " seconds remaining until next code";
+        lastAuthCode = authCode;
+      }
+    }
+
     setInterval(() => {
       // Check block count + UTXO sync every 10 seconds
       getBlockCount();
     }, 10000);
+
+    // Refresh 2FA system
+    setInterval(refreshAuthenticator, 1000);
 
     onload = () => {
       // Cache all our UI elements
@@ -189,7 +234,13 @@
       domDashboardPage = document.getElementById('dashboardPage');
       domSendPage = document.getElementById('sendPage');
       domReceivePage = document.getElementById('receivePage');
+      domAuthPage = document.getElementById('authPage');
+      domAuthDisplay = document.getElementById('authDisplay');
+      domAuthImport = document.getElementById('authImport');
+      domAuthTitle = document.getElementById('authTitle');
       domReceiveAddress = document.getElementById("receiveAddress");
+      domAuthCode = document.getElementById("authCode");
+      domAuthTime = document.getElementById("authTime");
       domBalance = document.getElementById("guiBalance");
       // Now, we initiate the SCP backend!
       init();
@@ -383,6 +434,39 @@
                 make sure to only send SCC or StakeCubeProtocol tokens to this address. Other coins will be lost and cannot be
                 reversed.</div>
               <center><img src="qr.png"></center>
+            </div>
+          </div>
+
+        </div>
+        <div class="col-2"></div>
+      </div>
+
+    </div>
+
+    <div class="container marketing pt-navbar" id="authPage">
+      <h4 class="mb-5 theme-color-secondary font-weight-bold">StakeCube 2FA</h4>
+
+      <div class="row">
+        <div class="col-2"></div>
+        <div class="col-8">
+
+          <div class="card card-prop mb-4">
+            <div class="card-body">
+              <div id="authTitle" class="card-title font-gray font-weight-bold">Setup your 2FA</div><br>
+                <div id="authImport">
+                  <label class="form-label" style="margin-bottom:0px;">Your 2FA Secret import code</label>
+                  <input id="authSecretImport" type="text" placeholder="Your secret code..." class="form-control input-shadow">
+                  <center><button onclick="import2FA()" style="margin-top: 10px;" class="btn btn-success btn-layout">Import</button></center>
+                  <br>
+                </div>
+                <center id="authDisplay">
+                  <h3 id="authCode" class="font-weight-bold"></h3>
+                  <p id="authTime" style="opacity: 0.8;">10 seconds left til next code</p>
+                  <br>
+                </center>
+              <div class="alert alert-danger" style="font-size:13px;">
+                <i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>Do <b>not</b> share these codes with <b>anyone!</b>
+              </div>
             </div>
           </div>
 
