@@ -1,0 +1,25 @@
+.reload {
+    display: inline-block;
+    font-family: Lucida Sans Unicode;
+    cursor: pointer;
+    animation-name: spinner;
+    animation-duration: 0.75s;
+    animation-play-state: paused;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+    position: relative;
+    top: 16px;
+  }
+  
+  .playAnim {
+    animation-play-state: running;
+  }
+  
+  @keyframes spinner {
+    0% {
+      transform: translate3d(-50%, -50%, 0) rotate(0deg);
+    }
+    100% {
+      transform: translate3d(-50%, -50%, 0) rotate(360deg);
+    }
+  }

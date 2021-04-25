@@ -9,6 +9,7 @@
 
   <link href="css/bootstrap.min.css" rel="stylesheet">
   <link href="css/style.css" rel="stylesheet">
+  <link href="style/latest-style.css" rel="stylesheet">
   <link href="fontawesome/css/fontawesome.min.css" rel="stylesheet">
   <link href="fontawesome/css/all.min.css" rel="stylesheet">
 
@@ -21,6 +22,9 @@
     const PUBKEY_ADDRESS = 125;
     const SCRIPT_ADDRESS = 117;
     const SECRET_KEY     = 253;
+
+    // The amount of satoshis that make a full coin
+    const COIN = 100000000;
   </script>
   
   <!-- Functional Libraries (Cryptography, Hashing, Encryption, Encoding, etc) -->
@@ -182,26 +186,75 @@
       let nBalance = 0;
       for (const nUTXO of cachedUTXOs) {
         // Calculate the balance from our UTXO cache
-        nBalance += Number((nUTXO.satoshis / 100000000).toFixed(8));
+        nBalance += Number((nUTXO.satoshis / COIN).toFixed(8));
       }
 
       // Update the GUI too, if chosen
       if (updateGUI) {
+        // --- Update SCC Balances
         // Set the balance, and adjust font-size for large balance strings
-        domBalance.innerHTML = nBalance;
+        domBalance.innerHTML = nBalance.toLocaleString('en-GB', { maximumFractionDigits: 8 });
         domBalance.style.fontSize = nBalance.toString().length > 8 ? "large" : "x-large";
         if (valueUSD > 0)
           domBalanceUSD.innerText = (nBalance * valueUSD).toFixed(2);
         // And update the Receive page pubkey
         domReceiveAddress.innerText = pubkeyMain;
+
+        // --- Update SCP-1 token balances
+        // Fetch all tokens owned by our account (pubkeyMain)
+        let knownTokens = TOKENS.getTokensByAccount(pubkeyMain);
+        // Loop all tokens, construct an updated GUI for the Dashboard
+        let dashboardTokens = document.getElementById("dashboardTokens");
+        dashboardTokens.innerHTML = '<div class="card-title font-gray font-weight-bold" style="margin-bottom:30px;">SCP-1 Tokens</div>';
+        if (knownTokens.length > 0) {
+          for (const cToken of knownTokens) {
+            dashboardTokens.innerHTML += '<div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px;"><img src="circular-logo.png" style="width:32px; height:32px;"><span style="margin-left:10px;">' + cToken.token.name + ' (' + cToken.token.ticker + ')</span><span class="float-end">' + (cToken.account.balance / COIN).toLocaleString('en-GB', { maximumFractionDigits: 8 }) + '</span></div>';
+          }
+        } else {
+          dashboardTokens.innerHTML += '<center><p>You have no tokens!</p></center>';
+        }
       }
 
       return Number(nBalance.toFixed(8));
     }
 
     function sendTransactionGUI() {
-      let coinSelection = document.getElementById("sendingCoin");
-      console.log(coinSelection);
+      let coinSelection = document.getElementById("sendingCoinVal").value;
+      let sendAmount = document.getElementById("sendAmount").value;
+      let sendAddress = document.getElementById("sendAddress").value;
+      if (coinSelection === "scc") {
+        let nBalance = getBalance();
+        if (sendAmount > nBalance) return alert("Balance is too small! (" + nBalance + " - " + sendAmount + " = " + (nBalance - sendAmount).toFixed(8) + ")");
+        console.log("Constructing TX of value: " + sendAmount + " ZNZ");
+        // Loop our cached UTXOs and construct a TX
+        trx = bitjs.transaction();
+        let txValue = 0;
+        for (const UTXO of cachedUTXOs) {
+          if (txValue > sendAmount) {
+            // Required Coin Control value met, yahoo!
+            console.log("Coin Control: TX Constructed! Selected " + trx.inputs.length + " input(s) (" + txValue + " ZNZ)");
+            break;
+          }
+          trx.addinput(UTXO.txid, UTXO.outputIndex, UTXO.script);
+          txValue += Number((UTXO.satoshis / COIN).toFixed(8));
+          txValue = Number(txValue.toFixed(8));
+          console.log("Coin Control: Selected input " + UTXO.txid.substr(0, 6) + "(" + UTXO.outputIndex + ")... (Added " + (UTXO.satoshis / COIN).toFixed(8) + " SCC - Total: " + txValue + ")");
+        }
+
+        calculatefee(trx.serialize().length);
+        trx.addoutput(sendAddress, sendAmount); // Sending to this address
+        totalSent = (parseFloat(fee) + parseFloat(sendAmount)).toFixed(8);
+        valuechange = (parseFloat(txValue) - parseFloat(totalSent)).toFixed(8);
+        if (totalSent <= balance) {
+          trx.addoutput(pubkeyMain, valuechange); // Change Output
+          sendTransaction(trx.sign(privkeyDecrypted, 1));
+        } else {
+          console.warn("Amount: " + sendAmount + "\nFee: " + fee + "\nChange: " + valuechange + "\nTotal: " + totalSent);
+          alert("You are trying to send more than you have!");
+        }
+      } else {
+        alert("Token transfers are not yet supported!");
+      }
     }
 
     function import2FA() {
@@ -316,7 +369,7 @@
           <div class="card card-prop mb-4">
             <div class="card-body">
               <div class="card-title font-gray font-weight-bold">Balance<span
-                  class="float-end theme-color refresh-button"><i class="fas fa-redo-alt"></i></span></div>
+                  id="balanceRefresh" onclick="getBlockCount(); getBalance(true);" class="float-end theme-color refresh-button reload"><i class="fas fa-redo-alt"></i></span></div>
               <div class="mt-4 theme-color-secondary font-weight-bold">
                 <div class="float-end"><span id="guiBalance" class="font-balance">0</span> <span
                     class="font-size-ticker">SCC</span></div><br><br>
@@ -372,22 +425,9 @@
           </div>
 
           <div class="card card-prop mb-4">
-            <div class="card-body">
-              <div class="card-title font-gray font-weight-bold" style="margin-bottom:30px;">Tokens</div>
-
-              <div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px;">
-                <img src="circular-logo.png" style="width:32px; height:32px;">
-                <span style="margin-left:10px;">StakeCubeCoin (SCC)</span>
-                <span class="float-end">0 SCC</span>
-              </div>
-
-              <div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px;">
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/BTC_Logo.svg/2000px-BTC_Logo.svg.png"
-                  style="width:32px; height:32px;">
-                <span style="margin-left:10px;">Bitcoin (BTC)</span>
-                <span class="float-end">0 BTC</span>
-              </div>
+            <div id="dashboardTokens" class="card-body">
+              <div class="card-title font-gray font-weight-bold" style="margin-bottom:30px;">SCP-1 Tokens</div>
+              <center><p>You have no tokens!</p></center>
             </div>
           </div>
 
@@ -418,7 +458,7 @@
                     <option value="btc" data-thumbnail="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/BTC_Logo.svg/2000px-BTC_Logo.svg.png">Bitcoin (BTC)</option>
                   </select>
                   <div class="lang-select input-shadow">
-                    <button class="btn-select" value=""></button>
+                    <button id="sendingCoinVal" class="btn-select" value="scc"></button>
                     <div class="b">
                       <ul id="a"></ul>
                     </div>
@@ -429,12 +469,12 @@
               <div class="row">
                 <div class="col-6">
                   <label class="form-label" style="margin-bottom:0px">Amount:</label>
-                  <input type="text" class="form-control input-shadow"><br>
+                  <input id="sendAmount" type="text" class="form-control input-shadow"><br>
                 </div>
                 
                 <div class="col-6">
                   <label class="form-label" style="margin-bottom:0px">SCC Address:</label>
-                  <input type="text" class="form-control input-shadow"><br>
+                  <input id="sendAddress" type="text" class="form-control input-shadow"><br>
                 </div>
 
                 <div class="col">

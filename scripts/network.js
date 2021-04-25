@@ -3,6 +3,9 @@ if (networkEnabled) {
   var githubRepo = 'https://api.github.com/repos/stakecube/StakeCubeProtocol/releases';
 
   var getBlockCount = function() {
+    // Play reload anim
+    document.getElementById("balanceRefresh").className += " playAnim";
+
     var request = new XMLHttpRequest();
     request.open('GET', "https://stakecubecoin.net/web3/blocks", true);
     request.onload = function () {
@@ -12,6 +15,9 @@ if (networkEnabled) {
         console.log("New block detected! " + cachedBlockCount + " --> " + data);
         if (pubkeyMain)
           getUnspentTransactions();
+      } else {
+        let reloader = document.getElementById("balanceRefresh");
+        reloader.className = reloader.className.replace(/ playAnim/g, "");
       }
       cachedBlockCount = data;
     }
@@ -54,6 +60,8 @@ if (networkEnabled) {
     var request = new XMLHttpRequest()
     request.open('GET', "https://stakecubecoin.net/web3/getutxos?addr=" + pubkeyMain, true)
     request.onload = function () {
+      let reloader = document.getElementById("balanceRefresh");
+      reloader.className = reloader.className.replace(/ playAnim/g, "");
       data = JSON.parse(this.response)
       if (data.length === 0) {
         console.log('No unspent Transactions');
@@ -89,12 +97,12 @@ if (networkEnabled) {
         data = this.response;
         if (data.length === 64) {
           console.log('Transaction sent! ' + data);
-          document.getElementById("transactionFinal").innerHTML = ('<h4 style="color:green">Transaction sent! ' + data + '</h4>');
-          document.getElementById("address1s").innerHTML = '';
-          document.getElementById("value1s").innerHTML = '';
+          alert("Transaction Sent!");
+          //document.getElementById("transactionFinal").innerHTML = ('<h4 style="color:green">Transaction sent! ' + data + '</h4>');
         } else {
           console.log('Error sending transaction: ' + data);
-          document.getElementById("transactionFinal").innerHTML = ('<h4 style="color:red">Error sending transaction: ' + data + "</h4>");
+          alert('Error sending transaction: ' + data);
+          //document.getElementById("transactionFinal").innerHTML = ('<h4 style="color:red">Error sending transaction: ' + data + "</h4>");
         }
       }
 

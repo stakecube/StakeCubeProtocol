@@ -11,7 +11,7 @@ $('#a').html(langArray);
 
 //Set the button value to the first el of the array
 $('.btn-select').html(langArray[0]);
-$('.btn-select').attr('value', 'en');
+$('.btn-select').attr('value', 'scc');
 
 //change button stuff on click
 $('#a li').click(function () {
