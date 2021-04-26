@@ -20,6 +20,8 @@ function switchToSend() {
   // Show
   domSendPage.style.display = "block";
   domHeader.style.display = "block";
+  // Refresh token selector
+  refreshCoinSelector();
 }
 
 function switchToDashboard() {
