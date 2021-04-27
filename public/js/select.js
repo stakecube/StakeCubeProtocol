@@ -25,6 +25,17 @@ function setCoinSelector(img, text, value) {
   $('.btn-select').html(item);
   $('.btn-select').attr('value', value);
   $(".b").toggle();
+
+  // Update available balance display
+  let nSendBalanceDisplay = 0;
+  if (value === "scc") {
+    nSendBalanceDisplay = getBalance();
+  } else {
+    let cToken = TOKENS.getToken(value.split('scptoken-')[1]);
+    let cAccount = cToken.getAccount(pubkeyMain);
+    nSendBalanceDisplay = Number((cAccount.balance / COIN).toFixed(8));
+  }
+  domSendingBalance.innerText = "Available: " + nSendBalanceDisplay.toLocaleString('en-GB', { maximumFractionDigits: 8 });
 }
 
 $(".btn-select").click(function () {

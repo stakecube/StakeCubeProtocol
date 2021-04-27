@@ -172,6 +172,7 @@
     let domReceiveAddress;
     let domBalance;
     let domBalanceUSD;
+    let domSendingBalance;
 
     let domMarketcap;
     let domPrice;
@@ -215,13 +216,13 @@
         let sendTokensSelector = document.getElementById('sendingCoin');
         sendTokensSelector.innerHTML = '<option value="scc" data-thumbnail="circular-logo.png">StakeCubeCoin (SCC)</option>';
         dashboardTokens.innerHTML = '<div class="card-title font-gray font-weight-bold" style="margin-bottom:30px;">SCP-1 Tokens</div>';
-        if (knownTokens.length > 0) {
+        if (getSyncPercentage() < 99.99) {
+          dashboardTokens.innerHTML += '<center><p id="scpSyncing">SCP is still syncing (' + getSyncPercentage().toFixed(2) + '%)</p></center>';
+        } else if (knownTokens.length > 0) {
           for (const cToken of knownTokens) {
             dashboardTokens.innerHTML += '<div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px;"><img src="circular-logo.png" style="width:32px; height:32px;"><span style="margin-left:10px;">' + cToken.token.name + ' (' + cToken.token.ticker + ')</span><span class="float-end">' + (cToken.account.balance / COIN).toLocaleString('en-GB', { maximumFractionDigits: 8 }) + '</span></div>';
             sendTokensSelector.innerHTML += '<option value="scptoken-' + cToken.token.contract + '" data-thumbnail="circular-logo.png">' + cToken.token.name + ' (' + cToken.token.ticker + ')</option>';
           }
-        } else if (getSyncPercentage() < 99.99) {
-          dashboardTokens.innerHTML += '<center><p id="scpSyncing">SCP is still syncing (' + getSyncPercentage().toFixed(2) + '%)</p></center>';
         } else {
           dashboardTokens.innerHTML += '<center><p>You have no tokens!</p></center>';
         }
@@ -370,6 +371,7 @@
       domAuthTime = document.getElementById("authTime");
       domBalance = document.getElementById("guiBalance");
       domBalanceUSD = document.getElementById("balanceUSD");
+      domSendingBalance = document.getElementById("sendingCoinBalance");
       domPrice = document.getElementById("dashboardPrice");
       domMarketcap = document.getElementById("dashboardMarketcap");
       // Now, we initiate the SCP backend!
@@ -419,7 +421,7 @@
               <div class="card-title font-gray font-weight-bold">Balance<span
                   id="balanceRefresh" onclick="getBlockCount(); getBalance(true);" class="float-end theme-color refresh-button reload"><i class="fas fa-redo-alt"></i></span></div>
               <div class="mt-4 theme-color-secondary font-weight-bold">
-                <div class="float-end"><span id="guiBalance" class="font-balance">0</span> <span
+                <div class="float-end"><span id="guiBalance" class="font-balance">...</span> <span
                     class="font-size-ticker">SCC</span></div><br><br>
                 <div class="float-end balance-usd-props"><span
                     id="balanceUSD" class="font-balance-usd font-gray font-weight-normal">...</span> <span
@@ -504,7 +506,7 @@
 
               <div class="row">
                 <div class="col-6">
-                  <label class="form-label" style="margin-bottom:0px">Coin/Token:</label>
+                  <label id="sendingCoinBalance" class="form-label" style="margin-bottom:0px"></label>
                   <select id="sendingCoin" class="vodiapicker">
                     <option value="scc" data-thumbnail="circular-logo.png">StakeCubeCoin (SCC)</option>
                   </select>
