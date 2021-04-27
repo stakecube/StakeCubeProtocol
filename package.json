@@ -1,23 +1,58 @@
 {
   "name": "stakecubeprotocol",
   "version": "1.0.0",
-  "description": "",
+  "description": "The StakeCube Protocol full-node and GUI for Node.js",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
-    "build": "electron-packager ./ \"StakeCube Protocol\""
+    "start": "electron-forge start",
+    "build": "electron-packager ./ \"StakeCube Protocol\"",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "author": "StakeCube",
   "license": "MPL-2.0",
   "devDependencies": {
+    "@electron-forge/cli": "^6.0.0-beta.54",
+    "@electron-forge/maker-deb": "^6.0.0-beta.54",
+    "@electron-forge/maker-rpm": "^6.0.0-beta.54",
+    "@electron-forge/maker-squirrel": "^6.0.0-beta.54",
+    "@electron-forge/maker-zip": "^6.0.0-beta.54",
     "electron": "^8.0.3",
     "electron-reloader": "^1.2.0"
   },
   "dependencies": {
     "bitcoin-rpc-promise": "^2.1.6",
+    "electron-squirrel-startup": "^1.0.0",
     "jquery": "^3.6.0",
     "lodash": "^4.17.21",
     "otplib": "^12.0.1",
     "regedit": "^3.0.3"
+  },
+  "config": {
+    "forge": {
+      "packagerConfig": {},
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "stakecubeprotocol"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": [
+            "darwin"
+          ]
+        },
+        {
+          "name": "@electron-forge/maker-deb",
+          "config": {}
+        },
+        {
+          "name": "@electron-forge/maker-rpm",
+          "config": {}
+        }
+      ]
+    }
   }
 }
