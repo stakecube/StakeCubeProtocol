@@ -291,6 +291,10 @@
       }
     }
 
+    function autofillSendingAmount() {
+      document.getElementById("sendAmount").value = domSendingBalance.innerText.split(" ")[1];
+    }
+
     function refreshSyncStatus() {
       let domScpSyncing = document.getElementById("scpSyncing");
       let syncPercent = getSyncPercentage();
@@ -507,7 +511,7 @@
 
               <div class="row">
                 <div class="col-6">
-                  <label id="sendingCoinBalance" class="form-label" style="margin-bottom:0px"></label>
+                  <label id="sendingCoinBalance" onclick="autofillSendingAmount()" style="cursor: pointer;" class="form-label" style="margin-bottom:0px"></label>
                   <select id="sendingCoin" class="vodiapicker">
                     <option value="scc" data-thumbnail="circular-logo.png">StakeCubeCoin (SCC)</option>
                   </select>
