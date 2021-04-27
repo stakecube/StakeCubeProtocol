@@ -146,6 +146,7 @@
 
   <script>
     // GUI module imports
+    const { clipboard } = require('electron');
     let authenticator = require("otplib").authenticator;
 
     // WALLET STATE DATA
@@ -555,9 +556,9 @@
               <div class="card-title font-gray font-weight-bold">Deposit address</div><br>
 
               <center><span id="receiveAddress" class="font-weight-bold"></span><span
-                  style="padding-left:6px;"><i class="far fa-copy refresh-button"></i></span><br><br></center>
+                  style="padding-left:6px;"><i onclick="clipboard.writeText(pubkeyMain)" class="far fa-copy refresh-button"></i></span><br><br></center>
               <div class="alert alert-danger" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> Please
-                make sure to only send SCC or StakeCubeProtocol tokens to this address. Other coins will be lost and cannot be
+                make sure to only send SCC or SCP tokens to this address. Other coins will be lost and cannot be
                 reversed.</div>
               <center><img src="qr.png" style="display: none;"></center>
             </div>
