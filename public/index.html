@@ -593,7 +593,8 @@
                   <br>
                 </div>
                 <center id="authDisplay">
-                  <h3 id="authCode" class="font-weight-bold"></h3>
+                  <span id="authCode" style="font-size: x-large;" class="font-weight-bold"></span>
+                  <i onclick="clipboard.writeText(document.getElementById('authCode').innerText)" style="padding-left:6px;" class="far fa-copy refresh-button"></i>
                   <p id="authTime" style="opacity: 0.8;">10 seconds left til next code</p>
                   <br>
                 </center>
