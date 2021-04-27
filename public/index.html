@@ -217,7 +217,9 @@
         let sendTokensSelector = document.getElementById('sendingCoin');
         sendTokensSelector.innerHTML = '<option value="scc" data-thumbnail="circular-logo.png">StakeCubeCoin (SCC)</option>';
         dashboardTokens.innerHTML = '<div class="card-title font-gray font-weight-bold" style="margin-bottom:30px;">SCP-1 Tokens</div>';
-        if (getSyncPercentage() < 99.99) {
+        if (cachedBlockCount === 0) {
+          dashboardTokens.innerHTML += '<center><p>Your SCP full-node has not yet initialized, ensure your configuration is correct!</p></center>';
+        } else if (getSyncPercentage() < 99.99) {
           dashboardTokens.innerHTML += '<center><p id="scpSyncing">SCP is still syncing (' + getSyncPercentage().toFixed(2) + '%)</p></center>';
         } else if (knownTokens.length > 0) {
           for (const cToken of knownTokens) {
@@ -486,7 +488,7 @@
           <div class="card card-prop mb-4">
             <div id="dashboardTokens" class="card-body">
               <div class="card-title font-gray font-weight-bold" style="margin-bottom:30px;">SCP-1 Tokens</div>
-              <center><p>You have no tokens!</p></center>
+              <center><p>Your SCP full-node has not yet initialized, ensure your configuration is correct!</p></center>
             </div>
           </div>
 
