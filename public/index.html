@@ -182,6 +182,13 @@
     let domAuthCode;
     let domAuthTime;
 
+    function getSyncPercentage() {
+      // We measure based on our total SCP hash-cache, and our blocks since the start of SCP
+      if (cachedBlockCount === 0) return 0;
+      if (!currentScanBlock || !currentScanBlock.height) return 100;
+      return percentOf(chainHashesCache.length, (cachedBlockCount - nFirstBlock));
+    }
+
     function getBalance(updateGUI = false) {
       let nBalance = 0;
       for (const nUTXO of cachedUTXOs) {
@@ -213,6 +220,8 @@
             dashboardTokens.innerHTML += '<div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px;"><img src="circular-logo.png" style="width:32px; height:32px;"><span style="margin-left:10px;">' + cToken.token.name + ' (' + cToken.token.ticker + ')</span><span class="float-end">' + (cToken.account.balance / COIN).toLocaleString('en-GB', { maximumFractionDigits: 8 }) + '</span></div>';
             sendTokensSelector.innerHTML += '<option value="scptoken-' + cToken.token.contract + '" data-thumbnail="circular-logo.png">' + cToken.token.name + ' (' + cToken.token.ticker + ')</option>';
           }
+        } else if (getSyncPercentage() < 99.99) {
+          dashboardTokens.innerHTML += '<center><p id="scpSyncing">SCP is still syncing (' + getSyncPercentage().toFixed(2) + '%)</p></center>';
         } else {
           dashboardTokens.innerHTML += '<center><p>You have no tokens!</p></center>';
         }
@@ -280,6 +289,19 @@
       }
     }
 
+    function refreshSyncStatus() {
+      let domScpSyncing = document.getElementById("scpSyncing");
+      let syncPercent = getSyncPercentage();
+      if (syncPercent > 99.99) {
+        // Sync is close enough to being finished, stop checking and load the tokens!
+        clearInterval(syncStatusInterval);
+        getBalance(true);
+      }
+      if (domScpSyncing) {
+        domScpSyncing.innerText = 'SCP is still syncing (' + syncPercent.toFixed(2) + '%)';
+      }
+    }
+
     function import2FA() {
       let strNewSecret = document.getElementById("authSecretImport").value;
       let testToken = authenticator.generate(strNewSecret);
@@ -325,6 +347,9 @@
       getCoinValue();
       getCoinSupply();
     }, 10000);
+
+    // Refresh syncing status
+    let syncStatusInterval = setInterval(refreshSyncStatus, 200);
 
     // Refresh 2FA system
     setInterval(refreshAuthenticator, 1000);
