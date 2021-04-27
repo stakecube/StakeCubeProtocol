@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SCC Web3 wallet</title>
+  <title>SCP Wallet</title>
 
   <link rel="canonical" href="https://getbootstrap.com/docs/5.0/examples/carousel/">
 
@@ -71,7 +71,7 @@
                       <center><h5 class="mb-3">Unlock your wallet</h5></center>
 
                       <label class="form-label" style="font-size:14px;">Password</label>
-                      <input id="pass1" type="password" class="form-control mb-2">
+                      <input id="pass1" type="password" class="form-control mb-2" autofocus>
 
                       <table class="mb-4" border="0">
                         <tr style="color:#2973cf; font-size:14px;">
@@ -389,6 +389,8 @@
         console.log("Encrypted key found: " + encwif);
         privkeyEncrypted = encwif;
         switchToLogin();
+        // Focus on the password entry
+        document.getElementById("pass1").focus();
       } else {
         // No privkey available, derive a new one and encrypt using the temppass
         let tmppass = localStorage.getItem("tmppass");
