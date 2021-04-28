@@ -183,6 +183,7 @@
     let domAuthTitle;
     let domAuthCode;
     let domAuthTime;
+    let domAuthReset;
 
     function getSyncPercentage() {
       // We measure based on our total SCP hash-cache, and our blocks since the start of SCP
@@ -318,6 +319,11 @@
       }
     }
 
+    function remove2FA() {
+      localStorage.removeItem("authsecret");
+      refreshAuthenticator();
+    }
+
     let lastAuthCode = null;
     function refreshAuthenticator() {
       let strSecret = localStorage.getItem("authsecret");
@@ -326,11 +332,13 @@
         domAuthImport.style.display = "";
         domAuthDisplay.style.display = "none";
         domAuthTitle.innerText = "Setup your 2FA";
+        domAuthReset.style.display = "none";
       } else {
         // Auth code already imported
         domAuthImport.style.display = "none";
         domAuthDisplay.style.display = "";
         domAuthTitle.innerText = "Login using 2FA";
+        domAuthReset.style.display = "";
         // Fetch the current code
         let authCode = authenticator.generate(strSecret);
         if (lastAuthCode !== authCode)
@@ -376,6 +384,7 @@
       domReceiveAddress = document.getElementById("receiveAddress");
       domAuthCode = document.getElementById("authCode");
       domAuthTime = document.getElementById("authTime");
+      domAuthReset = document.getElementById("authReset");
       domBalance = document.getElementById("guiBalance");
       domBalanceUSD = document.getElementById("balanceUSD");
       domSendingBalance = document.getElementById("sendingCoinBalance");
@@ -603,6 +612,7 @@
               <div class="alert alert-danger" style="font-size:13px;">
                 <i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>Do <b>not</b> share these codes with <b>anyone!</b>
               </div>
+              <center id="authReset"><button onclick="remove2FA()" style="margin-top: 10px;" class="btn btn-success btn-layout">Remove 2FA</button></center>
             </div>
           </div>
 
