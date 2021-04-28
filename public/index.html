@@ -401,8 +401,6 @@
       domSendingBalance = document.getElementById("sendingCoinBalance");
       domPrice = document.getElementById("dashboardPrice");
       domMarketcap = document.getElementById("dashboardMarketcap");
-      // Now, we initiate the SCP backend!
-      init();
       // Check for an encrypted wallet, if one exists, pull up the login screen!
       let encwif = localStorage.getItem("encwif");
       if (encwif && encwif.length > 1) {
