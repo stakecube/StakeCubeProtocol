@@ -214,7 +214,7 @@
 
     function getSyncPercentage() {
       // We measure based on our total SCP hash-cache, and our blocks since the start of SCP
-      if (cachedBlockCount === 0) return 0;
+      if (cachedBlockCount === 0 || chainHashesCache.length === 0) return 0;
       if (!currentScanBlock || !currentScanBlock.height) return 100;
       return percentOf(chainHashesCache.length, (cachedBlockCount - nFirstBlock));
     }
@@ -335,6 +335,8 @@
       }
       if (domScpSyncing) {
         domScpSyncing.innerText = 'SCP is still syncing (' + syncPercent.toFixed(2) + '%)';
+      } else if (syncPercent > 0) {
+        getBalance(true);
       }
     }
 
