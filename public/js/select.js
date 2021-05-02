@@ -35,7 +35,7 @@ function setCoinSelector(img, text, value) {
     let cAccount = cToken.getAccount(pubkeyMain);
     nSendBalanceDisplay = Number((cAccount.balance / COIN).toFixed(8));
   }
-  domSendingBalance.innerText = "Available: " + nSendBalanceDisplay.toLocaleString('en-GB', { maximumFractionDigits: 8 });
+  domSendingBalance.innerText = nSendBalanceDisplay.toLocaleString('en-GB', { maximumFractionDigits: 8 });
 }
 
 $(".btn-select").click(function () {

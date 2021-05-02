@@ -14,18 +14,19 @@
   <link href="fontawesome/css/all.min.css" rel="stylesheet">
 
   <script>
+    window.$ = window.jQuery = require('jquery');
     function finishWalletCreation() {
-      let errorMsg = document.getElementById("createWalletError");
-      errorMsg.innerText = "";
+      let errorMsg = document.getElementById("errMess");
+      errorMsg.innerHTML = "";
       const nFirstPass = document.getElementById("pass1").value;
       const nSecondPass = document.getElementById("pass2").value;
 
       // Check the password meets minimum requirements
-      if (nFirstPass.length < 8)      return errorMsg.innerText = "Password is too short, please use a minimum of 8 characters!";
-      if (nFirstPass.length > 200)    return errorMsg.innerText = "Password is too long, please use a maximum of 200 characters!";
+      if (nFirstPass.length < 8)      return errorMsg.innerHTML = '<div class="alert alert-danger-custom" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> &nbsp;Password is too short, please use a minimum of 8 characters!</div><br>';
+      if (nFirstPass.length > 200)    return errorMsg.innerHTML = '<div class="alert alert-danger-custom" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> &nbsp;Password is too long, please use a maximum of 200 characters!</div><br>';
 
       // Check the password is correct on re-type
-      if (nFirstPass !== nSecondPass) return errorMsg.innerText = "Passwords do not match, please carefully re-type your password!";
+      if (nFirstPass !== nSecondPass) return errorMsg.innerHTML = '<div class="alert alert-danger-custom" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> &nbsp;Passwords do not match, please carefully re-type your password!</div><br>';
 
       // Success! - Temp save the pass for key derivation and auto-encryption in the next phase.
       localStorage.setItem("tmppass", nFirstPass);
@@ -73,10 +74,16 @@
                     <div style="padding:30px; color:#5a5a5a" id="createWallet">
                       <h5 class="mb-3">Create a password for your wallet</h5>
 
-                      <label class="form-label" style="font-size:14px;">Set a password</label>
-                      <input id="pass1" type="password" class="form-control mb-2">
+                      <span id="errMess"></span>
 
-                      <table class="mb-4" border="0">
+                      <div class="omrs-input-group" style="width:100%; margin-bottom: 10px;">
+                        <label class="omrs-input-underlined">
+                          <input required id="pass1" type="password" autofocus>
+                          <span class="omrs-input-label">Password</span>
+                        </label>
+                      </div>
+
+                      <table class="mb-5" border="0">
                         <tr style="color:#2973cf; font-size:14px;">
                           <td>
                             <i class="fas fa-info-circle" style="margin-right: 10px;"></i>
@@ -87,12 +94,26 @@
                         </tr>
                       </table>
 
-                      <label class="form-label" style="font-size:14px;">Re-enter password</label>
-                      <input id="pass2" type="password" class="form-control mb-4">
+                      <div class="omrs-input-group" style="width:100%;">
+                        <label class="omrs-input-underlined">
+                          <input required id="pass2" type="password" autofocus>
+                          <span class="omrs-input-label">Re-enter Password</span>
+                        </label>
+                      </div>
+
+                      <script>
+                        $(document).ready(function(){
+                          $('#pass2').keypress(function(e){
+                            if(e.keyCode==13) {
+                              finishWalletCreation();
+                            }
+                          });
+                        });
+                      </script>
 
                       <center>
                         <p id="createWalletError" style="opacity: 0.8; color: red"></p>
-                        <button class="btn btn-success btn-layout" onclick="finishWalletCreation();">Next</button>
+                        <button class="btn btn-theme btn-layout" onclick="finishWalletCreation();">Next</button>
                       </center>
                     </div>
                   </div>
@@ -158,7 +179,6 @@
     }
   </script>
   <script src="js/bootstrap.bundle.min.js"></script>
-  <script>window.$ = window.jQuery = require('jquery');</script>
   <script src="js/select.js"></script>
 
 </body>

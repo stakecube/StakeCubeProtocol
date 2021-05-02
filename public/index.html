@@ -52,6 +52,8 @@
   <!-- SCP LIBRARY GOES BELOW -->
   <script src="../lib/index.js"></script>
   <!-- SCP LIBRARY GOES ABOVE -->
+
+  <script>window.$ = window.jQuery = require('jquery');</script>
 </head>
 
 <body>
@@ -67,13 +69,31 @@
               <div class="col-8">
                 <div class="card card-prop2 mb-4">
                   <div class="card-body font-gray">
-                    <div style="padding:30px; color:#5a5a5a" id="createWallet">
+                    <div style="padding:30px; padding-bottom:20px; color:#5a5a5a" id="createWallet">
                       <center><h5 class="mb-3">Unlock your wallet</h5></center>
 
-                      <label class="form-label" style="font-size:14px;">Password</label>
-                      <input id="pass1" type="password" class="form-control mb-2" autofocus>
+                      <span id="errMess"><br></span>
+                      
+                      <center>
+                        <div class="omrs-input-group" style="width:100%; margin-bottom:10px;">
+                          <label class="omrs-input-underlined">
+                            <input required id="pass1" type="password" autofocus>
+                            <span class="omrs-input-label">Password</span>
+                          </label>
+                        </div>
+                      </center>
 
-                      <table class="mb-4" border="0">
+                      <script>
+                        $(document).ready(function(){
+                          $('#pass1').keypress(function(e){
+                            if(e.keyCode==13) {
+                              finishLogin();
+                            }
+                          });
+                        });
+                      </script>
+
+                      <table class="mb-0" border="0">
                         <tr style="color:#2973cf; font-size:14px;">
                           <td>
                             <i class="fas fa-info-circle" style="margin-right: 10px;"></i>
@@ -84,10 +104,6 @@
                         </tr>
                       </table>
 
-                      <center>
-                        <p id="unlockError" style="opacity: 0.8; color: red"></p>
-                        <button class="btn btn-success btn-layout" onclick="finishLogin();">Unlock</button>
-                      </center>
                     </div>
                   </div>
                 </div>
@@ -102,14 +118,14 @@
   <Script>
     function finishLogin() {
       let nPass = document.getElementById("pass1").value;
-      let nLoginError = document.getElementById("unlockError");
+      let nLoginError = document.getElementById("errMess");
       decryptWallet(nPass).then(done => {
         if (done) {
-          nLoginError.innerText = "";
+          nLoginError.innerHTML = "";
           switchToDashboard();
           console.log("Login successful!");
         } else {
-          nLoginError.innerText = "Incorrect Password!";
+          nLoginError.innerHTML = '<div class="alert alert-danger-custom" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> &nbsp;Incorrect Password!</div><br>';
         }
       });
     }
@@ -126,25 +142,25 @@
         <div class="collapse navbar-collapse" id="navbarCollapse">
           <ul class="navbar-nav me-auto mb-2 mb-md-0">
             <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="#" onclick="switchToDashboard()">
+              <a class="nav-link active" id="dashboardBtn" aria-current="page" href="#" onclick="switchToDashboard()">
                 <i class="fas fa-tachometer-alt" style="margin-right: 5px;"></i>
                 Dashboard
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#" onclick="switchToSend()">
+              <a class="nav-link" href="#" id="sendBtn" onclick="switchToSend()">
                 <i class="fas fa-paper-plane" style="margin-right: 5px;"></i>
                 Send
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#" onclick="switchToReceive()">
+              <a class="nav-link" href="#" id="receiveBtn" onclick="switchToReceive()">
                 <i class="fas fa-money-check" style="margin-right: 5px;"></i>
                 Receive
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#" onclick="switchToAuth()">
+              <a class="nav-link" href="#" id="2faBtn" onclick="switchToAuth()">
                 <i class="fas fa-fingerprint" style="margin-right: 5px;"></i>
                 2FA
               </a>
@@ -306,7 +322,7 @@
     }
 
     function autofillSendingAmount() {
-      document.getElementById("sendAmount").value = domSendingBalance.innerText.split(" ")[1];
+      document.getElementById("sendAmount").value = domSendingBalance.innerText;
     }
 
     function refreshSyncStatus() {
@@ -401,6 +417,10 @@
       domSendingBalance = document.getElementById("sendingCoinBalance");
       domPrice = document.getElementById("dashboardPrice");
       domMarketcap = document.getElementById("dashboardMarketcap");
+      domDashboardBtn = document.getElementById("dashboardBtn");
+      domSendBtn = document.getElementById("sendBtn");
+      domReceiveBtn = document.getElementById("receiveBtn");
+      dom2FABtn = document.getElementById("2faBtn");
       // Check for an encrypted wallet, if one exists, pull up the login screen!
       let encwif = localStorage.getItem("encwif");
       if (encwif && encwif.length > 1) {
@@ -529,17 +549,17 @@
             <div class="card-body">
               <div class="card-title font-gray font-weight-bold">Withdraw</div>
 
-              <div class="alert alert-danger" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> &nbsp;Please make sure to enter the correct address. Transactions cannot be reversed.</div><br>
+              <div class="alert alert-danger-custom" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> &nbsp;Please make sure to enter the correct address. Transactions cannot be reversed.</div><br>
 
               <div class="row">
                 <div class="col-6">
-                  <label id="sendingCoinBalance" onclick="autofillSendingAmount()" style="cursor: pointer;" class="form-label" style="margin-bottom:0px"></label>
                   <select id="sendingCoin" class="vodiapicker">
+                    <option value="" data-thumbnail="i.png" disabled selected hidden>-</option>
                     <option value="scc" data-thumbnail="circular-logo.png">StakeCubeCoin (SCC)</option>
                   </select>
-                  <div class="lang-select input-shadow">
+                  <div class="lang-select">
                     <button id="sendingCoinVal" class="btn-select" value="scc"></button>
-                    <div class="b">
+                    <div class="b" style="z-index:1000;">
                       <ul id="a"></ul>
                     </div>
                   </div>
@@ -548,17 +568,26 @@
 
               <div class="row">
                 <div class="col-6">
-                  <label class="form-label" style="margin-bottom:0px">Amount:</label>
-                  <input id="sendAmount" type="text" class="form-control input-shadow"><br>
+                  <div class="omrs-input-group" style="width:100%; margin-bottom: 0px;">
+                    <label class="omrs-input-underlined">
+                      <input required id="sendAmount" type="text">
+                      <span class="omrs-input-label">Amount</span>
+                    </label>
+                  </div>
+                  <span style="font-size: 13px; top:5px; position: relative;">Available: <span id="sendingCoinBalance" onclick="autofillSendingAmount()" style="cursor: pointer;" class="badge badge-theme" style="margin-bottom:0px">-</label></span>
                 </div>
                 
                 <div class="col-6">
-                  <label class="form-label" style="margin-bottom:0px">SCC Address:</label>
-                  <input id="sendAddress" type="text" class="form-control input-shadow"><br>
+                  <div class="omrs-input-group" style="width:100%;">
+                    <label class="omrs-input-underlined">
+                      <input required id="sendAddress" type="text">
+                      <span class="omrs-input-label">SCC Address</span>
+                    </label>
+                  </div>
                 </div>
 
-                <div class="col">
-                  <center><button class="btn btn-success btn-layout" onclick="sendTransactionGUI()">Send Transaction</button><br></center>
+                <div class="col text-end"><br>
+                  <button class="btn btn-layout btn-theme" onclick="sendTransactionGUI()">Send Transaction</button><br>
                 </div>
               </div>
             </div>
@@ -579,13 +608,18 @@
 
           <div class="card card-prop mb-4">
             <div class="card-body">
-              <div class="card-title font-gray font-weight-bold">Deposit address</div><br>
-
-              <center><span id="receiveAddress" class="font-weight-bold"></span><span
-                  style="padding-left:6px;"><i onclick="clipboard.writeText(pubkeyMain)" class="far fa-copy refresh-button"></i></span><br><br></center>
-              <div class="alert alert-danger" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> Please
-                make sure to only send SCC or SCP tokens to this address. Other coins will be lost and cannot be
-                reversed.</div>
+              <div class="card-title font-gray font-weight-bold">Deposit address</div>
+              <div class="alert alert-danger-custom" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> Please make sure to only send SCC or SCP tokens to this address. Other coins will be lost and cannot be reversed.</div><br>
+              
+              <center>
+                <div onclick="clipboard.writeText(pubkeyMain)" class="refresh-button hover-darker">
+                  <span id="receiveAddress" class="font-weight-bold"></span>
+                  <span style="padding-left:6px;">
+                    <i class="far fa-copy"></i>
+                  </span>
+                </div>
+              </center><br><br>
+              
               <center><img src="qr.png" style="display: none;"></center>
             </div>
           </div>
@@ -605,11 +639,23 @@
 
           <div class="card card-prop mb-4">
             <div class="card-body">
-              <div id="authTitle" class="card-title font-gray font-weight-bold">Setup your 2FA</div><br>
+              <div id="authTitle" class="card-title font-gray font-weight-bold">Setup your 2FA</div>
+                <div class="alert alert-danger-custom" style="font-size:13px;">
+                  <i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>Do <b>not</b> share these codes with <b>anyone!</b>
+                </div>
+                <div class="alert alert-warning-custom" style="font-size:13px;">
+                  <i class="fas fa-info-circle" style="margin-right: 6px;"></i> The 2FA screen can be used as an in-wallet 2FA app for your StakeCube.net account, if you haven't already setup 2FA on your StakeCube.net account, use this and secure your account with your wallet!<br><br>
+                  To find your 2FA settings, login to StakeCube.net, visit your settings, and copy your 2FA "Secret", below the QR code, into the "Secret Code" section of this 2FA screen, then you're secured!
+                </div><br>
                 <div id="authImport">
-                  <label class="form-label" style="margin-bottom:0px;">Your 2FA Secret import code</label>
-                  <input id="authSecretImport" type="text" placeholder="Your secret code..." class="form-control input-shadow">
-                  <center><button onclick="import2FA()" style="margin-top: 10px;" class="btn btn-success btn-layout">Import</button></center>
+                  <div class="omrs-input-group" style="width:100%;">
+                    <label class="omrs-input-underlined">
+                      <input required id="authSecretImport" type="text" autofocus>
+                      <span class="omrs-input-label">2FA</span>
+                    </label>
+                  </div>
+                  
+                  <center><button onclick="import2FA()" style="margin-top: 10px;" class="btn btn-theme btn-layout">Import</button></center>
                   <br>
                 </div>
                 <center id="authDisplay">
@@ -618,10 +664,7 @@
                   <p id="authTime" style="opacity: 0.8;">10 seconds left til next code</p>
                   <br>
                 </center>
-              <div class="alert alert-danger" style="font-size:13px;">
-                <i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i>Do <b>not</b> share these codes with <b>anyone!</b>
-              </div>
-              <center id="authReset"><button onclick="remove2FA()" style="margin-top: 10px;" class="btn btn-success btn-layout">Remove 2FA</button></center>
+              <center id="authReset"><button onclick="remove2FA()" style="margin-top: 10px;" class="btn btn-danger btn-layout">Remove 2FA</button></center>
             </div>
           </div>
 
@@ -633,7 +676,6 @@
   </main>
 
   <script src="js/bootstrap.bundle.min.js"></script>
-  <script>window.$ = window.jQuery = require('jquery');</script>
   <script src="js/select.js"></script>
 
 </body>

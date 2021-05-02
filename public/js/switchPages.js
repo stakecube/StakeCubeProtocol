@@ -20,6 +20,15 @@ function switchToSend() {
   // Show
   domSendPage.style.display = "block";
   domHeader.style.display = "block";
+
+  // Remove active
+  domDashboardBtn.classList.remove('active');
+  domReceiveBtn.classList.remove('active');
+  dom2FABtn.classList.remove('active');
+
+  // Add active
+  domSendBtn.classList.add('active');
+
   // Refresh token selector
   refreshCoinSelector();
 }
@@ -34,6 +43,15 @@ function switchToDashboard() {
   // Show
   domDashboardPage.style.display = "block";
   domHeader.style.display = "block";
+
+  // Remove active
+  domSendBtn.classList.remove('active');
+  domReceiveBtn.classList.remove('active');
+  dom2FABtn.classList.remove('active');
+
+  // Add active
+  domDashboardBtn.classList.add('active');
+
 }
 
 function switchToReceive() {
@@ -47,6 +65,14 @@ function switchToReceive() {
   // Show
   domReceivePage.style.display = "block";
   domHeader.style.display = "block";
+
+  // Remove active
+  domSendBtn.classList.remove('active');
+  domDashboardBtn.classList.remove('active');
+  dom2FABtn.classList.remove('active');
+
+  // Add active
+  domReceiveBtn.classList.add('active');
 }
 
 function switchToAuth() {
@@ -59,4 +85,12 @@ function switchToAuth() {
   // Show
   domAuthPage.style.display = "block";
   domHeader.style.display = "block";
+
+  // Remove active
+  domSendBtn.classList.remove('active');
+  domDashboardBtn.classList.remove('active');
+  domReceiveBtn.classList.remove('active');
+
+  // Add active
+  dom2FABtn.classList.add('active');
 }
