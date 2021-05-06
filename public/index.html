@@ -237,14 +237,14 @@
         // And update the Receive page pubkey
         domReceiveAddress.innerText = pubkeyMain;
 
-        // --- Update SCP-1 token balances
+        // --- Update SCP token balances
         // Fetch all tokens owned by our account (pubkeyMain)
         let knownTokens = TOKENS.getTokensByAccount(pubkeyMain);
         // Loop all tokens, construct an updated GUI for the Dashboard
         let dashboardTokens = document.getElementById("dashboardTokens");
         let sendTokensSelector = document.getElementById('sendingCoin');
         sendTokensSelector.innerHTML = '<option value="scc" data-thumbnail="circular-logo.png">StakeCubeCoin (SCC)</option>';
-        dashboardTokens.innerHTML = '<div class="card-title font-gray font-weight-bold" style="margin-bottom:30px;">SCP-1 Tokens</div>';
+        dashboardTokens.innerHTML = '<div class="card-title font-gray font-weight-bold" style="margin-bottom:30px;">SCP Tokens</div>';
         if (chainHashesCache.length === 0) {
           dashboardTokens.innerHTML += '<center><p>Your SCP full-node has not yet initialized, ensure your configuration is correct!</p></center>';
         } else if (getSyncPercentage() < 99.99) {
@@ -300,8 +300,8 @@
         let cToken = TOKENS.getToken(coinSelection.split('scptoken-')[1]);
         let cAccount = cToken.getAccount(pubkeyMain);
         if ((cAccount.balance / COIN) < sendAmount) return alert("You don't have enough " + cToken.ticker + " to send!");
-        if (cachedUTXOs.length === 0) return alert("You need SCC to pay for SCP-1 transaction fees!");
-        console.log("Constructing SCP-1 Transfer TX for: " + sendAmount + " " + cToken.name + " (" + cToken.contract + ")");
+        if (cachedUTXOs.length === 0) return alert("You need SCC to pay for SCP-" + cToken.version + " transaction fees!");
+        console.log("Constructing SCP-" + cToken.version + " Transfer TX for: " + sendAmount + " " + cToken.name + " (" + cToken.contract + ")");
         // Use our first UTXO, as the fees will be incredibly low anyway
         trx = bitjs.transaction();
         let cUTXO = cachedUTXOs[0];
@@ -529,7 +529,7 @@
 
           <div class="card card-prop mb-4">
             <div id="dashboardTokens" class="card-body">
-              <div class="card-title font-gray font-weight-bold" style="margin-bottom:30px;">SCP-1 Tokens</div>
+              <div class="card-title font-gray font-weight-bold" style="margin-bottom:30px;">SCP Tokens</div>
               <center><p>Your SCP full-node has not yet initialized, ensure your configuration is correct!</p></center>
             </div>
           </div>
