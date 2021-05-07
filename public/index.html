@@ -196,6 +196,7 @@
     let domSendPage;
     let domReceivePage;
     let domAuthPage;
+    let domStakingPage;
 
     let domReceiveAddress;
     let domBalance;
@@ -211,6 +212,11 @@
     let domAuthCode;
     let domAuthTime;
     let domAuthReset;
+
+    let domStakingTitle;
+    let domStakingSubtitle;
+    let domStakingRewards;
+    let domStakingRedeem;
 
     function getSyncPercentage() {
       // We measure based on our total SCP hash-cache, and our blocks since the start of SCP
@@ -251,7 +257,18 @@
           dashboardTokens.innerHTML += '<center><p id="scpSyncing">SCP is still syncing (' + getSyncPercentage().toFixed(2) + '%)</p></center>';
         } else if (knownTokens.length > 0) {
           for (const cToken of knownTokens) {
-            dashboardTokens.innerHTML += '<div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px;"><img src="circular-logo.png" style="width:32px; height:32px;"><span style="margin-left:10px;">' + cToken.token.name + ' (' + cToken.token.ticker + ')</span><span class="float-end">' + (cToken.account.balance / COIN).toLocaleString('en-GB', { maximumFractionDigits: 8 }) + '</span></div>';
+            let stakingButton = 'onclick="switchToStaking(\'' + cToken.token.contract + '\')"';
+            let stakingStyle = 'cursor:pointer;';
+            let stakingText = '';
+            if (cToken.token.version !== 2) {
+              stakingButton = '';
+              stakingStyle = '';
+            } else {
+              let nRewards = (cToken.account.unclaimed_balance / COIN);
+              if (cToken.account.unclaimed_balance > 0)
+                stakingText = ' <i style="opacity:0.5;">(+' + (nRewards > 1 ? nRewards.toLocaleString('en-GB', { maximumFractionDigits: 4 }) : nRewards.toLocaleString('en-GB', { maximumFractionDigits: 8 })) + ')</i>';
+            }
+            dashboardTokens.innerHTML += '<div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px;' + stakingStyle + '" ' + stakingButton + '><img src="circular-logo.png" style="width:32px; height:32px;"><span style="margin-left:10px;">' + cToken.token.name + '</span><span class="float-end">' + (cToken.account.balance / COIN).toLocaleString('en-GB', { maximumFractionDigits: 8 }) + stakingText + '</span></div>';
             sendTokensSelector.innerHTML += '<option value="scptoken-' + cToken.token.contract + '" data-thumbnail="circular-logo.png">' + cToken.token.name + ' (' + cToken.token.ticker + ')</option>';
           }
         } else {
@@ -304,8 +321,14 @@
         console.log("Constructing SCP-" + cToken.version + " Transfer TX for: " + sendAmount + " " + cToken.name + " (" + cToken.contract + ")");
         // Use our first UTXO, as the fees will be incredibly low anyway
         trx = bitjs.transaction();
-        let cUTXO = cachedUTXOs[0];
-        trx.addinput(cUTXO.txid, cUTXO.outputIndex, cUTXO.script);
+        let cUTXO;
+        for (const cSelectedUTXO of cachedUTXOs) {
+          cUTXO = cSelectedUTXO;
+          if (cUTXO.satoshis > 200000) {
+            trx.addinput(cUTXO.txid, cUTXO.outputIndex, cUTXO.script);
+            break;
+          }
+        }
         trx.addoutputburn(0.00000001, cToken.contract + " send " + (sendAmount * COIN).toFixed(0) + " " + sendAddress); // Burn the transfer data on-chain
 
         calculatefee(trx.serialize().length);
@@ -319,6 +342,39 @@
           alert("You are trying to send more than you have!");
         }
       }
+    }
+
+    function claimStakingRewards(contract) {
+        let cToken = TOKENS.getToken(contract);
+        let cAccount = cToken.getAccount(pubkeyMain);
+        if (cachedUTXOs.length === 0) return alert("You need SCC to pay for SCP-" + cToken.version + " gas fees!");
+        console.log("Constructing SCP-" + cToken.version + " stake claim TX for " + (cAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + cToken.name + " (" + cToken.contract + ")");
+        // Use our first UTXO, as the fees will be incredibly low anyway
+        trx = bitjs.transaction();
+        let cUTXO;
+        for (const cSelectedUTXO of cachedUTXOs) {
+          cUTXO = cSelectedUTXO;
+          if (cUTXO.satoshis > 200000) {
+            trx.addinput(cUTXO.txid, cUTXO.outputIndex, cUTXO.script);
+            break;
+          }
+        }
+        trx.addoutputburn(0.00000001, cToken.contract + " redeem");
+
+        calculatefee(trx.serialize().length);
+        totalSent = parseFloat(fee).toFixed(8);
+        valuechange = (parseFloat(cUTXO.satoshis / COIN) - parseFloat(totalSent)).toFixed(8);
+        if (totalSent <= balance) {
+          trx.addoutput(pubkeyMain, valuechange); // Change Output
+          sendTransaction(trx.sign(privkeyDecrypted, 1));
+          domStakingRedeem.setAttribute('onclick', '');
+          domStakingRedeem.classList.add('disabled');
+          domStakingRedeem.innerText = 'Redeeming...';
+          domStakingSubtitle.innerText = 'Your stake is being redeemed! Please wait until the next block to see your balance update.';
+        } else {
+          console.warn("Redeem: " + (cAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + cToken.ticker + "\nFee: " + fee + " SCC\nChange: " + valuechange + " SCC\nTotal: " + totalSent + " SCC");
+          alert("You are trying to send more than you have!");
+        }
     }
 
     function autofillSendingAmount() {
@@ -407,6 +463,7 @@
       domSendPage = document.getElementById('sendPage');
       domReceivePage = document.getElementById('receivePage');
       domAuthPage = document.getElementById('authPage');
+      domStakingPage = document.getElementById('stakingPage');
       domAuthDisplay = document.getElementById('authDisplay');
       domAuthImport = document.getElementById('authImport');
       domAuthTitle = document.getElementById('authTitle');
@@ -423,6 +480,10 @@
       domSendBtn = document.getElementById("sendBtn");
       domReceiveBtn = document.getElementById("receiveBtn");
       dom2FABtn = document.getElementById("2faBtn");
+      domStakingTitle = document.getElementById("stakingTitle");
+      domStakingSubtitle = document.getElementById("stakingSubtitle");
+      domStakingRewards = document.getElementById("stakingRewards");
+      domStakingRedeem = document.getElementById("stakingRedeem");
       // Check for an encrypted wallet, if one exists, pull up the login screen!
       let encwif = localStorage.getItem("encwif");
       if (encwif && encwif.length > 1) {
@@ -667,6 +728,34 @@
                   <br>
                 </center>
               <center id="authReset"><button onclick="remove2FA()" style="margin-top: 10px;" class="btn btn-danger btn-layout">Remove 2FA</button></center>
+            </div>
+          </div>
+
+        </div>
+        <div class="col-2"></div>
+      </div>
+
+    </div>
+
+    <div class="container marketing pt-navbar" id="stakingPage">
+      <h4 class="mb-5 theme-color-secondary font-weight-bold">SCP-2 Staking</h4>
+
+      <div class="row">
+        <div class="col-2"></div>
+        <div class="col-8">
+
+          <div class="card card-prop mb-4">
+            <div class="card-body">
+              <div class="card-title font-gray font-weight-bold" id="stakingTitle"></div>
+              <br>
+              <center>
+                <p id="stakingSubtitle"></p>
+                <h2 id="stakingRewards"></h2>
+                <br>
+                <button id="stakingRedeem" class="btn btn-layout btn-theme" onclick="redeemTokens()">Claim Rewards</button>
+              </center><br><br>
+              
+              <center><img src="qr.png" style="display: none;"></center>
             </div>
           </div>
 
