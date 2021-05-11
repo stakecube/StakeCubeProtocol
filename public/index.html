@@ -202,6 +202,7 @@
     let domBalance;
     let domBalanceUSD;
     let domSendingBalance;
+    let domActivityList;
 
     let domMarketcap;
     let domPrice;
@@ -275,6 +276,18 @@
           }
         } else {
           dashboardTokens.innerHTML += '<center><p>You have no tokens!</p></center>';
+        }
+
+        // Update activity widget
+        let arrActivity = TOKENS.getActivityByAccount(pubkeyMain).reverse();
+        if (arrActivity.length > 0) {
+          domActivityList.innerHTML = "";
+          let amountToLoad = Math.min(arrActivity.length, 5), i;
+          for (i=0; i<amountToLoad; i++) {
+            domActivityList.innerHTML += '<div class="mt-4"><div class="float-start text-center">Block ' + arrActivity[i].block.toLocaleString('en-GB') + '</div><span class="float-end ' + ((arrActivity[i].type === 'received' || arrActivity[i].type === 'stake') ? "plus" : "minus") + '-balance-color font-weight-bold" style="position:relative; top:11px;">' + ((arrActivity[i].type === 'received' || arrActivity[i].type === 'stake') ? "+" : "-") + (arrActivity[i].amount / COIN).toLocaleString('en-GB', { maximumFractionDigits: 8, minimumFractionDigits: 2 }) + ' ' + arrActivity[i].token.ticker + '</span></div><br><br>' + (i !== 4 ? '<hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">' : '');
+          }
+        } else {
+          domActivityList.innerHTML = "<center><p>You have no activity!</p></center>";
         }
       }
 
@@ -513,6 +526,7 @@
       domPrice = document.getElementById("dashboardPrice");
       domMarketcap = document.getElementById("dashboardMarketcap");
       domDashboardBtn = document.getElementById("dashboardBtn");
+      domActivityList = document.getElementById("activityList");
       domSendBtn = document.getElementById("sendBtn");
       domReceiveBtn = document.getElementById("receiveBtn");
       dom2FABtn = document.getElementById("2faBtn");
@@ -581,32 +595,8 @@
           <div class="card card-prop mb-4">
             <div class="card-body">
               <div class="card-title font-gray font-weight-bold">Activity</div>
-
-              <center><p>Transaction history will be added #soon</p></center>
-
-              <div id="activityList" style="display: none;">
-                <div class="mt-4">
-                  <div class="float-start text-center">JAN<br>14</div>
-                  <span class="float-end plus-balance-color font-weight-bold" style="position:relative; top:11px;">
-                    +420.00 SCC
-                  </span>
-                </div><br><br>
-                <hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">
-
-                <div>
-                  <div class="float-start text-center">JAN<br>14</div>
-                  <span class="float-end plus-balance-color font-weight-bold" style="position:relative; top:11px;">
-                    +420.00 SCC
-                  </span>
-                </div><br><br>
-                <hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">
-
-                <div>
-                  <div class="float-start text-center">JAN<br>14</div>
-                  <span class="float-end plus-balance-color font-weight-bold" style="position:relative; top:11px;">
-                    +420.00 SCC
-                  </span>
-                </div>
+              <div id="activityList">
+                <center><p>You have no activity!</p></center>
               </div>
             </div>
           </div>
@@ -779,7 +769,7 @@
       <h4 class="mb-5 theme-color-secondary font-weight-bold">SCP-2 Staking</h4>
 
       <center>
-        <h3>Est. APY of <b id="stakingApy">---</b></h3>
+        <h3>Est. APR of <b id="stakingApy">---</b></h3>
       </center>
       <br>
       <div class="row">
