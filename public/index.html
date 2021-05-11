@@ -215,8 +215,10 @@
 
     let domStakingTitle;
     let domStakingSubtitle;
+    let domStakingApy;
     let domStakingRewards;
     let domStakingRedeem;
+    let domStakingRoi;
 
     function getSyncPercentage() {
       // We measure based on our total SCP hash-cache, and our blocks since the start of SCP
@@ -396,6 +398,35 @@
       }
     }
 
+    let currentStakingToken = false;
+    function refreshStakingStatus(contract) {
+      let cToken = TOKENS.getToken(contract);
+      let cAccount = cToken.getAccount(pubkeyMain);
+      let cStatus = cToken.getStakingStatus(pubkeyMain);
+      // put token + account info on the Staking Page on this refresh!
+      domStakingTitle.innerText = cToken.name + " " + cToken.ticker;
+      if (cStatus.enabled) {
+        // Run a quick'n'dirty APY calculation based on the current weight reward
+        let nWeight = cToken.getWeightPercent(pubkeyMain);
+        let nReward = cToken.inflation * nWeight;
+        let nAPY = percentOf((nReward * 720) * 365, cAccount.balance);
+        if (nAPY > 0.01 && nReward > 1) {
+          domStakingApy.innerText = nAPY.toLocaleString('en-GB', { maximumFractionDigits: (nAPY > 100 ? 0 : 2) }) + "%";
+          domStakingRoi.innerText = "or a ROI of " + percentOf(cAccount.unclaimed_balance, cAccount.balance).toFixed(2) + "%";
+        } else {
+          domStakingApy.innerText = "";
+          domStakingRoi.innerText = "";
+        }
+        domStakingSubtitle.innerHTML = "You've been staking for " + cStatus.age.toLocaleString('en-GB') + " blocks and earned...";
+      } else {
+        domStakingApy.innerText = "";
+        domStakingRoi.innerText = "";
+        domStakingSubtitle.innerHTML = "You've transacted tokens recently, so you must wait another " + (cToken.minAge - cStatus.age).toLocaleString('en-GB') + " blocks before you can start receiving stakes again!";
+      }
+
+      domStakingRewards.innerHTML = (cAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + cToken.ticker;
+    }
+
     function import2FA() {
       let strNewSecret = document.getElementById("authSecretImport").value;
       let testToken = authenticator.generate(strNewSecret);
@@ -431,6 +462,11 @@
         let authTimeRemaining = authenticator.timeRemaining()
         domAuthTime.innerText = authTimeRemaining + " second" + (authTimeRemaining === 1 ? "" : "s") + " remaining until next code";
         lastAuthCode = authCode;
+      }
+
+      // Also use this chance to update the Staking page, if it's open
+      if (domStakingPage.style.display === "block" && currentStakingToken) {
+        refreshStakingStatus(currentStakingToken);
       }
     }
 
@@ -482,6 +518,8 @@
       dom2FABtn = document.getElementById("2faBtn");
       domStakingTitle = document.getElementById("stakingTitle");
       domStakingSubtitle = document.getElementById("stakingSubtitle");
+      domStakingApy = document.getElementById("stakingApy");
+      domStakingRoi = document.getElementById("stakingRoi");
       domStakingRewards = document.getElementById("stakingRewards");
       domStakingRedeem = document.getElementById("stakingRedeem");
       // Check for an encrypted wallet, if one exists, pull up the login screen!
@@ -740,6 +778,10 @@
     <div class="container marketing pt-navbar" id="stakingPage">
       <h4 class="mb-5 theme-color-secondary font-weight-bold">SCP-2 Staking</h4>
 
+      <center>
+        <h3>Est. APY of <b id="stakingApy">---</b></h3>
+      </center>
+      <br>
       <div class="row">
         <div class="col-2"></div>
         <div class="col-8">
@@ -751,6 +793,7 @@
               <center>
                 <p id="stakingSubtitle"></p>
                 <h2 id="stakingRewards"></h2>
+                <p id="stakingRoi" style="opacity:0.5;">or a ROI of ---%</p>
                 <br>
                 <button id="stakingRedeem" class="btn btn-layout btn-theme" onclick="redeemTokens()">Claim Rewards</button>
               </center><br><br>

@@ -111,17 +111,9 @@ function switchToStaking(contract) {
   domStakingPage.style.display = "block";
   domHeader.style.display = "block";
 
-  let cToken = TOKENS.getToken(contract);
+  currentStakingToken = contract;
+  let cToken = TOKENS.getToken(currentStakingToken);
   let cAccount = cToken.getAccount(pubkeyMain);
-  let cStatus = cToken.getStakingStatus(pubkeyMain);
-  // put token + account info on the Staking Page on this refresh!
-  domStakingTitle.innerText = cToken.name + " " + cToken.ticker;
-  if (cStatus.enabled)
-    domStakingSubtitle.innerHTML = "You've been staking for " + cStatus.age.toLocaleString('en-GB') + " blocks and earned...";
-  else
-    domStakingSubtitle.innerHTML = "You've transacted tokens recently, so you must wait another " + (cToken.minAge - cStatus.age).toLocaleString('en-GB') + " blocks before you can start receiving stakes again!";
-  
-  domStakingRewards.innerHTML = (cAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + cToken.ticker;
   domStakingRedeem.setAttribute('onclick', 'claimStakingRewards("' + cToken.contract + '")');
   if (cAccount.unclaimed_balance > 0) {
     domStakingRedeem.classList.remove('disabled');
