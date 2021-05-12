@@ -178,6 +178,7 @@
 
     // WALLET STATE DATA
     let cachedUTXOs = [];
+    let cachedTokens = [];
     let cachedBlockCount = 0;
 
     // Privkey storage
@@ -248,15 +249,15 @@
 
         // --- Update SCP token balances
         // Fetch all tokens owned by our account (pubkeyMain)
-        let knownTokens = TOKENS.getTokensByAccount(pubkeyMain);
+        let knownTokens = isFullnode ? TOKENS.getTokensByAccount(pubkeyMain) : getTokensByAccountLight(pubkeyMain);
         // Loop all tokens, construct an updated GUI for the Dashboard
         let dashboardTokens = document.getElementById("dashboardTokens");
         let sendTokensSelector = document.getElementById('sendingCoin');
         sendTokensSelector.innerHTML = '<option value="scc" data-thumbnail="circular-logo.png">StakeCubeCoin (SCC)</option>';
         dashboardTokens.innerHTML = '<div class="card-title font-gray font-weight-bold" style="margin-bottom:30px;">SCP Tokens</div>';
-        if (chainHashesCache.length === 0) {
-          dashboardTokens.innerHTML += '<center><p>Your SCP full-node has not yet initialized, ensure your configuration is correct!</p></center>';
-        } else if (getSyncPercentage() < 99.99) {
+        if (chainHashesCache.length === 0 && isFullnode) {
+          dashboardTokens.innerHTML += '<center><p>Initializing SCP</p></center>';
+        } else if (getSyncPercentage() < 99.99 && isFullnode) {
           dashboardTokens.innerHTML += '<center><p id="scpSyncing">SCP is still syncing (' + getSyncPercentage().toFixed(2) + '%)</p></center>';
         } else if (knownTokens.length > 0) {
           for (const cToken of knownTokens) {
@@ -279,7 +280,7 @@
         }
 
         // Update activity widget
-        let arrActivity = TOKENS.getActivityByAccount(pubkeyMain).reverse();
+        let arrActivity = isFullnode ? TOKENS.getActivityByAccount(pubkeyMain).reverse() : getActivityByAccountLight(pubkeyMain).reverse();
         if (arrActivity.length > 0) {
           domActivityList.innerHTML = "";
           let amountToLoad = Math.min(arrActivity.length, 5), i;
@@ -292,6 +293,20 @@
       }
 
       return Number(nBalance.toFixed(8));
+    }
+
+    function getCachedToken(contract) {
+      for (const cToken of cachedTokens) {
+        if (cToken.token.contract === contract) return cToken.token;
+      }
+      return false;
+    }
+
+    function getCachedAccount(ctoken, address) {
+      for (const account of ctoken.owners) {
+        if (account.address === address) return account;
+      }
+      return false;
     }
 
     function sendTransactionGUI() {
@@ -329,8 +344,9 @@
           alert("You are trying to send more than you have!");
         }
       } else {
-        let cToken = TOKENS.getToken(coinSelection.split('scptoken-')[1]);
-        let cAccount = cToken.getAccount(pubkeyMain);
+        let strToken = coinSelection.split('scptoken-')[1];
+        let cToken = isFullnode ? TOKENS.getToken(strToken) : getCachedToken(strToken);
+        let cAccount = isFullnode ? cToken.getAccount(pubkeyMain) : getCachedAccount(cToken, pubkeyMain);
         if ((cAccount.balance / COIN) < sendAmount) return alert("You don't have enough " + cToken.ticker + " to send!");
         if (cachedUTXOs.length === 0) return alert("You need SCC to pay for SCP-" + cToken.version + " transaction fees!");
         console.log("Constructing SCP-" + cToken.version + " Transfer TX for: " + sendAmount + " " + cToken.name + " (" + cToken.contract + ")");
@@ -360,8 +376,8 @@
     }
 
     function claimStakingRewards(contract) {
-        let cToken = TOKENS.getToken(contract);
-        let cAccount = cToken.getAccount(pubkeyMain);
+        let cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
+        let cAccount = isFullnode ? cToken.getAccount(pubkeyMain) : getCachedAccount(cToken, pubkeyMain);
         if (cachedUTXOs.length === 0) return alert("You need SCC to pay for SCP-" + cToken.version + " gas fees!");
         console.log("Constructing SCP-" + cToken.version + " stake claim TX for " + (cAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + cToken.name + " (" + cToken.contract + ")");
         // Use our first UTXO, as the fees will be incredibly low anyway
@@ -413,15 +429,14 @@
 
     let currentStakingToken = false;
     function refreshStakingStatus(contract) {
-      let cToken = TOKENS.getToken(contract);
-      let cAccount = cToken.getAccount(pubkeyMain);
-      let cStatus = cToken.getStakingStatus(pubkeyMain);
+      let cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
+      let cAccount = isFullnode ? cToken.getAccount(pubkeyMain) : getCachedAccount(cToken, pubkeyMain);
+      let cStatus = isFullnode ? cToken.getStakingStatus(pubkeyMain) : getStakingStatusLight(contract, pubkeyMain);
       // put token + account info on the Staking Page on this refresh!
       domStakingTitle.innerText = cToken.name + " " + cToken.ticker;
       if (cStatus.enabled) {
         // Run a quick'n'dirty APY calculation based on the current weight reward
-        let nWeight = cToken.getWeightPercent(pubkeyMain);
-        let nReward = cToken.inflation * nWeight;
+        let nReward = cToken.inflation * cStatus.weight;
         let nAPY = percentOf((nReward * 720) * 365, cAccount.balance);
         if (nAPY > 0.01 && nReward > 1) {
           domStakingApy.innerText = nAPY.toLocaleString('en-GB', { maximumFractionDigits: (nAPY > 100 ? 0 : 2) }) + "%";

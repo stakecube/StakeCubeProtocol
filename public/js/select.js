@@ -31,8 +31,9 @@ function setCoinSelector(img, text, value) {
   if (value === "scc") {
     nSendBalanceDisplay = getBalance();
   } else {
-    let cToken = TOKENS.getToken(value.split('scptoken-')[1]);
-    let cAccount = cToken.getAccount(pubkeyMain);
+    let strToken = value.split('scptoken-')[1];
+    let cToken = isFullnode ? TOKENS.getToken(strToken) : getCachedToken(strToken);
+    let cAccount = isFullnode ? cToken.getAccount(pubkeyMain) : getCachedAccount(cToken, pubkeyMain);
     nSendBalanceDisplay = Number((cAccount.balance / COIN).toFixed(8));
   }
   domSendingBalance.innerText = nSendBalanceDisplay.toLocaleString('en-GB', { maximumFractionDigits: 8 });

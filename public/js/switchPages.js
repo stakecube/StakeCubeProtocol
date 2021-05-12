@@ -112,8 +112,8 @@ function switchToStaking(contract) {
   domHeader.style.display = "block";
 
   currentStakingToken = contract;
-  let cToken = TOKENS.getToken(currentStakingToken);
-  let cAccount = cToken.getAccount(pubkeyMain);
+  let cToken = isFullnode ? TOKENS.getToken(currentStakingToken) : getCachedToken(currentStakingToken);
+  let cAccount = isFullnode ? cToken.getAccount(pubkeyMain) : getCachedAccount(cToken, pubkeyMain);
   domStakingRedeem.setAttribute('onclick', 'claimStakingRewards("' + cToken.contract + '")');
   if (cAccount.unclaimed_balance > 0) {
     domStakingRedeem.classList.remove('disabled');

@@ -89,6 +89,35 @@ if (networkEnabled) {
     }
     request.send()
   }
+  var getTokensByAccountLight = function (address) {
+    var request = new XMLHttpRequest();
+      request.open('GET', 'https://stakecubecoin.net/web3/scp/gettokensbyaccount/' + address, false);
+      request.send();
+
+      if (request.status === 200) {
+        let jsonData = JSON.parse(request.responseText);
+        cachedTokens = jsonData;
+        return jsonData;
+      }
+  }
+  var getActivityByAccountLight = function (address) {
+    var request = new XMLHttpRequest();
+      request.open('GET', 'https://stakecubecoin.net/web3/scp/getallactivity/' + address, false);
+      request.send();
+
+      if (request.status === 200) {
+        return JSON.parse(request.responseText);
+      }
+  }
+  var getStakingStatusLight = function (contract, address) {
+    var request = new XMLHttpRequest();
+      request.open('GET', 'https://stakecubecoin.net/web3/scp/getstakingstatus/' + contract + '/' + address, false);
+      request.send();
+
+      if (request.status === 200) {
+        return JSON.parse(request.responseText);
+      }
+  }
   var sendTransaction = function (hex) {
     if (typeof hex !== 'undefined') {
       var request = new XMLHttpRequest()
