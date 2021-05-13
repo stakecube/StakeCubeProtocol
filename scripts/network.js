@@ -13,6 +13,7 @@ if (networkEnabled) {
       // If the block count has changed, refresh all of our data!
       if (data > cachedBlockCount) {
         console.log("New block detected! " + cachedBlockCount + " --> " + data);
+        domBlock.innerText = data.toLocaleString('en-GB');
         if (pubkeyMain)
           getUnspentTransactions();
       } else {

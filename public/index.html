@@ -207,6 +207,7 @@
 
     let domMarketcap;
     let domPrice;
+    let domBlock;
 
     let domAuthDisplay;
     let domAuthImport;
@@ -540,6 +541,7 @@
       domSendingBalance = document.getElementById("sendingCoinBalance");
       domPrice = document.getElementById("dashboardPrice");
       domMarketcap = document.getElementById("dashboardMarketcap");
+      domBlock = document.getElementById("dashboardBlock");
       domDashboardBtn = document.getElementById("dashboardBtn");
       domActivityList = document.getElementById("activityList");
       domSendBtn = document.getElementById("sendBtn");
@@ -626,7 +628,9 @@
                 <span class="font-gray">Price:</span>
                 <span class="float-end" id="dashboardPrice">Loading...</span><br>
                 <span class="font-gray">Marketcap:</span>
-                <span class="float-end" id="dashboardMarketcap">Loading...</span>
+                <span class="float-end" id="dashboardMarketcap">Loading...</span><br>
+                <span class="font-gray">Current Block:</span>
+                <span class="float-end" id="dashboardBlock">Loading...</span>
               </div>
             </div>
           </div>
