@@ -86,9 +86,6 @@ function createWindow () {
     backgroundColor: "#f4f6f8"
   })
 
-  // Remove this when going into production!
-  mainWindow.openDevTools()
-
   mainWindow.loadFile('public/begin.html')
   
   mainWindow.on('closed', function () {
