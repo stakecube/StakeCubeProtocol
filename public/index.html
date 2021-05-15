@@ -50,7 +50,7 @@
   <script type="text/javascript" src="js/switchPages.js"></script>
 
   <!-- SCP LIBRARY GOES BELOW -->
-  <script src="../lib/index.js"></script>
+  <script type="text/javascript" src="../lib/index.js"></script>
   <!-- SCP LIBRARY GOES ABOVE -->
 
   <script>window.$ = window.jQuery = require('jquery');</script>
@@ -62,7 +62,9 @@
       <div class="verticalalign" style="padding-top: 5%;">
         <div class="vertical-center color-white">
           <center>
-            <img src="logo.svg" style="height:50px;"><br><br>
+            <img src="logo.svg" style="height:50px;">
+            <i id="versionLogin" style="position: static;color: white;opacity: 0.6;font-size: small;cursor: default;letter-spacing: 1px;"></i>
+            <br><br>
           </center>
             <div class="row">
               <div class="col-2"></div>
@@ -135,6 +137,7 @@
     <nav class="navbar navbar-expand-md navbar-dark fixed-top navbar-color font-weight-bold">
       <div class="container-fluid">
         <a class="navbar-brand" href="#"><img src="logo.svg" height="30"></a>
+        <i id="version" style="position: relative;color: white;opacity: 0.4;font-size: x-small;left: -13px;cursor: default;letter-spacing: 1px;bottom: -1px;"></i>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
           aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
@@ -553,6 +556,14 @@
       domStakingRoi = document.getElementById("stakingRoi");
       domStakingRewards = document.getElementById("stakingRewards");
       domStakingRedeem = document.getElementById("stakingRedeem");
+      // Don't need to cache these as it's just one-time use
+      if (npm_package) {
+        document.getElementById("version").innerText = "v" + npm_package.version;
+        document.getElementById("versionLogin").innerText = "v" + npm_package.version;
+      } else {
+        document.getElementById("version").style.display = "none";
+        document.getElementById("versionLogin").style.display = "none";
+      }
       // Check for an encrypted wallet, if one exists, pull up the login screen!
       let encwif = localStorage.getItem("encwif");
       if (encwif && encwif.length > 1) {
