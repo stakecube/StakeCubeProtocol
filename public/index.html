@@ -78,14 +78,31 @@
                       
                       <center>
                         <div class="omrs-input-group" style="width:100%; margin-bottom:10px;">
-                          <label class="omrs-input-underlined">
+                          <label style="display: flex;" class="omrs-input-underlined">
                             <input required id="pass1" type="password" autofocus>
                             <span class="omrs-input-label">Password</span>
+                            <button onclick="switchLoginVisibility()" style="background-color: transparent;border-style: none;outline: none;">
+                              <i id="pass1Visibility" class="fas fa-eye-slash"></i>
+                            </button>
                           </label>
                         </div>
                       </center>
 
                       <script>
+                        function switchLoginVisibility() {
+                          if (domPass1Visibility.classList.contains("fa-eye-slash")) {
+                            // Display pass
+                            domPass1Visibility.classList.remove("fa-eye-slash");
+                            domPass1Visibility.classList.add("fa-eye");
+                            document.getElementById("pass1").setAttribute("type", "text");
+                          } else {
+                            // Hide pass
+                            domPass1Visibility.classList.remove("fa-eye");
+                            domPass1Visibility.classList.add("fa-eye-slash");
+                            document.getElementById("pass1").setAttribute("type", "password");
+                          }
+                        }
+
                         $(document).ready(function(){
                           $('#pass1').keypress(function(e){
                             if(e.keyCode==13) {
@@ -201,6 +218,8 @@
     let domReceivePage;
     let domAuthPage;
     let domStakingPage;
+
+    let domPass1Visibility;
 
     let domReceiveAddress;
     let domBalance;
@@ -527,6 +546,7 @@
       // Cache all our UI elements
       domHeader = document.getElementById("guiHeader");
       domLoginPage = document.getElementById("loginPage");
+      domPass1Visibility = document.getElementById("pass1Visibility");
       domDashboardPage = document.getElementById('dashboardPage');
       domSendPage = document.getElementById('sendPage');
       domReceivePage = document.getElementById('receivePage');
