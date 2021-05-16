@@ -22,6 +22,7 @@ function switchToSend() {
   // Show
   domSendPage.style.display = "block";
   domHeader.style.display = "block";
+  getBalance(true);
 
   // Remove active
   domDashboardBtn.classList.remove('active');
@@ -57,6 +58,7 @@ function switchToDashboard() {
 
 }
 
+let hasSetupRecvQR = false;
 function switchToReceive() {
   // Hide
   domSendPage.style.display = "none";
@@ -64,11 +66,19 @@ function switchToReceive() {
   domLoginPage.style.display = "none";
   domAuthPage.style.display = "none";
   domStakingPage.style.display = "none";
-  getBalance(true);
 
   // Show
   domReceivePage.style.display = "block";
   domHeader.style.display = "block";
+
+  // QR setup
+  if (!hasSetupRecvQR) {
+    hasSetupRecvQR = true;
+    let recvQR = qrcode(4, 'L');
+    recvQR.addData('scc:' + pubkeyMain);
+    recvQR.make();
+    document.getElementById('receiveQR').setAttribute('src', recvQR.createDataURL());
+  }
 
   // Remove active
   domSendBtn.classList.remove('active');
