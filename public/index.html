@@ -141,6 +141,7 @@
       decryptWallet(nPass).then(done => {
         if (done) {
           nLoginError.innerHTML = "";
+          document.getElementById("pass1").value = "";
           switchToDashboard();
           console.log("Login successful!");
         } else {
