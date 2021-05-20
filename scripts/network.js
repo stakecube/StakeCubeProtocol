@@ -92,32 +92,27 @@ if (networkEnabled) {
   }
   var getTokensByAccountLight = function (address) {
     var request = new XMLHttpRequest();
-      request.open('GET', 'https://stakecubecoin.net/web3/scp/gettokensbyaccount/' + address, false);
-      request.send();
-
-      if (request.status === 200) {
-        let jsonData = JSON.parse(request.responseText);
-        cachedTokens = jsonData;
-        return jsonData;
+      request.open('GET', 'https://stakecubecoin.net/web3/scp/gettokensbyaccount/' + address, true);
+      request.onload = function () {
+        cachedTokens = JSON.parse(this.response);
       }
+      request.send();
   }
   var getActivityByAccountLight = function (address) {
     var request = new XMLHttpRequest();
-      request.open('GET', 'https://stakecubecoin.net/web3/scp/getallactivity/' + address, false);
-      request.send();
-
-      if (request.status === 200) {
-        return JSON.parse(request.responseText);
+      request.open('GET', 'https://stakecubecoin.net/web3/scp/getallactivity/' + address, true);
+      request.onload = function () {
+        cachedActivity = JSON.parse(this.response).reverse();
       }
+      request.send();
   }
   var getStakingStatusLight = function (contract, address) {
     var request = new XMLHttpRequest();
-      request.open('GET', 'https://stakecubecoin.net/web3/scp/getstakingstatus/' + contract + '/' + address, false);
-      request.send();
-
-      if (request.status === 200) {
-        return JSON.parse(request.responseText);
+      request.open('GET', 'https://stakecubecoin.net/web3/scp/getstakingstatus/' + contract + '/' + address, true);
+      request.onload = function () {
+        guiStakingStatus = JSON.parse(this.response);
       }
+      request.send();
   }
   var sendTransaction = function (hex) {
     if (typeof hex !== 'undefined') {

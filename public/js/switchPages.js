@@ -47,6 +47,7 @@ function switchToDashboard() {
   // Show
   domDashboardPage.style.display = "block";
   domHeader.style.display = "block";
+  getBalance(true);
 
   // Remove active
   domSendBtn.classList.remove('active');
@@ -55,7 +56,6 @@ function switchToDashboard() {
 
   // Add active
   domDashboardBtn.classList.add('active');
-
 }
 
 let hasSetupRecvQR = false;
@@ -122,11 +122,4 @@ function switchToStaking(contract) {
   domHeader.style.display = "block";
 
   currentStakingToken = contract;
-  let cToken = isFullnode ? TOKENS.getToken(currentStakingToken) : getCachedToken(currentStakingToken);
-  let cAccount = isFullnode ? cToken.getAccount(pubkeyMain) : getCachedAccount(cToken, pubkeyMain);
-  domStakingRedeem.setAttribute('onclick', 'claimStakingRewards("' + cToken.contract + '")');
-  if (cAccount.unclaimed_balance > 0) {
-    domStakingRedeem.classList.remove('disabled');
-    domStakingRedeem.innerText = 'Claim Rewards';
-  }
 }

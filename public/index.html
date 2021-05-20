@@ -143,6 +143,10 @@
           nLoginError.innerHTML = "";
           document.getElementById("pass1").value = "";
           switchToDashboard();
+          // Give the cache a kick
+          setTimeout(() => {
+            getBalance(true);
+          }, 750);
           console.log("Login successful!");
         } else {
           nLoginError.innerHTML = '<div class="alert alert-danger-custom" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> &nbsp;Incorrect Password!</div><br>';
@@ -201,6 +205,7 @@
     let cachedUTXOs = [];
     let cachedTokens = [];
     let cachedBlockCount = 0;
+    let cachedActivity = [];
 
     // Privkey storage
     let privkeyDecrypted = null;
@@ -273,18 +278,21 @@
 
         // --- Update SCP token balances
         // Fetch all tokens owned by our account (pubkeyMain)
-        let knownTokens = isFullnode ? TOKENS.getTokensByAccount(pubkeyMain) : getTokensByAccountLight(pubkeyMain);
+        if (isFullnode)
+          cachedTokens = TOKENS.getTokensByAccount(pubkeyMain);
+        else
+          getTokensByAccountLight(pubkeyMain);
         // Loop all tokens, construct an updated GUI for the Dashboard
         let dashboardTokens = document.getElementById("dashboardTokens");
         let sendTokensSelector = document.getElementById('sendingCoin');
         sendTokensSelector.innerHTML = '<option value="scc" data-thumbnail="circular-logo.png">StakeCubeCoin (SCC)</option>';
         dashboardTokens.innerHTML = '<div class="card-title font-gray font-weight-bold" style="margin-bottom:30px;">SCP Tokens</div>';
         if (chainHashesCache.length === 0 && isFullnode) {
-          dashboardTokens.innerHTML += '<center><p>Initializing SCP</p></center>';
+          dashboardTokens.innerHTML += '<center><p>Loading SCP</p></center>';
         } else if (getSyncPercentage() < 99.99 && isFullnode) {
           dashboardTokens.innerHTML += '<center><p id="scpSyncing">SCP is still syncing (' + getSyncPercentage().toFixed(2) + '%)</p></center>';
-        } else if (knownTokens.length > 0) {
-          for (const cToken of knownTokens) {
+        } else if (cachedTokens.length > 0) {
+          for (const cToken of cachedTokens) {
             let stakingButton = 'onclick="switchToStaking(\'' + cToken.token.contract + '\')"';
             let stakingStyle = 'cursor:pointer;';
             let stakingText = '';
@@ -304,12 +312,15 @@
         }
 
         // Update activity widget
-        let arrActivity = isFullnode ? TOKENS.getActivityByAccount(pubkeyMain).reverse() : getActivityByAccountLight(pubkeyMain).reverse();
-        if (arrActivity.length > 0) {
+        if (isFullnode)
+          cachedActivity = TOKENS.getActivityByAccount(pubkeyMain).reverse();
+        else
+          getActivityByAccountLight(pubkeyMain);
+        if (cachedActivity.length > 0) {
           domActivityList.innerHTML = "";
-          let amountToLoad = Math.min(arrActivity.length, 5), i;
+          let amountToLoad = Math.min(cachedActivity.length, 5), i;
           for (i=0; i<amountToLoad; i++) {
-            domActivityList.innerHTML += '<div class="mt-4"><div class="float-start text-center">Block ' + arrActivity[i].block.toLocaleString('en-GB') + '</div><span class="float-end ' + ((arrActivity[i].type === 'received' || arrActivity[i].type === 'staked') ? "plus" : "minus") + '-balance-color font-weight-bold" style="position:relative; top:11px;"><i style="text-transform: capitalize;padding-right:5px;">' + arrActivity[i].type + '</i> ' + ((arrActivity[i].type === 'received' || arrActivity[i].type === 'staked') ? "+" : "-") + (arrActivity[i].amount / COIN).toLocaleString('en-GB', { maximumFractionDigits: 8, minimumFractionDigits: 2 }) + ' ' + arrActivity[i].token.ticker + '</span></div><br><br>' + (i !== 4 ? '<hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">' : '');
+            domActivityList.innerHTML += '<div class="mt-4"><div class="float-start text-center">Block ' + cachedActivity[i].block.toLocaleString('en-GB') + '</div><span class="float-end ' + ((cachedActivity[i].type === 'received' || cachedActivity[i].type === 'staked') ? "plus" : "minus") + '-balance-color font-weight-bold" style="position:relative; top:11px;"><i style="text-transform: capitalize;padding-right:5px;">' + cachedActivity[i].type + '</i> ' + ((cachedActivity[i].type === 'received' || cachedActivity[i].type === 'staked') ? "+" : "-") + (cachedActivity[i].amount / COIN).toLocaleString('en-GB', { maximumFractionDigits: 8, minimumFractionDigits: 2 }) + ' ' + cachedActivity[i].token.ticker + '</span></div><br><br>' + (i !== 4 ? '<hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">' : '');
           }
         } else {
           domActivityList.innerHTML = "<center><p>You have no activity!</p></center>";
@@ -452,31 +463,83 @@
     }
 
     let currentStakingToken = false;
+    let guiStakingToken;
+    let guiStakingAccount;
+    let guiStakingStatus;
     function refreshStakingStatus(contract) {
-      let cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
-      let cAccount = isFullnode ? cToken.getAccount(pubkeyMain) : getCachedAccount(cToken, pubkeyMain);
-      let cStatus = isFullnode ? cToken.getStakingStatus(pubkeyMain) : getStakingStatusLight(contract, pubkeyMain);
-      // put token + account info on the Staking Page on this refresh!
-      domStakingTitle.innerText = cToken.name + " " + cToken.ticker;
-      if (cStatus.enabled) {
-        // Run a quick'n'dirty APY calculation based on the current weight reward
-        let nReward = cToken.inflation * cStatus.weight;
-        let nAPY = percentOf((nReward * 720) * 365, cAccount.balance);
-        if (nAPY > 0.01 && nReward > 1) {
-          domStakingApy.innerText = nAPY.toLocaleString('en-GB', { maximumFractionDigits: (nAPY > 100 ? 0 : 2) }) + "%";
-          domStakingRoi.innerText = "or a ROI of " + percentOf(cAccount.unclaimed_balance, cAccount.balance).toFixed(2) + "%";
-        } else {
-          domStakingApy.innerText = "";
-          domStakingRoi.innerText = "";
-        }
-        domStakingSubtitle.innerHTML = "You've been staking for " + cStatus.age.toLocaleString('en-GB') + " blocks and earned...";
+      if (isFullnode) {
+        guiStakingToken   = TOKENS.getToken(contract);
+        guiStakingAccount = guiStakingToken.getAccount(pubkeyMain);
+        guiStakingStatus  = guiStakingToken.getStakingStatus(pubkeyMain);
       } else {
-        domStakingApy.innerText = "";
-        domStakingRoi.innerText = "";
-        domStakingSubtitle.innerHTML = "You've transacted tokens recently, so you must wait another " + (cToken.minAge - cStatus.age).toLocaleString('en-GB') + " blocks before you can start receiving stakes again!";
+        guiStakingToken   = getCachedToken(contract);
+        guiStakingAccount = getCachedAccount(guiStakingToken, pubkeyMain);
+        getStakingStatusLight(contract, pubkeyMain);
       }
-
-      domStakingRewards.innerHTML = (cAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + cToken.ticker;
+      // Put token + account info on the Staking Page on this refresh!
+      if ((guiStakingToken && guiStakingAccount && guiStakingStatus) && guiStakingStatus.enabled) {
+        domStakingTitle.innerText = guiStakingToken.name + " " + guiStakingToken.ticker;
+        // Run a quick'n'dirty APY calculation based on the current weight reward
+        let nReward = guiStakingToken.inflation * guiStakingStatus.weight;
+        // Also check to ensure we haven't hit the max supply yet
+        if (guiStakingToken.supply === guiStakingToken.maxSupply ||
+           (guiStakingToken.supply + guiStakingAccount.unclaimed_balance) >= guiStakingToken.maxSupply)
+        {
+          console.log("max");
+          domStakingApy.innerText = "0%";
+          domStakingRoi.innerText = "";
+          domStakingSubtitle.innerText = guiStakingToken.name + " has hit it's max supply of " + (guiStakingToken.maxSupply / COIN).toLocaleString('en-GB') + " " + guiStakingToken.ticker  + "!";
+          domStakingRewards.innerText = "Cap Reached";
+          domStakingRedeem.setAttribute('onclick', '');
+          if (!domStakingRedeem.classList.contains('disabled'))
+            domStakingRedeem.classList.add('disabled');
+          domStakingRedeem.innerText = 'No Stakes to Claim';
+        } else {
+          console.log("not max");
+          console.log((guiStakingToken.supply / COIN) + " " + (nReward / COIN) + " " + (guiStakingToken.maxSupply / COIN));
+          console.log((guiStakingToken.supply + nReward) >= guiStakingToken.maxSupply);
+          let nAPY = percentOf((nReward * 720) * 365, guiStakingAccount.balance);
+          if (nAPY > 0.01 && nReward > 1) {
+            domStakingApy.innerText = nAPY.toLocaleString('en-GB', { maximumFractionDigits: (nAPY > 100 ? 0 : 2) }) + "%";
+            domStakingRoi.innerText = "or a ROI of " + percentOf(guiStakingAccount.unclaimed_balance, guiStakingAccount.balance).toFixed(2) + "%";
+          } else {
+            domStakingApy.innerText = "---";
+            domStakingRoi.innerText = "";
+          }
+          domStakingSubtitle.innerHTML = "You've been staking for " + (guiStakingStatus.age - guiStakingToken.minAge).toLocaleString('en-GB') + " blocks and earned...";
+          domStakingRewards.innerText = (guiStakingAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + guiStakingToken.ticker;
+          if (guiStakingAccount.unclaimed_balance > 0) {
+            domStakingRedeem.setAttribute('onclick', 'claimStakingRewards("' + contract + '")');
+            domStakingRedeem.classList.remove('disabled');
+            domStakingRedeem.innerText = 'Claim Rewards';
+          } else {
+            domStakingRedeem.setAttribute('onclick', '');
+            if (!domStakingRedeem.classList.contains('disabled'))
+              domStakingRedeem.classList.add('disabled');
+            domStakingRedeem.innerText = 'No Stakes to Claim';
+          }
+        }
+      } else if (guiStakingToken && guiStakingAccount && guiStakingStatus) {
+        domStakingTitle.innerText = guiStakingToken.name + " (" + guiStakingToken.ticker + ")";
+        domStakingApy.innerText = "---";
+        domStakingRoi.innerText = "";
+        domStakingSubtitle.innerHTML = "Your tokens need another " + (guiStakingToken.minAge - guiStakingStatus.age).toLocaleString('en-GB') + " blocks to mature before earning stakes!";
+        domStakingRewards.innerHTML = (guiStakingAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + guiStakingToken.ticker;
+        domStakingRedeem.setAttribute('onclick', '');
+        if (!domStakingRedeem.classList.contains('disabled'))
+          domStakingRedeem.classList.add('disabled');
+        domStakingRedeem.innerText = 'No Stakes to Claim';
+      } else {
+        domStakingTitle.innerText = guiStakingToken ? guiStakingToken.name + " (" + guiStakingToken.ticker + ")" : "Loading...";
+        domStakingApy.innerText = "---";
+        domStakingRoi.innerText = "";
+        domStakingSubtitle.innerHTML = "Loading...";
+        domStakingRewards.innerHTML = "...";
+        domStakingRedeem.setAttribute('onclick', '');
+        if (!domStakingRedeem.classList.contains('disabled'))
+          domStakingRedeem.classList.add('disabled');
+        domStakingRedeem.innerText = 'No Stakes to Claim';
+      }
     }
 
     function import2FA() {
@@ -645,7 +708,7 @@
             <div class="card-body">
               <div class="card-title font-gray font-weight-bold">Activity</div>
               <div id="activityList">
-                <center><p>You have no activity!</p></center>
+                <center><p>Loading Activity</p></center>
               </div>
             </div>
           </div>
@@ -670,7 +733,7 @@
           <div class="card card-prop mb-4">
             <div id="dashboardTokens" class="card-body">
               <div class="card-title font-gray font-weight-bold" style="margin-bottom:30px;">SCP Tokens</div>
-              <center><p>Your SCP full-node has not yet initialized, ensure your configuration is correct!</p></center>
+              <center><p>Loading SCP</p></center>
             </div>
           </div>
 
@@ -829,14 +892,14 @@
 
           <div class="card card-prop mb-4">
             <div class="card-body">
-              <div class="card-title font-gray font-weight-bold" id="stakingTitle"></div>
+              <div class="card-title font-gray font-weight-bold" id="stakingTitle">Loading...</div>
               <br>
               <center>
-                <p id="stakingSubtitle"></p>
-                <h2 id="stakingRewards"></h2>
-                <p id="stakingRoi" style="opacity:0.5;">or a ROI of ---%</p>
+                <p id="stakingSubtitle">Loading...</p>
+                <h2 id="stakingRewards">...</h2>
+                <p id="stakingRoi" style="opacity:0.5;"></p>
                 <br>
-                <button id="stakingRedeem" class="btn btn-layout btn-theme" onclick="redeemTokens()">Claim Rewards</button>
+                <button id="stakingRedeem" class="btn btn-layout btn-theme disabled" onclick="redeemTokens()">Claim Rewards</button>
               </center><br><br>
               
               <center><img src="qr.png" style="display: none;"></center>
