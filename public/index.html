@@ -485,7 +485,6 @@
         if (guiStakingToken.supply === guiStakingToken.maxSupply ||
            (guiStakingToken.supply + guiStakingAccount.unclaimed_balance) >= guiStakingToken.maxSupply)
         {
-          console.log("max");
           domStakingApy.innerText = "0%";
           domStakingRoi.innerText = "";
           domStakingSubtitle.innerText = guiStakingToken.name + " has hit it's max supply of " + (guiStakingToken.maxSupply / COIN).toLocaleString('en-GB') + " " + guiStakingToken.ticker  + "!";
@@ -495,9 +494,6 @@
             domStakingRedeem.classList.add('disabled');
           domStakingRedeem.innerText = 'No Stakes to Claim';
         } else {
-          console.log("not max");
-          console.log((guiStakingToken.supply / COIN) + " " + (nReward / COIN) + " " + (guiStakingToken.maxSupply / COIN));
-          console.log((guiStakingToken.supply + nReward) >= guiStakingToken.maxSupply);
           let nAPY = percentOf((nReward * 720) * 365, guiStakingAccount.balance);
           if (nAPY > 0.01 && nReward > 1) {
             domStakingApy.innerText = nAPY.toLocaleString('en-GB', { maximumFractionDigits: (nAPY > 100 ? 0 : 2) }) + "%";
