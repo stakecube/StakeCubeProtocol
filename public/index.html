@@ -301,7 +301,8 @@
               stakingStyle = '';
             } else {
               let nRewards = (cToken.account.unclaimed_balance / COIN);
-              if (cToken.account.unclaimed_balance > 0)
+              // Ensure we have unclaimed stakes, and the token has not hit max supply yet
+              if (cToken.account.unclaimed_balance > 0 && (cToken.token.supply + cToken.account.unclaimed_balance) < cToken.token.maxSupply)
                 stakingText = ' <i style="opacity:0.5;">(+' + (nRewards > 1 ? nRewards.toLocaleString('en-GB', { maximumFractionDigits: 4 }) : nRewards.toLocaleString('en-GB', { maximumFractionDigits: 8 })) + ')</i>';
             }
             dashboardTokens.innerHTML += '<div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px;' + stakingStyle + '" ' + stakingButton + '><img src="circular-logo.png" style="width:32px; height:32px;"><span style="margin-left:10px;">' + cToken.token.name + '</span><span class="float-end">' + (cToken.account.balance / COIN).toLocaleString('en-GB', { maximumFractionDigits: 8 }) + stakingText + '</span></div>';
