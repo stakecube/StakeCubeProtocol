@@ -170,3 +170,66 @@ div.omrs-input-group {
   background-color:#0475df;
   color:white;
 }
+
+#toast-container {
+    display: block;
+    position: fixed;
+    z-index: 10000
+}
+
+@media only screen and (max-width: 600px) {
+    #toast-container {
+        min-width:100%;
+        bottom: 0%
+    }
+}
+
+@media only screen and (min-width: 601px) and (max-width: 992px) {
+    #toast-container {
+		/*
+        left:5%;
+        bottom: 7%;
+		*/
+        top:10%;
+        right: 7%;
+        max-width: 90%
+    }
+}
+
+@media only screen and (min-width: 993px) {
+    #toast-container {
+        top:10%;
+        right: 7%;
+        max-width: 86%
+    }
+}
+
+.toast {
+	border-radius: 50px !important;
+    top: 35px;
+    width: auto;
+    margin-top: 10px;
+    position: relative;
+    max-width: 100%;
+    height: auto;
+    min-height: 48px;
+    line-height: 1.5em;
+    background-color: #323232;
+    padding: 10px 25px;
+    font-size: 1.1rem;
+    font-weight: 300;
+    color: #fff;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-box-pack: justify;
+    -webkit-justify-content: space-between;
+    -ms-flex-pack: justify;
+    justify-content: space-between;
+    cursor: default
+}

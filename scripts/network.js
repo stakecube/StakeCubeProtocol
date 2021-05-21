@@ -122,11 +122,10 @@ if (networkEnabled) {
         data = this.response;
         if (data.length === 64) {
           console.log('Transaction sent! ' + data);
-          alert("Transaction Sent!");
+          M.toast({html: 'Transaction Sent!', displayLength: 2000});
           //document.getElementById("transactionFinal").innerHTML = ('<h4 style="color:green">Transaction sent! ' + data + '</h4>');
         } else {
-          console.log('Error sending transaction: ' + data);
-          alert('Error sending transaction: ' + data);
+          M.toast({html: 'Error sending transaction!', displayLength: 3000});
           //document.getElementById("transactionFinal").innerHTML = ('<h4 style="color:red">Error sending transaction: ' + data + "</h4>");
         }
       }

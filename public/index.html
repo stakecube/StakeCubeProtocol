@@ -49,6 +49,9 @@
   <script type="text/javascript" src="../scripts/bitTrx.js"></script>
   <script type="text/javascript" src="js/switchPages.js"></script>
 
+  <!-- Materialize Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
   <!-- SCP LIBRARY GOES BELOW -->
   <script type="text/javascript" src="../lib/index.js"></script>
   <!-- SCP LIBRARY GOES ABOVE -->
@@ -149,7 +152,7 @@
           }, 750);
           console.log("Login successful!");
         } else {
-          nLoginError.innerHTML = '<div class="alert alert-danger-custom" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> &nbsp;Incorrect Password!</div><br>';
+          M.toast({html: 'Incorrect Password!', displayLength: 2000});
         }
       });
     }
@@ -351,7 +354,7 @@
       let sendAddress = document.getElementById("sendAddress").value;
       if (coinSelection === "scc") {
         let nBalance = getBalance();
-        if (sendAmount > nBalance) return alert("Balance is too small! (" + nBalance + " - " + sendAmount + " = " + (nBalance - sendAmount).toFixed(8) + ")");
+        if (sendAmount > nBalance) return M.toast({html: 'Not enough funds!', displayLength: 3000});
         console.log("Constructing TX of value: " + sendAmount + " SCC");
         // Loop our cached UTXOs and construct a TX
         trx = bitjs.transaction();
@@ -377,14 +380,14 @@
           sendTransaction(trx.sign(privkeyDecrypted, 1));
         } else {
           console.warn("Amount: " + sendAmount + "\nFee: " + fee + "\nChange: " + valuechange + "\nTotal: " + totalSent);
-          alert("You are trying to send more than you have!");
+          M.toast({html: 'You don\'t have enough SCC!', displayLength: 3000});
         }
       } else {
         let strToken = coinSelection.split('scptoken-')[1];
         let cToken = isFullnode ? TOKENS.getToken(strToken) : getCachedToken(strToken);
         let cAccount = isFullnode ? cToken.getAccount(pubkeyMain) : getCachedAccount(cToken, pubkeyMain);
-        if ((cAccount.balance / COIN) < sendAmount) return alert("You don't have enough " + cToken.ticker + " to send!");
-        if (cachedUTXOs.length === 0) return alert("You need SCC to pay for SCP-" + cToken.version + " transaction fees!");
+        if ((cAccount.balance / COIN) < sendAmount) return M.toast({html: 'You don\'t have enough ' + cToken.ticker + '!', displayLength: 3000});
+        if (cachedUTXOs.length === 0) return M.toast({html: 'You need SCC to pay for gas fees!', displayLength: 3000});
         console.log("Constructing SCP-" + cToken.version + " Transfer TX for: " + sendAmount + " " + cToken.name + " (" + cToken.contract + ")");
         // Use our first UTXO, as the fees will be incredibly low anyway
         trx = bitjs.transaction();
@@ -406,7 +409,7 @@
           sendTransaction(trx.sign(privkeyDecrypted, 1));
         } else {
           console.warn("Transfer: " + sendAmount + " " + cToken.ticker + "\nFee: " + fee + " SCC\nChange: " + valuechange + " SCC\nTotal: " + totalSent + " SCC");
-          alert("You are trying to send more than you have!");
+          M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
         }
       }
     }
@@ -414,7 +417,7 @@
     function claimStakingRewards(contract) {
         let cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
         let cAccount = isFullnode ? cToken.getAccount(pubkeyMain) : getCachedAccount(cToken, pubkeyMain);
-        if (cachedUTXOs.length === 0) return alert("You need SCC to pay for SCP-" + cToken.version + " gas fees!");
+        if (cachedUTXOs.length === 0) return M.toast({html: 'You need SCC to pay for gas fees!', displayLength: 3000});
         console.log("Constructing SCP-" + cToken.version + " stake claim TX for " + (cAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + cToken.name + " (" + cToken.contract + ")");
         // Use our first UTXO, as the fees will be incredibly low anyway
         trx = bitjs.transaction();
@@ -438,9 +441,10 @@
           domStakingRedeem.classList.add('disabled');
           domStakingRedeem.innerText = 'Redeeming...';
           domStakingSubtitle.innerText = 'Your stake is being redeemed! Please wait until the next block to see your balance update.';
+          M.toast({html: 'Redeeming, please wait for your claim to confirm on the network!', displayLength: 7500});
         } else {
           console.warn("Redeem: " + (cAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + cToken.ticker + "\nFee: " + fee + " SCC\nChange: " + valuechange + " SCC\nTotal: " + totalSent + " SCC");
-          alert("You are trying to send more than you have!");
+          M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
         }
     }
 
@@ -580,6 +584,11 @@
       if (domStakingPage.style.display === "block" && currentStakingToken) {
         refreshStakingStatus(currentStakingToken);
       }
+    }
+
+    function copyToClipboard(text, name) {
+      clipboard.writeText(text);
+      M.toast({html: 'Copied ' + name + ' to Clipboard!', displayLength: 2000});
     }
 
     setInterval(() => {
@@ -814,7 +823,7 @@
               <div class="alert alert-danger-custom" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> Please make sure to only send SCC or SCP tokens to this address. Other coins will be lost and cannot be reversed.</div><br>
               
               <center>
-                <div onclick="clipboard.writeText(pubkeyMain)" class="refresh-button hover-darker">
+                <div onclick="copyToClipboard(pubkeyMain, 'Address')" class="refresh-button hover-darker">
                   <span id="receiveAddress" class="font-weight-bold"></span>
                   <span style="padding-left:6px;">
                     <i class="far fa-copy"></i>
@@ -861,8 +870,10 @@
                   <br>
                 </div>
                 <center id="authDisplay">
-                  <span id="authCode" style="font-size: x-large;" class="font-weight-bold"></span>
-                  <i onclick="clipboard.writeText(document.getElementById('authCode').innerText)" style="padding-left:6px;" class="far fa-copy refresh-button"></i>
+                  <div onclick="copyToClipboard(document.getElementById('authCode').innerText, '2FA code')" class="refresh-button hover-darker">
+                    <span id="authCode" style="font-size: x-large;" class="font-weight-bold"></span>
+                    <i  style="padding-left:6px;" class="far fa-copy refresh-button"></i>
+                  </div>
                   <p id="authTime" style="opacity: 0.8;">10 seconds left til next code</p>
                   <br>
                 </center>
