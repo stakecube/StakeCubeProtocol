@@ -146,8 +146,7 @@ importWallet = function (newWif = false) {
       //document.getElementById('genKeyWarning').style.display = 'block';
     }
     // Load UTXOs from explorer
-    if (networkEnabled)
-      getUnspentTransactions();
+    getUnspentTransactions();
   }
 }
 
@@ -160,24 +159,20 @@ generateWallet = async function (strPrefix = false) {
   }
   if (walletConfirm) {
     walletAlreadyMade++;
-    if (debug) {
-      var privateKeyBytes = hexStringToByte("FFE09E40CE1C5F7092801D2388347C552C408FC9056734E8273977E658BC201F");
-    } else {
-      var randArr = new Uint8Array(32)
-      window.crypto.getRandomValues(randArr) //populate array with cryptographically secure random numbers
-      var privateKeyBytes = []
-      for (var i = 0; i < randArr.length; ++i)
-        privateKeyBytes[i] = randArr[i]
-    }
+    var randArr = new Uint8Array(32);
+    window.crypto.getRandomValues(randArr); //populate array with cryptographically secure random numbers
+    var privateKeyBytes = [];
+    for (var i = 0; i < randArr.length; ++i)
+      privateKeyBytes[i] = randArr[i];
     //Private Key Generation
-    var privateKeyHex = byteToHexString(privateKeyBytes).toUpperCase()
-    var privateKeyAndVersion = SECRET_KEY.toString(16) + privateKeyHex + "01"
+    var privateKeyHex = byteToHexString(privateKeyBytes).toUpperCase();
+    var privateKeyAndVersion = SECRET_KEY.toString(16) + privateKeyHex + "01";
     const shaObj = new jsSHA("SHA-256", "HEX", { "numRounds": 2 });
     shaObj.update(privateKeyAndVersion);
     const hash = shaObj.getHash("HEX");
-    var checksum = String(hash).substr(0, 8).toUpperCase()
-    var keyWithChecksum = privateKeyAndVersion + checksum
-    var privateKeyWIF = to_b58(hexStringToByte(keyWithChecksum), MAP)
+    var checksum = String(hash).substr(0, 8).toUpperCase();
+    var keyWithChecksum = privateKeyAndVersion + checksum;
+    var privateKeyWIF = to_b58(hexStringToByte(keyWithChecksum), MAP);
     privkeyDecrypted = privateKeyWIF;
     //Public Key Generation
     var privateKeyBigInt = BigInteger.fromByteArrayUnsigned(Crypto.util.hexToBytes(byteToHexString(privateKeyBytes).toUpperCase()));

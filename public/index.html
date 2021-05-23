@@ -9,7 +9,7 @@
 
   <link href="css/bootstrap.min.css" rel="stylesheet">
   <link href="css/style.css" rel="stylesheet">
-  <link href="style/latest-style.css" rel="stylesheet">
+  <link id="themeSheet" href="style/latest-style-light.css" rel="stylesheet">
   <link href="fontawesome/css/fontawesome.min.css" rel="stylesheet">
   <link href="fontawesome/css/all.min.css" rel="stylesheet">
 
@@ -371,8 +371,8 @@
           console.log("Coin Control: Selected input " + UTXO.txid.substr(0, 6) + "(" + UTXO.outputIndex + ")... (Added " + (UTXO.satoshis / COIN).toFixed(8) + " SCC - Total: " + txValue + ")");
         }
 
-        calculatefee(trx.serialize().length);
         trx.addoutput(sendAddress, sendAmount); // Sending to this address
+        calculatefee(trx.serialize().length);
         totalSent = (parseFloat(fee) + parseFloat(sendAmount)).toFixed(8);
         valuechange = (parseFloat(txValue) - parseFloat(totalSent)).toFixed(8);
         if (totalSent <= balance) {
