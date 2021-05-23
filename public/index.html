@@ -9,7 +9,7 @@
 
   <link href="css/bootstrap.min.css" rel="stylesheet">
   <link href="css/style.css" rel="stylesheet">
-  <link id="themeSheet" href="style/latest-style-light.css" rel="stylesheet">
+  <link id="themeSheet" themeIndex="0" href="style/latest-style-light.css" rel="stylesheet">
   <link href="fontawesome/css/fontawesome.min.css" rel="stylesheet">
   <link href="fontawesome/css/all.min.css" rel="stylesheet">
 
@@ -161,8 +161,10 @@
   <header id="guiHeader">
     <nav class="navbar navbar-expand-md navbar-dark fixed-top navbar-color font-weight-bold">
       <div class="container-fluid">
-        <a class="navbar-brand" href="#"><img onclick="switchToDashboard()" src="logo.svg" height="30"></a>
-        <i id="version" style="position: relative;color: white;opacity: 0.4;font-size: x-small;left: -13px;cursor: default;letter-spacing: 1px;bottom: -1px;"></i>
+        <a class="navbar-brand" href="#">
+          <img onclick="switchToDashboard()" src="logo.svg" height="30">
+          <i id="version" style="position: relative;color: white;opacity: 0.4;font-size: x-small;cursor: default;letter-spacing: 1px;bottom: -1px;"></i>
+        </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
           aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
@@ -614,6 +616,8 @@
 
     onload = () => {
       // Cache all our UI elements
+      domTheme = document.getElementById("themeSheet");
+      domThemeButton = document.getElementById("themeButton");
       domHeader = document.getElementById("guiHeader");
       domLoginPage = document.getElementById("loginPage");
       domPass1Visibility = document.getElementById("pass1Visibility");
@@ -919,6 +923,7 @@
       </div>
 
     </div>
+    <i id="themeButton" onclick="loadNextTheme();" class="fas fa-sun" style="position: fixed; bottom: 10px; left: 10px; color: black; opacity: 0.5; cursor: pointer;"></i>
   </main>
 
   <script src="js/bootstrap.bundle.min.js"></script>
