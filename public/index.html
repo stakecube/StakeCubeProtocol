@@ -450,6 +450,64 @@
         }
     }
 
+    function deploySCP(version = 1, params = []) {
+        if (!Number.isSafeInteger(version)) return console.error("SCP token must have a version integer!");
+        if (params.length < 3) return console.error("SCP token deployment requires params!\nE.g; deploySCP(1, ['Cat Coin', 'CAT', " + COIN + "])");
+        if (cachedUTXOs.length === 0) return M.toast({html: 'You need SCC to pay for gas fees!', displayLength: 3000});
+        console.log("Constructing SCP-" + version + " deployment TX");
+        // Use our first UTXO, as the fees will be incredibly low anyway
+        trx = bitjs.transaction();
+        let cUTXO;
+        for (const cSelectedUTXO of cachedUTXOs) {
+          cUTXO = cSelectedUTXO;
+          if (cUTXO.satoshis > 200000) {
+            trx.addinput(cUTXO.txid, cUTXO.outputIndex, cUTXO.script);
+            break;
+          }
+        }
+        trx.addoutputburn(0.00000001, "SCPCREATE" + version + " " + params.join(" "));
+
+        calculatefee(trx.serialize().length);
+        totalSent = parseFloat(fee).toFixed(8);
+        valuechange = (parseFloat(cUTXO.satoshis / COIN) - parseFloat(totalSent)).toFixed(8);
+        if (totalSent <= balance) {
+          trx.addoutput(pubkeyMain, valuechange); // Change Output
+          sendTransaction(trx.sign(privkeyDecrypted, 1));
+          M.toast({html: 'Deploying! Please wait for the contract to confirm in a block!', displayLength: 7500});
+        } else {
+          console.warn("SCP-" + version + " Deployment:\nFee: " + fee + " SCC\nChange: " + valuechange + " SCC\nTotal: " + totalSent + " SCC");
+          M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
+        }
+    }
+
+    function mintSCP(contract, amount) {
+        if (cachedUTXOs.length === 0) return M.toast({html: 'You need SCC to pay for gas fees!', displayLength: 3000});
+        console.log("Constructing SCP mint TX for " + (amount / COIN).toLocaleString('en-GB'));
+        // Use our first UTXO, as the fees will be incredibly low anyway
+        trx = bitjs.transaction();
+        let cUTXO;
+        for (const cSelectedUTXO of cachedUTXOs) {
+          cUTXO = cSelectedUTXO;
+          if (cUTXO.satoshis > 200000) {
+            trx.addinput(cUTXO.txid, cUTXO.outputIndex, cUTXO.script);
+            break;
+          }
+        }
+        trx.addoutputburn(0.00000001, contract + " mint " + amount);
+
+        calculatefee(trx.serialize().length);
+        totalSent = parseFloat(fee).toFixed(8);
+        valuechange = (parseFloat(cUTXO.satoshis / COIN) - parseFloat(totalSent)).toFixed(8);
+        if (totalSent <= balance) {
+          trx.addoutput(pubkeyMain, valuechange); // Change Output
+          sendTransaction(trx.sign(privkeyDecrypted, 1));
+          M.toast({html: 'Minting, please wait for your mint to confirm on the network!', displayLength: 7500});
+        } else {
+          console.warn("Mint: " + (amount / COIN).toLocaleString('en-GB') + " tokens\nFee: " + fee + " SCC\nChange: " + valuechange + " SCC\nTotal: " + totalSent + " SCC");
+          M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
+        }
+    }
+
     function autofillSendingAmount() {
       document.getElementById("sendAmount").value = domSendingBalance.innerText;
     }
