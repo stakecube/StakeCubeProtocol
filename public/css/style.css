@@ -7,10 +7,6 @@ body {
   font-family: 'SiteFont';
 }
 
-.navbar-color {
-  background: linear-gradient(90deg, #0d84f4, #0a43b5 100%);
-}
-
 .pt-navbar {
   padding-top: 80px;
 }
@@ -40,10 +36,6 @@ body {
   color: #0087ea;
 }
 
-.theme-color-secondary {
-  color: #304258!important;
-}
-
 .font-balance {
   font-size: 30px;
 }
@@ -63,14 +55,6 @@ body {
 .balance-usd-props {
   position: relative;
   top: -10px;
-}
-
-.card-prop {
-  border: none;
-  border-radius: 15px;
-  -moz-box-shadow: 0 0 40px #eaeaea;
-  -webkit-box-shadow: 0 0 40px #eaeaea;
-  box-shadow: 0 0 40px #eaeaea;
 }
 
 .font-size-overview {

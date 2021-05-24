@@ -1,4 +1,4 @@
-<html lang="en">
+<html class="main-html" lang="en">
 
 <head>
   <meta charset="utf-8">
@@ -59,7 +59,7 @@
 </head>
 
 <body>
-  <div id="loginPage" style="width: 100%; height: 100%; background: linear-gradient(90deg, #0d84f4, #0a43b5 100%); display: none;">
+  <div id="loginPage" class="page-gradient" style="display: none;">
     <div class="container marketing">
       <div class="verticalalign" style="padding-top: 5%;">
         <div class="vertical-center color-white">
@@ -71,9 +71,9 @@
             <div class="row">
               <div class="col-2"></div>
               <div class="col-8">
-                <div class="card card-prop2 mb-4">
+                <div class="login-card card-prop2 mb-4">
                   <div class="card-body font-gray">
-                    <div style="padding:30px; padding-bottom:20px; color:#5a5a5a" id="createWallet">
+                    <div class="login-page">
                       <center><h5 class="mb-3">Unlock your wallet</h5></center>
 
                       <span id="errMess"><br></span>
@@ -115,7 +115,7 @@
                       </script>
 
                       <table class="mb-0" border="0">
-                        <tr style="color:#2973cf; font-size:14px;">
+                        <tr class="info">
                           <td>
                             <i class="fas fa-info-circle" style="margin-right: 10px;"></i>
                           </td>
@@ -158,7 +158,7 @@
   </Script>
 
   <header id="guiHeader">
-    <nav class="navbar navbar-expand-md navbar-dark fixed-top navbar-color font-weight-bold">
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top navbar-colour font-weight-bold">
       <div class="container-fluid">
         <a class="navbar-brand" href="#">
           <img onclick="switchToDashboard()" src="logo.svg" height="30">
@@ -675,6 +675,8 @@
       // Cache all our UI elements
       domTheme = document.getElementById("themeSheet");
       domThemeButton = document.getElementById("themeButton");
+      // Initialize theme from disk
+      loadTheme();
       domHeader = document.getElementById("guiHeader");
       domLoginPage = document.getElementById("loginPage");
       domPass1Visibility = document.getElementById("pass1Visibility");
@@ -749,7 +751,7 @@
     }
   </script>
 
-  <main>
+  <main class="main-body">
     <div class="container marketing pt-navbar" id="dashboardPage">
 
       <h4 class="mb-5 theme-color-secondary font-weight-bold">Dashboard</h4>

@@ -1,3 +1,107 @@
+body {
+  color: white !important;
+  background-color: transparent;
+}
+
+input {
+  background-color: transparent !important;
+  color: white;
+}
+
+.info {
+  color: #55a1ff;
+  font-size: 14px;
+}
+
+.main-html {
+  background: linear-gradient(90deg, rgba(13, 229, 244, 0.1), rgba(10, 83, 181, 0.3) 100%);
+  background-color: black;
+}
+
+.main-body {
+  background-color: transparent;
+}
+
+.navbar-colour {
+  background: linear-gradient(90deg, #0043a7, #06183d 80%);
+  border-bottom-style: solid;
+  border-color: #0043a7;
+  border-width: 1px;
+}
+
+.page-gradient {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(13, 229, 244, 0.1), rgba(10, 83, 181, 0.3) 100%);
+  background-color: black;
+}
+
+.login-page {
+  padding:30px;
+  padding-bottom:20px;
+  color:#c5c5c5;
+}
+
+.login-card {
+  background-color: #ffffff1f !important;
+  border-radius: 3px;
+}
+
+.card {
+  background-color: rgba(255, 255, 255, 0.01) !important;
+}
+
+.fas {
+  color: white !important;
+  opacity: 0.8;
+}
+
+.theme-color-secondary {
+  color: #5897e3!important;
+}
+
+.card-prop {
+  border: none;
+  border-radius: 15px;
+  -moz-box-shadow: 0 0 3px #5897e3;
+  -webkit-box-shadow: 0 0 3px #5897e3;
+  box-shadow: 0 0 3px #5897e3;
+}
+
+.alert-danger-custom {
+  color: #ff4656 !important;
+  background-color: transparent !important;
+  border-color: #ff0019 !important;
+}
+
+.alert-warning-custom {
+  color: #fff1ca !important;
+  background-color: transparent !important;
+  border-color: #ffe9ab !important;
+}
+
+.btn-select {
+  color: white;
+  background-color: transparent !important;
+}
+
+#a li {
+  color: white;
+  background-color: rgb(0, 22, 51);
+}
+
+#a li:hover {
+  background-color: rgb(0, 39, 89);
+}
+
+.hover-darker {
+  color: #ffffff!important;
+}
+
+.hover-darker:hover {
+  color: #c7c7c7!important;
+}
+
 .reload {
   display: inline-block;
   font-family: Lucida Sans Unicode;
@@ -28,7 +132,7 @@
 	--omrs-color-ink-lowest-contrast: rgba(47, 60, 85, 0.18);
 	--omrs-color-ink-low-contrast: rgba(60, 60, 67, 0.3);
 	--omrs-color-ink-medium-contrast: rgb(135, 135, 135);
-	--omrs-color-interaction: #1e4bd1;
+	--omrs-color-interaction: #647abd;
 	--omrs-color-interaction-minus-two: rgba(73, 133, 224, 0.12);
 	--omrs-color-danger: #b50706;
 	--omrs-color-bg-low-contrast: #eff1f2;

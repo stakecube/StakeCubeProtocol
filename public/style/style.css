@@ -153,10 +153,6 @@ input::-moz-focus-inner {
   background: linear-gradient(90deg, #0d84f4, #0a43b5 100%);
 }
 
-.navbarSpecial {
-  background: linear-gradient(90deg, #0d84f4, #0a43b5 100%);
-}
-
 .nav-link {
   font-size: large;
   padding-right: 25px !important;
