@@ -17,7 +17,7 @@ var cssThemes = ["light", "dark"];
 // Loads the current theme from disk
 function loadTheme() {
   let nThemeIndex = localStorage.getItem('themeIndex');
-  if (Number.isSafeInteger(Number(nThemeIndex))) {
+  if (nThemeIndex !== null && Number.isSafeInteger(Number(nThemeIndex))) {
     domTheme.href = "style/latest-style-" + cssThemes[nThemeIndex] + ".css";
     domTheme.setAttribute("themeIndex", nThemeIndex);
   } else {
