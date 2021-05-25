@@ -32,6 +32,26 @@
       localStorage.setItem("tmppass", nFirstPass);
       window.location.href = "index.html";
     }
+
+    function finishWalletImport() {
+      let errorMsg = document.getElementById("errMess2");
+      errorMsg.innerHTML = "";
+      const nPrivkey = document.getElementById("privkey").value;
+      const nFirstPass = document.getElementById("pass3").value;
+      const nSecondPass = document.getElementById("pass4").value;
+
+      // Check the password meets minimum requirements
+      if (nFirstPass.length < 8)      return errorMsg.innerHTML = '<div class="alert alert-danger-custom" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> &nbsp;Password is too short, please use a minimum of 8 characters!</div><br>';
+      if (nFirstPass.length > 200)    return errorMsg.innerHTML = '<div class="alert alert-danger-custom" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> &nbsp;Password is too long, please use a maximum of 200 characters!</div><br>';
+
+      // Check the password is correct on re-type
+      if (nFirstPass !== nSecondPass) return errorMsg.innerHTML = '<div class="alert alert-danger-custom" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> &nbsp;Passwords do not match, please carefully re-type your password!</div><br>';
+
+      // Success! - Temp save the pass and key for auto-encryption in the next phase.
+      localStorage.setItem("tmppass", nFirstPass);
+      localStorage.setItem("tmpwifkey", nPrivkey);
+      window.location.href = "index.html";
+    }
   </script>
 </head>
 
@@ -132,12 +152,81 @@
       <div class="verticalalign">
         <div class="vertical-center color-white">
           <center>
-            <img src="logo.svg" style="height:100px;"><br><br>
-
-            <h3>Import your Private Key</h3><br><br>
-
-            <input type="text" id="inputPrivkey" placeholder="Your SCC Private Key...">
+            <img src="logo.svg" style="height:50px;"><br><br>
           </center>
+
+            <div class="row">
+              <div class="col-2"></div>
+              <div class="col-8">
+
+                <div class="card card-prop2 mb-4">
+                  <div class="card-body font-gray">
+                    <div class="card-title color-white font-weight-bold mb-3"
+                      style="background:linear-gradient(90deg, #6fb0ef, #5481da 100%)!important; margin-left:-16px; margin-right:-16px; margin-top:-16px; border-top-right-radius:15px; border-top-left-radius:15px; padding:18px;">
+                      <center>Import your wallet</center>
+                    </div>
+                    
+                    <div style="padding:30px; color:#5a5a5a" id="createWallet">
+
+                      <span id="errMess2"></span>
+
+                      <h5 class="mb-3">Import your private key</h5>
+                      <div class="omrs-input-group" style="width:100%; margin-bottom: 10px;">
+                        <label class="omrs-input-underlined">
+                          <input required id="privkey" type="password" autofocus>
+                          <span class="omrs-input-label">Private Key (WIF)</span>
+                        </label>
+                      </div>
+
+                      <h5 class="mb-3">Encrypt your wallet</h5>
+                      <div class="omrs-input-group" style="width:100%; margin-bottom: 10px;">
+                        <label class="omrs-input-underlined">
+                          <input required id="pass3" type="password" autofocus>
+                          <span class="omrs-input-label">Password</span>
+                        </label>
+                      </div>
+
+                      <table class="mb-5" border="0">
+                        <tr style="color:#2973cf; font-size:14px;">
+                          <td>
+                            <i class="fas fa-info-circle" style="margin-right: 10px;"></i>
+                          </td>
+                          <td>
+                            Make sure to enter at least 8 and max 200 characters, including one upper-case letter, a symbol and a number
+                          </td>
+                        </tr>
+                      </table>
+
+                      <div class="omrs-input-group" style="width:100%;">
+                        <label class="omrs-input-underlined">
+                          <input required id="pass4" type="password" autofocus>
+                          <span class="omrs-input-label">Re-enter Password</span>
+                        </label>
+                      </div>
+
+                      <script>
+                        $(document).ready(function(){
+                          $('#pass4').keypress(function(e){
+                            if(e.keyCode==13) {
+                              finishWalletImport();
+                            }
+                          });
+                        });
+                      </script>
+
+                      <center>
+                        <p id="createWalletError" style="opacity: 0.8; color: red"></p>
+                        <button class="btn btn-theme btn-layout" onclick="finishWalletImport();">Next</button>
+                      </center>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+              <div class="col-2"></div>
+            </div>
+
+
         </div>
       </div>
     </div>
@@ -161,7 +250,6 @@
       document.getElementById('createPage').style.display = "block";
     }
     function switchToImport() {
-      return;
       // Hide
       document.getElementById('mainPage').style.display = "none";
       document.getElementById('createPage').style.display = "none";

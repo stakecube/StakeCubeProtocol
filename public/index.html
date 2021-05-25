@@ -726,27 +726,51 @@
         // Focus on the password entry
         document.getElementById("pass1").focus();
       } else {
-        // No privkey available, derive a new one and encrypt using the temppass
+        // No encrypted wallet available, check for an unencrypted key
+        let tmpwifkey = localStorage.getItem("tmpwifkey");
         let tmppass = localStorage.getItem("tmppass");
         if (!tmppass) throw "Unable to find encwif, and no tmppass available, bailing out!";
-        console.log("Unable to find encrypted keys, but tmppass is available, deriving new key...");
-        generateWallet().then(objWallet => {
-          // Save decrypted copy in memory
-          privkeyDecrypted = objWallet.privkey;
+        console.log("Unable to find encrypted keys, but tmppass is available, checking for imported wifkey...");
+        if (tmpwifkey) {
+          console.log("Encrypting import key...");
+          // Save decrypted copy in memory, immediately erase from disk
+          privkeyDecrypted = tmpwifkey;
+          localStorage.removeItem("tmpwifkey");
           // Encrypt wallet and save it to disk
           encryptWallet(tmppass).then(newEncwif => {
             console.log("Encrypted wallet!");
-            console.log(newEncwif);
-            console.log(tmppass);
-            privkeyEncrypted = newEncwif;
-            localStorage.setItem("encwif", privkeyEncrypted);
             // Erase the tmppass from disk and memory
             tmppass = null;
             localStorage.removeItem("tmppass");
+            // Load the new keys
+            privkeyEncrypted = newEncwif;
+            localStorage.setItem("encwif", privkeyEncrypted);
+            importWallet(privkeyDecrypted);
             // Load the Dashboard screen
             switchToDashboard();
+            // Give the cache a kick
+            setTimeout(() => {
+              getBalance(true);
+            }, 750);
           });
-        });
+        } else {
+          console.log("Deriving new key...")
+          generateWallet().then(objWallet => {
+            // Save decrypted copy in memory
+            privkeyDecrypted = objWallet.privkey;
+            // Encrypt wallet and save it to disk
+            encryptWallet(tmppass).then(newEncwif => {
+              console.log("Encrypted wallet!");
+              privkeyEncrypted = newEncwif;
+              localStorage.setItem("encwif", privkeyEncrypted);
+              // Erase the tmppass from disk and memory
+              tmppass = null;
+              localStorage.removeItem("tmppass");
+              // Load the Dashboard screen
+              switchToDashboard();
+            });
+          });
+        }
       }
     }
   </script>
