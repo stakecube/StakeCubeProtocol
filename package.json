@@ -1,6 +1,6 @@
 {
   "name": "stakecubeprotocol",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "The StakeCube Protocol full-node and GUI for Node.js",
   "main": "main.js",
   "scripts": {
