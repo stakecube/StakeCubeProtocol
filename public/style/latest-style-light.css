@@ -36,6 +36,27 @@
   box-shadow: 0 0 40px #eaeaea;
 }
 
+ /* width */
+ ::-webkit-scrollbar {
+  width: 5px;
+  left: -100px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: rgba(168, 168, 168, 0.3);
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(73, 73, 73, 0.7);
+}
+
 .reload {
   display: inline-block;
   font-family: Lucida Sans Unicode;

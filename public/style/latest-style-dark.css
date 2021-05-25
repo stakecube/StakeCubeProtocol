@@ -102,6 +102,27 @@ input {
   color: #c7c7c7!important;
 }
 
+ /* width */
+ ::-webkit-scrollbar {
+  width: 5px;
+  left: -100px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: rgba(241, 241, 241, 0.02);
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: rgba(136, 136, 136, 0.3);
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(235, 235, 235, 0.75);
+}
+
 .reload {
   display: inline-block;
   font-family: Lucida Sans Unicode;

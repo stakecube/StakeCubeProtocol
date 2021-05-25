@@ -290,7 +290,7 @@
         let dashboardTokens = document.getElementById("dashboardTokens");
         let sendTokensSelector = document.getElementById('sendingCoin');
         sendTokensSelector.innerHTML = '<option value="scc" data-thumbnail="circular-logo.png">StakeCubeCoin (SCC)</option>';
-        dashboardTokens.innerHTML = '<div class="card-title font-gray font-weight-bold" style="margin-bottom:30px;">SCP Tokens</div>';
+        dashboardTokens.innerHTML = '';
         if (chainHashesCache.length === 0 && isFullnode) {
           dashboardTokens.innerHTML += '<center><p>Loading SCP</p></center>';
         } else if (getSyncPercentage() < 99.99 && isFullnode) {
@@ -323,7 +323,7 @@
           getActivityByAccountLight(pubkeyMain);
         if (cachedActivity.length > 0) {
           domActivityList.innerHTML = "";
-          let amountToLoad = Math.min(cachedActivity.length, 5), i;
+          let amountToLoad = cachedActivity.length, i;
           for (i=0; i<amountToLoad; i++) {
             domActivityList.innerHTML += '<div class="mt-4"><div class="float-start text-center">Block ' + cachedActivity[i].block.toLocaleString('en-GB') + '</div><span class="float-end ' + ((cachedActivity[i].type === 'received' || cachedActivity[i].type === 'staked') ? "plus" : "minus") + '-balance-color font-weight-bold" style="position:relative; top:11px;"><i style="text-transform: capitalize;padding-right:5px;">' + cachedActivity[i].type + '</i> ' + ((cachedActivity[i].type === 'received' || cachedActivity[i].type === 'staked') ? "+" : "-") + (cachedActivity[i].amount / COIN).toLocaleString('en-GB', { maximumFractionDigits: 8, minimumFractionDigits: 2 }) + ' ' + cachedActivity[i].token.ticker + '</span></div><br><br>' + (i !== 4 ? '<hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">' : '');
           }
@@ -776,7 +776,7 @@
           <div class="card card-prop mb-4">
             <div class="card-body">
               <div class="card-title font-gray font-weight-bold">Activity</div>
-              <div id="activityList">
+              <div id="activityList" style="overflow-y: auto; max-height: 320px;">
                 <center><p>Loading Activity</p></center>
               </div>
             </div>
@@ -800,9 +800,11 @@
           </div>
 
           <div class="card card-prop mb-4">
-            <div id="dashboardTokens" class="card-body">
+            <div class="card-body">
               <div class="card-title font-gray font-weight-bold" style="margin-bottom:30px;">SCP Tokens</div>
-              <center><p>Loading SCP</p></center>
+              <div id="dashboardTokens" style="overflow-y: auto; max-height: 200px;">
+                <center><p>Loading SCP</p></center>
+              </div>
             </div>
           </div>
 
