@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SCC Web3 wallet</title>
+  <title>SCP Wallet - Setup</title>
 
   <link rel="canonical" href="https://getbootstrap.com/docs/5.0/examples/carousel/">
 
@@ -57,7 +57,7 @@
 
 <body class="navbarSpecial">
   <main>
-    <div class="container marketing" id="mainPage">
+    <div class="container marketing" id="mainPage" style="display: none;">
       <div class="verticalalign">
         <div class="vertical-center color-white">
           <center>
@@ -133,6 +133,7 @@
 
                       <center>
                         <p id="createWalletError" style="opacity: 0.8; color: red"></p>
+                        <button class="btn btn-theme btn-layout" onclick="switchToMain();">Back</button>
                         <button class="btn btn-theme btn-layout" onclick="finishWalletCreation();">Next</button>
                       </center>
                     </div>
@@ -216,6 +217,7 @@
 
                       <center>
                         <p id="createWalletError" style="opacity: 0.8; color: red"></p>
+                        <button class="btn btn-theme btn-layout" onclick="switchToMain();">Back</button>
                         <button class="btn btn-theme btn-layout" onclick="finishWalletImport();">Next</button>
                       </center>
                     </div>
@@ -263,6 +265,8 @@
       if (localStorage.getItem("encwif")) {
         // Take the user to the login screen
         window.location.href = "index.html";
+      } else {
+        switchToMain();
       }
     }
   </script>

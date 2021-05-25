@@ -1,11 +1,11 @@
 {
   "name": "stakecubeprotocol",
+  "productName": "SCP Wallet",
   "version": "1.0.8",
   "description": "The StakeCube Protocol full-node and GUI for Node.js",
   "main": "main.js",
   "scripts": {
     "start": "electron-forge start",
-    "build": "electron-packager ./ \"StakeCube Protocol\"",
     "package": "electron-forge package",
     "make": "electron-forge make"
   },
@@ -31,12 +31,17 @@
   },
   "config": {
     "forge": {
-      "packagerConfig": {},
+      "packagerConfig": {
+        "icon": "public/sc-logo.ico"
+      },
       "makers": [
         {
           "name": "@electron-forge/maker-squirrel",
           "config": {
-            "name": "stakecubeprotocol"
+            "setupExe": "SCP Installer.exe",
+            "loadingGif": "public/spinner.gif",
+            "iconUrl": "https://raw.githubusercontent.com/stakecube/StakeCubeProtocol/main/public/sc-logo.ico",
+            "setupIcon": "public/sc-logo.ico"
           }
         },
         {
