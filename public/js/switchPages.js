@@ -47,6 +47,10 @@ function switchToSend() {
     nSendBalanceDisplay = Number((cAccount.balance / COIN).toFixed(8));
   }
   domSendingBalance.innerText = nSendBalanceDisplay.toLocaleString('en-GB', { maximumFractionDigits: 8 });
+
+  // Reset inputs
+  document.getElementById("sendAmount").value = "";
+  document.getElementById("sendAddress").value = "";
 }
 
 function switchToDashboard() {
