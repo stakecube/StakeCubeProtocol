@@ -1,3 +1,5 @@
+'use strict';
+
 var coinArray = [];
 function refreshCoinSelector() {
   coinArray = [];

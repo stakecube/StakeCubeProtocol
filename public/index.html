@@ -15,6 +15,7 @@
 
   <!--- IMPORTANT: CHAIN PARAMS BELOW, DO NOT EDIT UNLESS YOU'RE ABSOLUTELY CERTAIN YOU KNOW WHAT YOU'RE DOING  --->
   <script>
+    'use strict';
     // In most BTC-derived coins, the below parameters can be found in the 'src/chainparams.cpp' Mainnet configuration.
     // These below params share the same names as the CPP params, so finding and editing these is easy-peasy!
 
@@ -91,6 +92,7 @@
                       </center>
 
                       <script>
+                        'use strict';
                         function switchLoginVisibility() {
                           if (domPass1Visibility.classList.contains("fa-eye-slash")) {
                             // Display pass
@@ -136,7 +138,7 @@
     </div>
   </div>
 
-  <Script>
+  <script>
     function finishLogin() {
       let nPass = document.getElementById("pass1").value;
       let nLoginError = document.getElementById("errMess");
@@ -155,7 +157,7 @@
         }
       });
     }
-  </Script>
+  </script>
 
   <header id="guiHeader">
     <nav class="navbar navbar-expand-md navbar-dark fixed-top navbar-colour font-weight-bold">
@@ -201,6 +203,7 @@
   </header>
 
   <script>
+    'use strict';
     // GUI module imports
     const { clipboard } = require('electron');
     let authenticator = require("otplib").authenticator;
@@ -223,6 +226,10 @@
     // Cached DOM elements
     let domHeader;
     let domLoginPage;
+    let domDashboardBtn;
+    let domSendBtn;
+    let domReceiveBtn;
+    let dom2FABtn;
     let domDashboardPage;
     let domSendPage;
     let domReceivePage;
@@ -374,8 +381,8 @@
 
         trx.addoutput(sendAddress, sendAmount); // Sending to this address
         calculatefee(trx.serialize().length);
-        totalSent = (parseFloat(fee) + parseFloat(sendAmount)).toFixed(8);
-        valuechange = (parseFloat(txValue) - parseFloat(totalSent)).toFixed(8);
+        let totalSent = (parseFloat(fee) + parseFloat(sendAmount)).toFixed(8);
+        let valuechange = (parseFloat(txValue) - parseFloat(totalSent)).toFixed(8);
         if (totalSent <= balance) {
           trx.addoutput(pubkeyMain, valuechange); // Change Output
           sendTransaction(trx.sign(privkeyDecrypted, 1));
@@ -403,8 +410,8 @@
         trx.addoutputburn(0.00000001, cToken.contract + " send " + (sendAmount * COIN).toFixed(0) + " " + sendAddress); // Burn the transfer data on-chain
 
         calculatefee(trx.serialize().length);
-        totalSent = parseFloat(fee).toFixed(8);
-        valuechange = (parseFloat(cUTXO.satoshis / COIN) - parseFloat(totalSent)).toFixed(8);
+        let totalSent = parseFloat(fee).toFixed(8);
+        let valuechange = (parseFloat(cUTXO.satoshis / COIN) - parseFloat(totalSent)).toFixed(8);
         if (totalSent <= balance) {
           trx.addoutput(pubkeyMain, valuechange); // Change Output
           sendTransaction(trx.sign(privkeyDecrypted, 1));
@@ -433,8 +440,8 @@
         trx.addoutputburn(0.00000001, cToken.contract + " redeem");
 
         calculatefee(trx.serialize().length);
-        totalSent = parseFloat(fee).toFixed(8);
-        valuechange = (parseFloat(cUTXO.satoshis / COIN) - parseFloat(totalSent)).toFixed(8);
+        let totalSent = parseFloat(fee).toFixed(8);
+        let valuechange = (parseFloat(cUTXO.satoshis / COIN) - parseFloat(totalSent)).toFixed(8);
         if (totalSent <= balance) {
           trx.addoutput(pubkeyMain, valuechange); // Change Output
           sendTransaction(trx.sign(privkeyDecrypted, 1));
@@ -467,8 +474,8 @@
         trx.addoutputburn(0.00000001, "SCPCREATE" + version + " " + params.join(" "));
 
         calculatefee(trx.serialize().length);
-        totalSent = parseFloat(fee).toFixed(8);
-        valuechange = (parseFloat(cUTXO.satoshis / COIN) - parseFloat(totalSent)).toFixed(8);
+        let totalSent = parseFloat(fee).toFixed(8);
+        let valuechange = (parseFloat(cUTXO.satoshis / COIN) - parseFloat(totalSent)).toFixed(8);
         if (totalSent <= balance) {
           trx.addoutput(pubkeyMain, valuechange); // Change Output
           sendTransaction(trx.sign(privkeyDecrypted, 1));
@@ -495,8 +502,8 @@
         trx.addoutputburn(0.00000001, contract + " mint " + amount);
 
         calculatefee(trx.serialize().length);
-        totalSent = parseFloat(fee).toFixed(8);
-        valuechange = (parseFloat(cUTXO.satoshis / COIN) - parseFloat(totalSent)).toFixed(8);
+        let totalSent = parseFloat(fee).toFixed(8);
+        let valuechange = (parseFloat(cUTXO.satoshis / COIN) - parseFloat(totalSent)).toFixed(8);
         if (totalSent <= balance) {
           trx.addoutput(pubkeyMain, valuechange); // Change Output
           sendTransaction(trx.sign(privkeyDecrypted, 1));

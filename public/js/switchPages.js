@@ -1,3 +1,5 @@
+'use strict';
+
 function switchToLogin() {
   // Hide
   domHeader.style.display = "none";
