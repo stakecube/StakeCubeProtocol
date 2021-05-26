@@ -57,7 +57,6 @@ var getUnspentTransactions = function () {
     reloader.className = reloader.className.replace(/ playAnim/g, "");
     data = JSON.parse(this.response)
     if (data.length === 0) {
-      console.log('No unspent Transactions');
       cachedUTXOs = [];
       // Update SCP-1 token balances anyway!
       balance = getBalance(true);
@@ -78,7 +77,6 @@ var getUnspentTransactions = function () {
         //document.getElementById("errorNotice").innerHTML = '<div class="alert alert-danger" role="alert"><h4>Note:</h4><h5>This address has over 1000 UTXOs, which may be problematic for the wallet to handle, transact with caution!</h5></div>';
       }
     }
-    console.log('Total Balance:' + balance);
   }
   request.send()
 }
