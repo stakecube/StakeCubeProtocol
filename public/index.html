@@ -281,7 +281,6 @@
         // --- Update SCC Balances
         // Set the balance, and adjust font-size for large balance strings
         domBalance.innerHTML = nBalance.toLocaleString('en-GB', { maximumFractionDigits: 8 });
-        domBalance.style.fontSize = nBalance.toString().length > 8 ? "large" : "x-large";
         if (valueUSD > 0)
           domBalanceUSD.innerText = (nBalance * valueUSD).toFixed(2);
         // And update the Receive page pubkey
