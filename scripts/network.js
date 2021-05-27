@@ -126,7 +126,7 @@ var sendTransaction = function (hex) {
 }
 var calculatefee = function (bytes) {
   // TEMPORARY: Hardcoded fee per-byte
-  fee = Number(((bytes * 250) / 100000000).toFixed(8)); // 250 sats/byte
+  fee = Number(((bytes * 2) / COIN).toFixed(8)); // 2 sats/byte
   /*var request = new XMLHttpRequest()
   request.open('GET', url + '/api/v1/estimatefee/10', false)
   request.onload = function () {
