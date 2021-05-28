@@ -528,6 +528,37 @@
         }
     }
 
+    function burnSCP(contract, amount) {
+        if (WALLET.getUTXOsPtr().length === 0) return M.toast({html: 'You need SCC to pay for gas fees!', displayLength: 3000});
+        console.log("Constructing SCP burn TX for " + (amount / COIN).toLocaleString('en-GB'));
+        // Use our first UTXO, as the fees will be incredibly low anyway
+        trx = bitjs.transaction();
+        let usedUTXOs = [];
+        let cUTXO;
+        for (const cSelectedUTXO of WALLET.getUTXOsPtr()) {
+          if (cSelectedUTXO.spent) continue;
+          cUTXO = cSelectedUTXO;
+          if (cUTXO.sats > 200000) {
+            trx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
+            usedUTXOs.push(cUTXO);
+            break;
+          }
+        }
+        trx.addoutputburn(0.00000001, contract + " burn " + amount);
+
+        calculatefee(trx.serialize().length);
+        let totalSent = parseFloat(fee).toFixed(8);
+        let valuechange = (parseFloat(cUTXO.sats / COIN) - parseFloat(totalSent)).toFixed(8);
+        if (totalSent <= balance) {
+          trx.addoutput(pubkeyMain, valuechange); // Change Output
+          sendTransaction(trx.sign(privkeyDecrypted, 1), usedUTXOs);
+          M.toast({html: 'Burning, please wait for your burn to confirm on the network!', displayLength: 7500});
+        } else {
+          console.warn("Burn: " + (amount / COIN).toLocaleString('en-GB') + " tokens\nFee: " + fee + " SCC\nChange: " + valuechange + " SCC\nTotal: " + totalSent + " SCC");
+          M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
+        }
+    }
+
     function autofillSendingAmount() {
       document.getElementById("sendAmount").value = domSendingBalance.innerText;
     }
