@@ -72,6 +72,7 @@ var getMempoolLight = function (arrUTXOList) {
       let rawMempool = JSON.parse(this.response);
       // Fetch all mempool UTXOs (vouts) belonging to our pubkey
       for (rawTX of rawMempool) {
+        // Search all VOUTs belonging to us, add them to our wallet
         for (rawVout of rawTX.vout) {
           if (rawVout.scriptPubKey && rawVout.scriptPubKey.addresses && rawVout.scriptPubKey.addresses.length > 0) {
             if (rawVout.scriptPubKey.addresses[0] === pubkeyMain) {
@@ -83,11 +84,19 @@ var getMempoolLight = function (arrUTXOList) {
       }
       // Merge our newly fetched UTXO set with our known in-wallet set
       WALLET.mergeUTXOs(arrUTXOList);
-      setTimeout(() => {
-        // Update the GUI with the newly cached UTXO set
-        balance = getBalance(true);
-        refreshSendBalance();
-      }, 1000);
+      // Search for all spent VINs for our wallet, and mark them as spent
+      for (rawTX of rawMempool) {
+        for (rawVin of rawTX.vin) {
+          let spentVout = WALLET.getUTXO(rawVin.txid, rawVin.vout);
+          if (spentVout) {
+            // Mark this UTXO as spent!
+            spentVout.spent = true;
+          }
+        }
+      }
+      // Update the GUI with the newly cached UTXO set
+      balance = getBalance(true);
+      refreshSendBalance();
     }
     request.send();
 }

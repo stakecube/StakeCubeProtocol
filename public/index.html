@@ -369,7 +369,7 @@
         let txValue = 0;
         for (const cUTXO of WALLET.getUTXOsPtr()) {
           if (cUTXO.spent) continue;
-          if (txValue > sendAmount) {
+          if (txValue > (sendAmount + 1000)) {
             // Required Coin Control value met, yahoo!
             console.log("Coin Control: TX Constructed! Selected " + trx.inputs.length + " input(s) (" + txValue + " SCC)");
             break;
