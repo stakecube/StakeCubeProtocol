@@ -472,21 +472,28 @@
         // Use our first UTXO, as the fees will be incredibly low anyway
         trx = bitjs.transaction();
         let usedUTXOs = [];
-        let cUTXO;
-        for (const cSelectedUTXO of WALLET.getUTXOsPtr()) {
-          if (cSelectedUTXO.spent) continue;
-          cUTXO = cSelectedUTXO;
-          if (cUTXO.sats > 200000) {
-            trx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
-            usedUTXOs.push(cUTXO);
+        let txValue = 0;
+        for (const cUTXO of WALLET.getUTXOsPtr()) {
+          if (cUTXO.spent) continue;
+          if (txValue > (nDeployFee + (1000 / COIN))) {
+            // Required Coin Control value met, yahoo!
+            console.log("Coin Control: TX Constructed! Selected " + trx.inputs.length + " input(s) (" + txValue + " SCC)");
             break;
           }
+          trx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
+          usedUTXOs.push(cUTXO);
+          txValue += Number((cUTXO.sats / COIN).toFixed(8));
+          txValue = Number(txValue.toFixed(8));
+          console.log("Coin Control: Selected input " + cUTXO.id.substr(0, 6) + "(" + cUTXO.vout + ")... (Added " + (cUTXO.sats / COIN).toFixed(8) + " SCC - Total: " + txValue + ")");
         }
+        // The SCP VM command
         trx.addoutputburn(0.00000001, "SCPCREATE" + version + " " + params.join(" "));
+        // Static Deployment fee (Sent to the SCC burn address)
+        trx.addoutput(strDeployFeeDest, nDeployFee);
 
         calculatefee(trx.serialize().length);
-        let totalSent = parseFloat(fee).toFixed(8);
-        let valuechange = (parseFloat(cUTXO.sats / COIN) - parseFloat(totalSent)).toFixed(8);
+        let totalSent = (parseFloat(fee) + parseFloat(nDeployFee)).toFixed(8);
+        let valuechange = (parseFloat(txValue) - parseFloat(totalSent)).toFixed(8);
         if (totalSent <= balance) {
           trx.addoutput(pubkeyMain, valuechange); // Change Output
           sendTransaction(trx.sign(privkeyDecrypted, 1), usedUTXOs);
