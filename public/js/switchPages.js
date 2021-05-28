@@ -34,21 +34,9 @@ function switchToSend() {
   // Add active
   domSendBtn.classList.add('active');
 
-  // Refresh token selector
+  // Refresh token selector and available balance
   refreshCoinSelector();
-
-  // Update available balance display
-  let nSendBalanceDisplay = 0;
-  let strCurrency = document.getElementById("sendingCoinVal").value;
-  if (strCurrency === "scc") {
-    nSendBalanceDisplay = getBalance();
-  } else {
-    let strToken = strCurrency.split('scptoken-')[1];
-    let cToken = isFullnode ? TOKENS.getToken(strToken) : getCachedToken(strToken);
-    let cAccount = isFullnode ? cToken.getAccount(pubkeyMain) : getCachedAccount(cToken, pubkeyMain);
-    nSendBalanceDisplay = Number((cAccount.balance / COIN).toFixed(8));
-  }
-  domSendingBalance.innerText = nSendBalanceDisplay.toLocaleString('en-GB', { maximumFractionDigits: 8 });
+  refreshSendBalance();
 
   // Reset inputs
   document.getElementById("sendAmount").value = "";

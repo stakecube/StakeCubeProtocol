@@ -55,30 +55,41 @@ var getUnspentTransactions = function () {
   request.onload = function () {
     let reloader = document.getElementById("balanceRefresh");
     reloader.className = reloader.className.replace(/ playAnim/g, "");
-    data = JSON.parse(this.response)
-    if (data.length === 0) {
-      cachedUTXOs = [];
-      // Update SCP-1 token balances anyway!
-      balance = getBalance(true);
-    } else {
-      cachedUTXOs = [];
-      amountOfTransactions = data.length;
-      if (amountOfTransactions > 0)
-        //document.getElementById("errorNotice").innerHTML = '';
-      if (amountOfTransactions <= 1000) {
-        for (i = 0; i < amountOfTransactions; i++) {
-          cachedUTXOs.push(data[i]);
-        }
-        // Update the GUI with the newly cached UTXO set
-        balance = getBalance(true);
-      } else {
-        //Temporary message for when there are alot of inputs
-        //Probably use change all of this to using websockets will work better
-        //document.getElementById("errorNotice").innerHTML = '<div class="alert alert-danger" role="alert"><h4>Note:</h4><h5>This address has over 1000 UTXOs, which may be problematic for the wallet to handle, transact with caution!</h5></div>';
-      }
+    data = JSON.parse(this.response);
+    // Convert explorer dataset into UTXO classes and merge with the current set
+    let arrNewUTXOs = [];
+    for (const rawUTXO of data) {
+      arrNewUTXOs.push(new WALLET.UTXO(rawUTXO.txid, rawUTXO.outputIndex, rawUTXO.script, rawUTXO.satoshis));
     }
+    getMempoolLight(arrNewUTXOs);
   }
   request.send()
+}
+var getMempoolLight = function (arrUTXOList) {
+  var request = new XMLHttpRequest();
+    request.open('GET', 'https://stakecubecoin.net/web3/scp/getrawmempool', true);
+    request.onload = function () {
+      let rawMempool = JSON.parse(this.response);
+      // Fetch all mempool UTXOs (vouts) belonging to our pubkey
+      for (rawTX of rawMempool) {
+        for (rawVout of rawTX.vout) {
+          if (rawVout.scriptPubKey && rawVout.scriptPubKey.addresses && rawVout.scriptPubKey.addresses.length > 0) {
+            if (rawVout.scriptPubKey.addresses[0] === pubkeyMain) {
+              // Found a mempool vout for our wallet!
+              arrUTXOList.push(new WALLET.UTXO(rawTX.txid, rawVout.n, rawVout.scriptPubKey.hex, rawVout.valueSat));
+            }
+          }
+        }
+      }
+      // Merge our newly fetched UTXO set with our known in-wallet set
+      WALLET.mergeUTXOs(arrUTXOList);
+      setTimeout(() => {
+        // Update the GUI with the newly cached UTXO set
+        balance = getBalance(true);
+        refreshSendBalance();
+      }, 1000);
+    }
+    request.send();
 }
 var getTokensByAccountLight = function (address) {
   var request = new XMLHttpRequest();
@@ -104,22 +115,26 @@ var getStakingStatusLight = function (contract, address) {
     }
     request.send();
 }
-var sendTransaction = function (hex) {
+var sendTransaction = function (hex, usedUTXOs = []) {
   if (typeof hex !== 'undefined') {
     var request = new XMLHttpRequest()
-    request.open('GET', 'https://stakecubecoin.net/web3/submittx?tx=' + hex, true)
+    request.open('GET', 'https://stakecubecoin.net/web3/submittx?tx=' + hex, true);
     request.onload = function () {
       data = this.response;
       if (data.length === 64) {
         console.log('Transaction sent! ' + data);
         M.toast({html: 'Transaction Sent!', displayLength: 2000});
-        //document.getElementById("transactionFinal").innerHTML = ('<h4 style="color:green">Transaction sent! ' + data + '</h4>');
+        // Mark UTXOs as spent
+        for (const cUTXO of usedUTXOs) {
+          cUTXO.spent = true;
+        }
+        // Refresh UTXOs from on-chain and mempool
+        getUnspentTransactions();
       } else {
         M.toast({html: 'Error sending transaction!', displayLength: 3000});
-        //document.getElementById("transactionFinal").innerHTML = ('<h4 style="color:red">Error sending transaction: ' + data + "</h4>");
       }
     }
-    request.send()
+    request.send();
   } else {
     console.log("hex undefined");
   }
