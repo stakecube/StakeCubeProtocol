@@ -76,9 +76,9 @@ let mainWindow;
 
 function createWindow () {
   mainWindow = new BrowserWindow({
-    width: 1880, // Replace this value with 1024 when going into production!
+    width: 1024, // Replace this value with 1024 when going into production!
     height: 679,
-    minWidth: 960,
+    minWidth: 1024,
     minHeight: 540,
     webPreferences: {
       nodeIntegration: true

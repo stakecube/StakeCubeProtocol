@@ -303,6 +303,7 @@
           dashboardTokens.innerHTML += '<center><p id="scpSyncing">SCP is still syncing (' + getSyncPercentage().toFixed(2) + '%)</p></center>';
         } else if (cachedTokens.length > 0) {
           for (const cToken of cachedTokens) {
+            let nBalance = cToken.account.balance / COIN;
             let stakingButton = 'onclick="switchToStaking(\'' + cToken.token.contract + '\')"';
             let stakingStyle = 'cursor:pointer;';
             let stakingText = '';
@@ -313,10 +314,10 @@
               let nRewards = (cToken.account.unclaimed_balance / COIN);
               // Ensure we have unclaimed stakes, and the token has not hit max supply yet
               if (cToken.account.unclaimed_balance > 0 && (cToken.token.supply + cToken.account.unclaimed_balance) < cToken.token.maxSupply)
-                stakingText = ' <i style="opacity:0.5;">(+' + (nRewards > 1 ? nRewards.toLocaleString('en-GB', { maximumFractionDigits: 4 }) : nRewards.toLocaleString('en-GB', { maximumFractionDigits: 8 })) + ')</i>';
+                stakingText = ' <i style="opacity:0.5;">(+' + nRewards.toLocaleString('en-GB', { maximumFractionDigits: (nRewards > 0.1 ? 2 : 8 ) }) + ')</i>';
             }
-            dashboardTokens.innerHTML += '<div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px;' + stakingStyle + '" ' + stakingButton + '><img src="circular-logo.png" style="width:32px; height:32px;"><span style="margin-left:10px;">' + cToken.token.name + '</span><span class="float-end theme-color-secondary">' + (cToken.account.balance / COIN).toLocaleString('en-GB', { maximumFractionDigits: 8 }) + stakingText + '</span></div>';
-            sendTokensSelector.innerHTML += '<option value="scptoken-' + cToken.token.contract + '" data-thumbnail="circular-logo.png">' + cToken.token.name + ' (' + cToken.token.ticker + ')</option>';
+            dashboardTokens.innerHTML += '<div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px;' + stakingStyle + '" ' + stakingButton + '><img src="circular-logo.png" style="width:32px; height:32px;"><span style="margin-left:10px;">' + formatName(cToken.token.ticker, 8) + '</span><span class="float-end theme-color-secondary">' + nBalance.toLocaleString('en-GB', { maximumFractionDigits: (nBalance > 1 ? 2 : 8) }) + stakingText + '</span></div>';
+            sendTokensSelector.innerHTML += '<option value="scptoken-' + cToken.token.contract + '" data-thumbnail="circular-logo.png">' + formatName(cToken.token.name, 10) + ' (' + cToken.token.ticker + ')</option>';
           }
         } else {
           dashboardTokens.innerHTML += '<center><p>You have no tokens!</p></center>';
@@ -331,7 +332,8 @@
           domActivityList.innerHTML = "";
           let amountToLoad = cachedActivity.length, i;
           for (i=0; i<amountToLoad; i++) {
-            domActivityList.innerHTML += '<div class="mt-4"><div class="float-start text-center">Block ' + cachedActivity[i].block.toLocaleString('en-GB') + '</div><span class="float-end ' + ((cachedActivity[i].type === 'received' || cachedActivity[i].type === 'staked') ? "plus" : "minus") + '-balance-color font-weight-bold" style="position:relative; top:11px;"><i style="text-transform: capitalize;padding-right:5px;">' + cachedActivity[i].type + '</i> ' + ((cachedActivity[i].type === 'received' || cachedActivity[i].type === 'staked') ? "+" : "-") + (cachedActivity[i].amount / COIN).toLocaleString('en-GB', { maximumFractionDigits: 8, minimumFractionDigits: 2 }) + ' ' + cachedActivity[i].token.ticker + '</span></div><br><br>' + (i !== 4 ? '<hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">' : '');
+            let nValue = cachedActivity[i].amount / COIN;
+            domActivityList.innerHTML += '<div class="mt-4"><div class="float-start text-center">Block ' + cachedActivity[i].block.toLocaleString('en-GB') + '</div><span class="float-end ' + ((cachedActivity[i].type === 'received' || cachedActivity[i].type === 'staked') ? "plus" : "minus") + '-balance-color font-weight-bold" style="position:relative; top:11px;"><i style="text-transform: capitalize;padding-right:5px;">' + cachedActivity[i].type + '</i> ' + ((cachedActivity[i].type === 'received' || cachedActivity[i].type === 'staked') ? "+" : "-") + nValue.toLocaleString('en-GB', { maximumFractionDigits: nValue > 1 ? 2 : 8, minimumFractionDigits: 2 }) + ' ' + cachedActivity[i].token.ticker + '</span></div><br><br>' + (i !== 4 ? '<hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">' : '');
           }
         } else {
           domActivityList.innerHTML = "<center><p>You have no activity!</p></center>";
@@ -398,7 +400,7 @@
         let cAccount = isFullnode ? cToken.getAccount(pubkeyMain) : getCachedAccount(cToken, pubkeyMain);
         if ((cAccount.balance / COIN) < sendAmount) return M.toast({html: 'You don\'t have enough ' + cToken.ticker + '!', displayLength: 3000});
         if (WALLET.getUTXOsPtr().length === 0) return M.toast({html: 'You need SCC to pay for gas fees!', displayLength: 3000});
-        console.log("Constructing SCP-" + cToken.version + " Transfer TX for: " + sendAmount + " " + cToken.name + " (" + cToken.contract + ")");
+        console.log("Constructing SCP-" + cToken.version + " Transfer TX for: " + sendAmount + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
         // Use our first UTXO, as the fees will be incredibly low anyway
         trx = bitjs.transaction();
         let usedUTXOs = [];
@@ -431,7 +433,7 @@
         let cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
         let cAccount = isFullnode ? cToken.getAccount(pubkeyMain) : getCachedAccount(cToken, pubkeyMain);
         if (WALLET.getUTXOsPtr().length === 0) return M.toast({html: 'You need SCC to pay for gas fees!', displayLength: 3000});
-        console.log("Constructing SCP-" + cToken.version + " stake claim TX for " + (cAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + cToken.name + " (" + cToken.contract + ")");
+        console.log("Constructing SCP-" + cToken.version + " stake claim TX for " + (cAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
         // Use our first UTXO, as the fees will be incredibly low anyway
         trx = bitjs.transaction();
         let usedUTXOs = [];
@@ -616,16 +618,17 @@
       }
       // Put token + account info on the Staking Page on this refresh!
       if ((guiStakingToken && guiStakingAccount && guiStakingStatus) && guiStakingStatus.enabled) {
-        domStakingTitle.innerText = guiStakingToken.name + " " + guiStakingToken.ticker;
+        domStakingTitle.innerText = formatName(guiStakingToken.name, 18) + " (" + formatName(guiStakingToken.ticker, 6) + ")";
         // Run a quick'n'dirty APY calculation based on the current weight reward
         let nReward = guiStakingToken.inflation * guiStakingStatus.weight;
+        let nTotalRewards = guiStakingAccount.unclaimed_balance / COIN;
         // Also check to ensure we haven't hit the max supply yet
         if (guiStakingToken.supply === guiStakingToken.maxSupply ||
            (guiStakingToken.supply + guiStakingAccount.unclaimed_balance) >= guiStakingToken.maxSupply)
         {
           domStakingApy.innerText = "0%";
           domStakingRoi.innerText = "";
-          domStakingSubtitle.innerText = guiStakingToken.name + " has hit it's max supply of " + (guiStakingToken.maxSupply / COIN).toLocaleString('en-GB') + " " + guiStakingToken.ticker  + "!";
+          domStakingSubtitle.innerText = formatName(guiStakingToken.name, 12) + " has hit it's max supply of " + (guiStakingToken.maxSupply / COIN).toLocaleString('en-GB') + " " + formatName(guiStakingToken.ticker, 6)  + "!";
           domStakingRewards.innerText = "Cap Reached";
           domStakingRedeem.setAttribute('onclick', '');
           if (!domStakingRedeem.classList.contains('disabled'))
@@ -635,13 +638,13 @@
           let nAPY = percentOf((nReward * 720) * 365, guiStakingAccount.balance);
           if (nAPY > 0.01 && nReward > 1) {
             domStakingApy.innerText = nAPY.toLocaleString('en-GB', { maximumFractionDigits: (nAPY > 100 ? 0 : 2) }) + "%";
-            domStakingRoi.innerText = "or a ROI of " + percentOf(guiStakingAccount.unclaimed_balance, guiStakingAccount.balance).toFixed(2) + "%";
+            domStakingRoi.innerText = "or a ROI of " + percentOf(guiStakingAccount.unclaimed_balance, guiStakingAccount.balance).toLocaleString('en-GB', { maximumFractionDigits: 2 }) + "%";
           } else {
             domStakingApy.innerText = "---";
             domStakingRoi.innerText = "";
           }
           domStakingSubtitle.innerHTML = "You've been staking for " + (guiStakingStatus.age - guiStakingToken.minAge).toLocaleString('en-GB') + " blocks and earned...";
-          domStakingRewards.innerText = (guiStakingAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + guiStakingToken.ticker;
+          domStakingRewards.innerText = nTotalRewards.toLocaleString('en-GB', { maximumFractionDigits: nTotalRewards > 1 ? 4 : 8}) + " " + formatName(guiStakingToken.ticker, 6);
           if (guiStakingAccount.unclaimed_balance > 0) {
             domStakingRedeem.setAttribute('onclick', 'claimStakingRewards("' + contract + '")');
             domStakingRedeem.classList.remove('disabled');
@@ -654,17 +657,17 @@
           }
         }
       } else if (guiStakingToken && guiStakingAccount && guiStakingStatus) {
-        domStakingTitle.innerText = guiStakingToken.name + " (" + guiStakingToken.ticker + ")";
+        domStakingTitle.innerText = formatName(guiStakingToken.name, 18) + " (" + formatName(guiStakingToken.ticker, 6) + ")";
         domStakingApy.innerText = "---";
         domStakingRoi.innerText = "";
         domStakingSubtitle.innerHTML = "Your tokens need another " + (guiStakingToken.minAge - guiStakingStatus.age).toLocaleString('en-GB') + " blocks to mature before earning stakes!";
-        domStakingRewards.innerHTML = (guiStakingAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + guiStakingToken.ticker;
+        domStakingRewards.innerHTML = nTotalRewards.toLocaleString('en-GB', { maximumFractionDigits: nTotalRewards > 1 ? 4 : 8 }) + " " + guiStakingToken.ticker;
         domStakingRedeem.setAttribute('onclick', '');
         if (!domStakingRedeem.classList.contains('disabled'))
           domStakingRedeem.classList.add('disabled');
         domStakingRedeem.innerText = 'No Stakes to Claim';
       } else {
-        domStakingTitle.innerText = guiStakingToken ? guiStakingToken.name + " (" + guiStakingToken.ticker + ")" : "Loading...";
+        domStakingTitle.innerText = guiStakingToken ? formatName(guiStakingToken.name, 18) + " (" + formatName(guiStakingToken.ticker, 6) + ")" : "Loading...";
         domStakingApy.innerText = "---";
         domStakingRoi.innerText = "";
         domStakingSubtitle.innerHTML = "Loading...";
@@ -722,6 +725,10 @@
     function copyToClipboard(text, name) {
       clipboard.writeText(text);
       M.toast({html: 'Copied ' + name + ' to Clipboard!', displayLength: 2000});
+    }
+
+    function formatName(name, limit) {
+      return (name.length > limit ? name.substr(0, limit) + "…" : name);
     }
 
     setInterval(() => {
