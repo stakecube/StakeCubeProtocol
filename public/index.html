@@ -398,16 +398,11 @@
         console.log("Constructing SCP-" + cToken.version + " Transfer TX for: " + sendAmount + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
         // Use our first UTXO, as the fees will be incredibly low anyway
         trx = bitjs.transaction();
-        let usedUTXOs = [];
         let cUTXO;
-        for (const cSelectedUTXO of WALLET.getUTXOsPtr()) {
-          if (cSelectedUTXO.spent) continue;
+        for (const cSelectedUTXO of WALLET.getCoinsToSpend(10000)) {
           cUTXO = cSelectedUTXO;
-          if (cUTXO.sats > 200000) {
-            trx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
-            usedUTXOs.push(cUTXO);
-            break;
-          }
+          trx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
+          break;
         }
         trx.addoutputburn(0.00000001, cToken.contract + " send " + (sendAmount * COIN).toFixed(0) + " " + sendAddress); // Burn the transfer data on-chain
 
@@ -416,7 +411,7 @@
         let valuechange = (parseFloat(cUTXO.sats / COIN) - parseFloat(totalSent)).toFixed(8);
         if (totalSent <= WALLET.getBalance()) {
           trx.addoutput(strPubkey, valuechange); // Change Output
-          sendTransaction(trx.sign(WALLET.getPrivkey(), 1), usedUTXOs);
+          sendTransaction(trx.sign(WALLET.getPrivkey(), 1), [cUTXO]);
         } else {
           console.warn("Transfer: " + sendAmount + " " + cToken.ticker + "\nFee: " + nFee + " SCC\nChange: " + valuechange + " SCC\nTotal: " + totalSent + " SCC");
           M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
