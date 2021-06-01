@@ -1,7 +1,7 @@
 {
   "name": "stakecubeprotocol",
   "productName": "SCP Wallet",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "The StakeCube Protocol full-node and GUI for Node.js",
   "main": "main.js",
   "scripts": {
@@ -25,7 +25,6 @@
     "electron-squirrel-startup": "^1.0.0",
     "express": "^4.17.1",
     "jquery": "^3.6.0",
-    "lodash": "^4.17.21",
     "otplib": "^12.0.1",
     "regedit": "^3.0.3"
   },

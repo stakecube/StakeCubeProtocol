@@ -11,6 +11,9 @@ function switchToLogin() {
 
   // Show
   domLoginPage.style.display = "block";
+
+  // Focus on the password entry
+  document.getElementById("pass1").focus();
 }
 
 function switchToSend() {

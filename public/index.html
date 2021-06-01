@@ -744,8 +744,6 @@
         if (encwif && encwif.length > 1) {
           console.log("Encrypted key found: " + encwif);
           WALLET.setKeys(null, null, encwif);
-          // Focus on the password entry
-          document.getElementById("pass1").focus();
           getUnspentTransactions();
         } else {
           // No encrypted wallet available, check for an unencrypted key
