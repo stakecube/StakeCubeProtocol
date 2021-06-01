@@ -82,7 +82,7 @@ function switchToReceive() {
   if (!hasSetupRecvQR) {
     hasSetupRecvQR = true;
     let recvQR = qrcode(4, 'L');
-    recvQR.addData('scc:' + pubkeyMain);
+    recvQR.addData('scc:' + WALLET.getPubkey());
     recvQR.make();
     document.getElementById('receiveQR').setAttribute('src', recvQR.createDataURL());
   }

@@ -214,9 +214,7 @@
     let cachedActivity = [];
 
     // Privkey storage
-    let privkeyDecrypted = null;
     let privkeyEncrypted = null;
-    let pubkeyMain = null;
 
     // Statistical / Informational data
     let valueUSD = 0;
@@ -284,14 +282,15 @@
         if (valueUSD > 0)
           domBalanceUSD.innerText = (nBalance * valueUSD).toFixed(2);
         // And update the Receive page pubkey
-        domReceiveAddress.innerText = pubkeyMain;
+        let strPubkey = WALLET.getPubkey();
+        domReceiveAddress.innerText = strPubkey;
 
         // --- Update SCP token balances
-        // Fetch all tokens owned by our account (pubkeyMain)
+        // Fetch all tokens owned by our account (strPubkey)
         if (isFullnode)
-          cachedTokens = TOKENS.getTokensByAccount(pubkeyMain);
+          cachedTokens = TOKENS.getTokensByAccount(strPubkey);
         else
-          getTokensByAccountLight(pubkeyMain);
+          getTokensByAccountLight(strPubkey);
         // Loop all tokens, construct an updated GUI for the Dashboard
         let dashboardTokens = document.getElementById("dashboardTokens");
         let sendTokensSelector = document.getElementById('sendingCoin');
@@ -325,9 +324,9 @@
 
         // Update activity widget
         if (isFullnode)
-          cachedActivity = TOKENS.getActivityByAccount(pubkeyMain).reverse();
+          cachedActivity = TOKENS.getActivityByAccount(strPubkey).reverse();
         else
-          getActivityByAccountLight(pubkeyMain);
+          getActivityByAccountLight(strPubkey);
         if (cachedActivity.length > 0) {
           domActivityList.innerHTML = "";
           let amountToLoad = cachedActivity.length, i;
@@ -358,6 +357,7 @@
     }
 
     function sendTransactionGUI() {
+      let strPubkey = WALLET.getPubkey();
       let coinSelection = document.getElementById("sendingCoinVal").value;
       let sendAmount = document.getElementById("sendAmount").value;
       let sendAddress = document.getElementById("sendAddress").value;
@@ -388,8 +388,8 @@
         let totalSent = (parseFloat(fee) + parseFloat(sendAmount)).toFixed(8);
         let valuechange = (parseFloat(txValue) - parseFloat(totalSent)).toFixed(8);
         if (totalSent <= balance) {
-          trx.addoutput(pubkeyMain, valuechange); // Change Output
-          sendTransaction(trx.sign(privkeyDecrypted, 1), usedUTXOs);
+          trx.addoutput(strPubkey, valuechange); // Change Output
+          sendTransaction(trx.sign(WALLET.getPrivkey(), 1), usedUTXOs);
         } else {
           console.warn("Amount: " + sendAmount + "\nFee: " + fee + "\nChange: " + valuechange + "\nTotal: " + totalSent);
           M.toast({html: 'You don\'t have enough SCC!', displayLength: 3000});
@@ -397,7 +397,7 @@
       } else {
         let strToken = coinSelection.split('scptoken-')[1];
         let cToken = isFullnode ? TOKENS.getToken(strToken) : getCachedToken(strToken);
-        let cAccount = isFullnode ? cToken.getAccount(pubkeyMain) : getCachedAccount(cToken, pubkeyMain);
+        let cAccount = isFullnode ? cToken.getAccount(strPubkey) : getCachedAccount(cToken, strPubkey);
         if ((cAccount.balance / COIN) < sendAmount) return M.toast({html: 'You don\'t have enough ' + cToken.ticker + '!', displayLength: 3000});
         if (WALLET.getUTXOsPtr().length === 0) return M.toast({html: 'You need SCC to pay for gas fees!', displayLength: 3000});
         console.log("Constructing SCP-" + cToken.version + " Transfer TX for: " + sendAmount + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
@@ -420,8 +420,8 @@
         let totalSent = parseFloat(fee).toFixed(8);
         let valuechange = (parseFloat(cUTXO.sats / COIN) - parseFloat(totalSent)).toFixed(8);
         if (totalSent <= balance) {
-          trx.addoutput(pubkeyMain, valuechange); // Change Output
-          sendTransaction(trx.sign(privkeyDecrypted, 1), usedUTXOs);
+          trx.addoutput(strPubkey, valuechange); // Change Output
+          sendTransaction(trx.sign(WALLET.getPrivkey(), 1), usedUTXOs);
         } else {
           console.warn("Transfer: " + sendAmount + " " + cToken.ticker + "\nFee: " + fee + " SCC\nChange: " + valuechange + " SCC\nTotal: " + totalSent + " SCC");
           M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
@@ -430,8 +430,9 @@
     }
 
     function claimStakingRewards(contract) {
+        let strPubkey = WALLET.getPubkey();
         let cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
-        let cAccount = isFullnode ? cToken.getAccount(pubkeyMain) : getCachedAccount(cToken, pubkeyMain);
+        let cAccount = isFullnode ? cToken.getAccount(strPubkey) : getCachedAccount(cToken, strPubkey);
         if (WALLET.getUTXOsPtr().length === 0) return M.toast({html: 'You need SCC to pay for gas fees!', displayLength: 3000});
         console.log("Constructing SCP-" + cToken.version + " stake claim TX for " + (cAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
         // Use our first UTXO, as the fees will be incredibly low anyway
@@ -453,8 +454,8 @@
         let totalSent = parseFloat(fee).toFixed(8);
         let valuechange = (parseFloat(cUTXO.sats / COIN) - parseFloat(totalSent)).toFixed(8);
         if (totalSent <= balance) {
-          trx.addoutput(pubkeyMain, valuechange); // Change Output
-          sendTransaction(trx.sign(privkeyDecrypted, 1), usedUTXOs);
+          trx.addoutput(strPubkey, valuechange); // Change Output
+          sendTransaction(trx.sign(WALLET.getPrivkey(), 1), usedUTXOs);
           domStakingRedeem.setAttribute('onclick', '');
           domStakingRedeem.classList.add('disabled');
           domStakingRedeem.innerText = 'Redeeming...';
@@ -468,8 +469,9 @@
 
     function deploySCP(version = 1, params = []) {
         if (!Number.isSafeInteger(version)) return console.error("SCP token must have a version integer!");
-        if (params.length < 3) return console.error("SCP token deployment requires params!\nE.g; deploySCP(1, ['Cat Coin', 'CAT', " + COIN + "])");
+        if (params.length < 3) return console.error("SCP token deployment requires params!\nE.g; deploySCP(1, ['CatCoin', 'CAT', " + COIN + "])");
         if (WALLET.getUTXOsPtr().length === 0) return M.toast({html: 'You need SCC to pay for gas fees!', displayLength: 3000});
+        let strPubkey = WALLET.getPubkey();
         console.log("Constructing SCP-" + version + " deployment TX");
         // Use our first UTXO, as the fees will be incredibly low anyway
         trx = bitjs.transaction();
@@ -497,8 +499,8 @@
         let totalSent = (parseFloat(fee) + parseFloat(nDeployFee)).toFixed(8);
         let valuechange = (parseFloat(txValue) - parseFloat(totalSent)).toFixed(8);
         if (totalSent <= balance) {
-          trx.addoutput(pubkeyMain, valuechange); // Change Output
-          sendTransaction(trx.sign(privkeyDecrypted, 1), usedUTXOs);
+          trx.addoutput(strPubkey, valuechange); // Change Output
+          sendTransaction(trx.sign(WALLET.getPrivkey(), 1), usedUTXOs);
           M.toast({html: 'Deploying! Please wait for the contract to confirm in a block!', displayLength: 7500});
         } else {
           console.warn("SCP-" + version + " Deployment:\nFee: " + fee + " SCC\nChange: " + valuechange + " SCC\nTotal: " + totalSent + " SCC");
@@ -508,6 +510,7 @@
 
     function mintSCP(contract, amount) {
         if (WALLET.getUTXOsPtr().length === 0) return M.toast({html: 'You need SCC to pay for gas fees!', displayLength: 3000});
+        let strPubkey = WALLET.getPubkey();
         console.log("Constructing SCP mint TX for " + (amount / COIN).toLocaleString('en-GB'));
         // Use our first UTXO, as the fees will be incredibly low anyway
         trx = bitjs.transaction();
@@ -528,8 +531,8 @@
         let totalSent = parseFloat(fee).toFixed(8);
         let valuechange = (parseFloat(cUTXO.sats / COIN) - parseFloat(totalSent)).toFixed(8);
         if (totalSent <= balance) {
-          trx.addoutput(pubkeyMain, valuechange); // Change Output
-          sendTransaction(trx.sign(privkeyDecrypted, 1), usedUTXOs);
+          trx.addoutput(strPubkey, valuechange); // Change Output
+          sendTransaction(trx.sign(WALLET.getPrivkey(), 1), usedUTXOs);
           M.toast({html: 'Minting, please wait for your mint to confirm on the network!', displayLength: 7500});
         } else {
           console.warn("Mint: " + (amount / COIN).toLocaleString('en-GB') + " tokens\nFee: " + fee + " SCC\nChange: " + valuechange + " SCC\nTotal: " + totalSent + " SCC");
@@ -539,6 +542,7 @@
 
     function burnSCP(contract, amount) {
         if (WALLET.getUTXOsPtr().length === 0) return M.toast({html: 'You need SCC to pay for gas fees!', displayLength: 3000});
+        let strPubkey = WALLET.getPubkey();
         console.log("Constructing SCP burn TX for " + (amount / COIN).toLocaleString('en-GB'));
         // Use our first UTXO, as the fees will be incredibly low anyway
         trx = bitjs.transaction();
@@ -559,8 +563,8 @@
         let totalSent = parseFloat(fee).toFixed(8);
         let valuechange = (parseFloat(cUTXO.sats / COIN) - parseFloat(totalSent)).toFixed(8);
         if (totalSent <= balance) {
-          trx.addoutput(pubkeyMain, valuechange); // Change Output
-          sendTransaction(trx.sign(privkeyDecrypted, 1), usedUTXOs);
+          trx.addoutput(strPubkey, valuechange); // Change Output
+          sendTransaction(trx.sign(WALLET.getPrivkey(), 1), usedUTXOs);
           M.toast({html: 'Burning, please wait for your burn to confirm on the network!', displayLength: 7500});
         } else {
           console.warn("Burn: " + (amount / COIN).toLocaleString('en-GB') + " tokens\nFee: " + fee + " SCC\nChange: " + valuechange + " SCC\nTotal: " + totalSent + " SCC");
@@ -574,6 +578,7 @@
 
     function refreshSendBalance() {
       // Update available balance display
+      let strPubkey = WALLET.getPubkey();
       let nSendBalanceDisplay = 0;
       let strCurrency = document.getElementById("sendingCoinVal").value;
       if (strCurrency === "scc") {
@@ -581,7 +586,7 @@
       } else {
         let strToken = strCurrency.split('scptoken-')[1];
         let cToken = isFullnode ? TOKENS.getToken(strToken) : getCachedToken(strToken);
-        let cAccount = isFullnode ? cToken.getAccount(pubkeyMain) : getCachedAccount(cToken, pubkeyMain);
+        let cAccount = isFullnode ? cToken.getAccount(strPubkey) : getCachedAccount(cToken, strPubkey);
         nSendBalanceDisplay = Number((cAccount.balance / COIN).toFixed(8));
       }
       domSendingBalance.innerText = nSendBalanceDisplay.toLocaleString('en-GB', { maximumFractionDigits: 8 });
@@ -607,14 +612,15 @@
     let guiStakingAccount;
     let guiStakingStatus;
     function refreshStakingStatus(contract) {
+      let strPubkey = WALLET.getPubkey();
       if (isFullnode) {
         guiStakingToken   = TOKENS.getToken(contract);
-        guiStakingAccount = guiStakingToken.getAccount(pubkeyMain);
-        guiStakingStatus  = guiStakingToken.getStakingStatus(pubkeyMain);
+        guiStakingAccount = guiStakingToken.getAccount(strPubkey);
+        guiStakingStatus  = guiStakingToken.getStakingStatus(strPubkey);
       } else {
         guiStakingToken   = getCachedToken(contract);
-        guiStakingAccount = getCachedAccount(guiStakingToken, pubkeyMain);
-        getStakingStatusLight(contract, pubkeyMain);
+        guiStakingAccount = getCachedAccount(guiStakingToken, strPubkey);
+        getStakingStatusLight(contract, strPubkey);
       }
       // Put token + account info on the Staking Page on this refresh!
       if ((guiStakingToken && guiStakingAccount && guiStakingStatus) && guiStakingStatus.enabled) {
@@ -815,7 +821,7 @@
         if (tmpwifkey) {
           console.log("Encrypting import key...");
           // Save decrypted copy in memory, immediately erase from disk
-          privkeyDecrypted = tmpwifkey;
+          WALLET.setKeys(false, tmpwifkey);
           localStorage.removeItem("tmpwifkey");
           // Encrypt wallet and save it to disk
           encryptWallet(tmppass).then(newEncwif => {
@@ -826,7 +832,7 @@
             // Load the new keys
             privkeyEncrypted = newEncwif;
             localStorage.setItem("encwif", privkeyEncrypted);
-            importWallet(privkeyDecrypted);
+            importWallet(WALLET.getPrivkey());
             // Load the Dashboard screen
             switchToDashboard();
             // Give the cache a kick
@@ -838,7 +844,7 @@
           console.log("Deriving new key...")
           generateWallet().then(objWallet => {
             // Save decrypted copy in memory
-            privkeyDecrypted = objWallet.privkey;
+            WALLET.setKeys(false, objWallet.privkey);
             // Encrypt wallet and save it to disk
             encryptWallet(tmppass).then(newEncwif => {
               console.log("Encrypted wallet!");
@@ -993,7 +999,7 @@
               <div class="alert alert-danger-custom" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> Please make sure to only send SCC or SCP tokens to this address. Other coins will be lost and cannot be reversed.</div><br>
               
               <center>
-                <div onclick="copyToClipboard(pubkeyMain, 'Address')" class="refresh-button hover-darker">
+                <div onclick="copyToClipboard(WALLET.getPubkey(), 'Address')" class="refresh-button hover-darker">
                   <span id="receiveAddress" class="font-weight-bold"></span>
                   <span style="padding-left:6px;">
                     <i class="far fa-copy"></i>

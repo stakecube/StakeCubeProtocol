@@ -29,13 +29,14 @@ function setCoinSelector(img, text, value) {
   $(".b").toggle();
 
   // Update available balance display
+  let strPubkey = WALLET.getPubkey();
   let nSendBalanceDisplay = 0;
   if (value === "scc") {
     nSendBalanceDisplay = getBalance();
   } else {
     let strToken = value.split('scptoken-')[1];
     let cToken = isFullnode ? TOKENS.getToken(strToken) : getCachedToken(strToken);
-    let cAccount = isFullnode ? cToken.getAccount(pubkeyMain) : getCachedAccount(cToken, pubkeyMain);
+    let cAccount = isFullnode ? cToken.getAccount(strPubkey) : getCachedAccount(cToken, strPubkey);
     nSendBalanceDisplay = Number((cAccount.balance / COIN).toFixed(8));
   }
   domSendingBalance.innerText = nSendBalanceDisplay.toLocaleString('en-GB', { maximumFractionDigits: 8 });

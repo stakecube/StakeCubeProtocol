@@ -10,7 +10,7 @@ var getBlockCount = function() {
     if (data > cachedBlockCount) {
       console.log("New block detected! " + cachedBlockCount + " --> " + data);
       domBlock.innerText = data.toLocaleString('en-GB');
-      if (pubkeyMain)
+      if (WALLET.getPubkey())
         getUnspentTransactions();
     } else {
       let reloader = document.getElementById("balanceRefresh");
@@ -51,7 +51,7 @@ var getCoinSupply = function() {
 }
 var getUnspentTransactions = function () {
   var request = new XMLHttpRequest()
-  request.open('GET', "https://stakecubecoin.net/web3/getutxos?addr=" + pubkeyMain, true)
+  request.open('GET', "https://stakecubecoin.net/web3/getutxos?addr=" + WALLET.getPubkey(), true)
   request.onload = function () {
     let reloader = document.getElementById("balanceRefresh");
     reloader.className = reloader.className.replace(/ playAnim/g, "");
@@ -75,7 +75,7 @@ var getMempoolLight = function (arrUTXOList) {
         // Search all VOUTs belonging to us, add them to our wallet
         for (rawVout of rawTX.vout) {
           if (rawVout.scriptPubKey && rawVout.scriptPubKey.addresses && rawVout.scriptPubKey.addresses.length > 0) {
-            if (rawVout.scriptPubKey.addresses[0] === pubkeyMain) {
+            if (rawVout.scriptPubKey.addresses[0] === WALLET.getPubkey()) {
               // Found a mempool vout for our wallet!
               arrUTXOList.push(new WALLET.UTXO(rawTX.txid, rawVout.n, rawVout.scriptPubKey.hex, rawVout.valueSat));
             }

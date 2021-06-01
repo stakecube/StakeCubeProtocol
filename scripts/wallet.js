@@ -91,7 +91,6 @@ importWallet = function (newWif = false) {
     walletAlreadyMade++;
     //Wallet Import Format to Private Key
     var privateKeyWIF = newWif || document.getElementById("privateKey").value;
-    privkeyDecrypted = privateKeyWIF;
     if (!newWif) {
       document.getElementById("privateKey").value = "";
       toggleWallet();
@@ -139,7 +138,7 @@ importWallet = function (newWif = false) {
     var checksumPubKey = String(pubKeyHashingSF).substr(0, 8).toUpperCase()
     var pubKeyPreBase = pubKeyHashNetwork + checksumPubKey
     var pubKey = to_b58(hexStringToByte(pubKeyPreBase), MAP)
-    pubkeyMain = pubKey;
+    WALLET.setKeys(pubKey, privateKeyWIF);
     console.log(pubKey);
     if (!newWif) {
         // Hide the encryption warning
@@ -173,7 +172,6 @@ generateWallet = async function (strPrefix = false) {
     var checksum = String(hash).substr(0, 8).toUpperCase();
     var keyWithChecksum = privateKeyAndVersion + checksum;
     var privateKeyWIF = to_b58(hexStringToByte(keyWithChecksum), MAP);
-    privkeyDecrypted = privateKeyWIF;
     //Public Key Generation
     var privateKeyBigInt = BigInteger.fromByteArrayUnsigned(Crypto.util.hexToBytes(byteToHexString(privateKeyBytes).toUpperCase()));
     var curve = EllipticCurve.getSECCurveByName("secp256k1");
@@ -206,7 +204,7 @@ generateWallet = async function (strPrefix = false) {
     var checksumPubKey = String(pubKeyHashingSF).substr(0, 8).toUpperCase()
     var pubKeyPreBase = pubKeyHashNetwork + checksumPubKey
     var pubKey = to_b58(hexStringToByte(pubKeyPreBase), MAP)
-    pubkeyMain = pubKey;
+    WALLET.setKeys(pubKey, privateKeyWIF);
     //Debug Console
     if (debug && strPrefix === false) {
       console.log("Private Key")
@@ -269,7 +267,7 @@ generateWallet = async function (strPrefix = false) {
 
 encryptWallet = async function (forcedPass = false) {
   // Encrypt the wallet WIF with AES-GCM and a user-chosen password - suitable for browser storage
-  let encWIF = await encrypt(privkeyDecrypted, forcedPass);
+  let encWIF = await encrypt(WALLET.getPrivkey(), forcedPass);
   if (typeof encWIF !== "string") return false;
   // Set the encrypted wallet in localStorage
   localStorage.setItem("encwif", encWIF);
