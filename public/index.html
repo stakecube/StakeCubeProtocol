@@ -765,6 +765,7 @@
               // Load the new keys
               WALLET.setKeys(null, null, newEncwif);
               importWallet(WALLET.getPrivkey());
+              DB.setWallet(WALLET.toDB());
               // Load the Dashboard screen
               switchToDashboard();
               // Give the cache a kick
@@ -781,6 +782,7 @@
               encryptWallet(tmppass).then(newEncwif => {
                 console.log("Encrypted wallet!");
                 WALLET.setKeys(null, null, newEncwif);
+                DB.setWallet(WALLET.toDB());
                 // Erase the tmppass from disk and memory
                 tmppass = null;
                 localStorage.removeItem("tmppass");
