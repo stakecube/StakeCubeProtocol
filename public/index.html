@@ -242,6 +242,7 @@
     let domBalance;
     let domBalanceUSD;
     let domSendingBalance;
+    let domActivitySubtitle;
     let domActivityList;
 
     let domMarketcap;
@@ -327,7 +328,11 @@
           getActivityByAccountLight(strPubkey);
         if (cachedActivity.length > 0) {
           domActivityList.innerHTML = "";
+          domActivitySubtitle.innerHTML = "";
           let amountToLoad = cachedActivity.length, i;
+          if (WALLET.getIncomingUTXOs().length > 0) {
+            domActivitySubtitle.innerHTML = '<center style="margin-top: 25px; margin-bottom: 25px;"><p>You have incoming pending transactions!</p></center>';
+          }
           for (i=0; i<amountToLoad; i++) {
             let nValue = cachedActivity[i].amount / COIN;
             domActivityList.innerHTML += '<div class="mt-4"><div class="float-start text-center">Block ' + cachedActivity[i].block.toLocaleString('en-GB') + '</div><span class="float-end ' + ((cachedActivity[i].type === 'received' || cachedActivity[i].type === 'staked') ? "plus" : "minus") + '-balance-color font-weight-bold" style="position:relative; top:11px;"><i style="text-transform: capitalize;padding-right:5px;">' + cachedActivity[i].type + '</i> ' + ((cachedActivity[i].type === 'received' || cachedActivity[i].type === 'staked') ? "+" : "-") + nValue.toLocaleString('en-GB', { maximumFractionDigits: nValue > 1 ? 2 : 8, minimumFractionDigits: 2 }) + ' ' + cachedActivity[i].token.ticker + '</span></div><br><br>' + (i !== 4 ? '<hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">' : '');
@@ -747,6 +752,8 @@
     setInterval(() => {
       // Check block count + UTXO sync every 10 seconds
       getBlockCount();
+      if (WALLET.getPubkey())
+        getUnspentTransactions();
       // Update Dashboard stats
       if (valueUSD > 0) {
         domBalanceUSD.innerText = (getBalance() * valueUSD).toFixed(2);
@@ -793,6 +800,7 @@
       domMarketcap = document.getElementById("dashboardMarketcap");
       domBlock = document.getElementById("dashboardBlock");
       domDashboardBtn = document.getElementById("dashboardBtn");
+      domActivitySubtitle = document.getElementById("activitySubtitle");
       domActivityList = document.getElementById("activityList");
       domSendBtn = document.getElementById("sendBtn");
       domReceiveBtn = document.getElementById("receiveBtn");
@@ -894,6 +902,7 @@
           <div class="card card-prop mb-4">
             <div class="card-body">
               <div class="card-title font-gray font-weight-bold">Activity</div>
+              <div id="activitySubtitle"></div> 
               <div id="activityList" style="overflow-y: auto; max-height: 320px; padding-right: 10px;">
                 <center><p>Loading Activity</p></center>
               </div>

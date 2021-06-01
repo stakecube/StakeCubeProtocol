@@ -135,10 +135,6 @@ importWallet = function (newWif = false) {
   var pubKey = to_b58(hexStringToByte(pubKeyPreBase), MAP)
   WALLET.setKeys(pubKey, privateKeyWIF);
   console.log(pubKey);
-  if (!newWif) {
-      // Hide the encryption warning
-    //document.getElementById('genKeyWarning').style.display = 'block';
-  }
   // Load UTXOs from explorer
   getUnspentTransactions();
 }
