@@ -1,10 +1,6 @@
 // Settings Defaults
 var debug = false;
 
-// TODO: The below variables need some serious cleanup!
-//------------------------------
-var trx;
-
 /* Theme and UI settings */
 var domTheme;
 var domThemeButton;
