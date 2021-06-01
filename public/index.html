@@ -49,9 +49,6 @@
   <script type="text/javascript" src="../scripts/bitTrx.js"></script>
   <script type="text/javascript" src="js/switchPages.js"></script>
 
-  <!-- Materialize Library -->
-  <script type="text/javascript" src="js/materialize.js"></script>
-
   <!-- SCP LIBRARY GOES BELOW -->
   <script type="text/javascript" src="../lib/index.js"></script>
   <!-- SCP LIBRARY GOES ABOVE -->
@@ -377,7 +374,7 @@
         let nUTXOs = usedUTXOs.reduce((a, b) => {return a + b.sats}, 0);
         for (const cUTXO of usedUTXOs)
           cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
-        if (sendAmount >= nUTXOs) return M.toast({html: 'Not enough funds!', displayLength: 2000});
+        if (sendAmount >= nUTXOs / COIN) return M.toast({html: 'Not enough funds!', displayLength: 2000});
         // Destination output
         cTx.addoutput(sendAddress, sendAmount);
         // Fee & Change output
@@ -395,7 +392,7 @@
         console.log("Constructing SCP-" + cToken.version + " Transfer TX for: " + sendAmount + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
         let cTx = bitjs.transaction();
         // Add input
-        let cUTXO = WALLET.getCoinsToSpend(10000, true);
+        let cUTXO = WALLET.getCoinsToSpend(10000, true)[0];
         cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         // SCP output
         cTx.addoutputburn(0.00000001, cToken.contract + " send " + (sendAmount * COIN).toFixed(0) + " " + sendAddress);
@@ -1031,6 +1028,9 @@
     </div>
     <i id="themeButton" onclick="loadNextTheme();" class="fas fa-sun" style="position: fixed; bottom: 10px; left: 10px; color: black; opacity: 0.5; cursor: pointer;"></i>
   </main>
+
+  <!-- Materialize Library -->
+  <script type="text/javascript" src="js/materialize.js"></script>
 
   <script src="js/bootstrap.bundle.min.js"></script>
   <script src="js/select.js"></script>
