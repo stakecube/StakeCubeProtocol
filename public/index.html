@@ -337,7 +337,7 @@
           let strActivityList = "";
           for (i=0; i<amountToLoad; i++) {
             let nValue = cachedActivity[i].amount / COIN;
-            strActivityList += '<div class="mt-4"><div class="float-start text-center">Block ' + cachedActivity[i].block.toLocaleString('en-GB') + '</div><span class="float-end ' + ((cachedActivity[i].type === 'received' || cachedActivity[i].type === 'staked') ? "plus" : "minus") + '-balance-color font-weight-bold" style="position:relative; top:11px;"><i style="text-transform: capitalize;padding-right:5px;">' + cachedActivity[i].type + '</i> ' + ((cachedActivity[i].type === 'received' || cachedActivity[i].type === 'staked') ? "+" : "-") + nValue.toLocaleString('en-GB', { maximumFractionDigits: nValue > 1 ? 2 : 8, minimumFractionDigits: 2 }) + ' ' + cachedActivity[i].token.ticker + '</span></div><br><br>' + (i !== 4 ? '<hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">' : '');
+            strActivityList += '<div class="mt-4" style="cursor: pointer;" onclick="openExternalURL(\'https://scc.ccore.online/transaction/' + cachedActivity[i].id + '\')"><div class="float-start text-center">Block ' + cachedActivity[i].block.toLocaleString('en-GB') + '</div><span class="float-end ' + ((cachedActivity[i].type === 'received' || cachedActivity[i].type === 'staked') ? "plus" : "minus") + '-balance-color font-weight-bold" style="position:relative; top:11px;"><i style="text-transform: capitalize;padding-right:5px;">' + cachedActivity[i].type + '</i> ' + ((cachedActivity[i].type === 'received' || cachedActivity[i].type === 'staked') ? "+" : "-") + nValue.toLocaleString('en-GB', { maximumFractionDigits: nValue > 1 ? 2 : 8, minimumFractionDigits: 2 }) + ' ' + cachedActivity[i].token.ticker + '</span></div><br><br>' + (i !== 4 ? '<hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">' : '');
           }
           domActivityList.innerHTML += strActivityList;
         } else {
@@ -657,6 +657,10 @@
     function copyToClipboard(text, name) {
       clipboard.writeText(text);
       M.toast({html: 'Copied ' + name + ' to Clipboard!', displayLength: 2000});
+    }
+
+    function openExternalURL(url) {
+      require("electron").shell.openExternal(url);
     }
 
     function formatName(name, limit) {
