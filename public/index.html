@@ -372,18 +372,10 @@
         trx = bitjs.transaction();
         let usedUTXOs = [];
         let txValue = 0;
-        for (const cUTXO of WALLET.getUTXOsPtr()) {
-          if (cUTXO.spent) continue;
-          if (txValue > (sendAmount + 1000)) {
-            // Required Coin Control value met, yahoo!
-            console.log("Coin Control: TX Constructed! Selected " + trx.inputs.length + " input(s) (" + txValue + " SCC)");
-            break;
-          }
-          trx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
+        for (const cUTXO of WALLET.getCoinsToSpend(sendAmount * COIN)) {
           usedUTXOs.push(cUTXO);
-          txValue += Number((cUTXO.sats / COIN).toFixed(8));
-          txValue = Number(txValue.toFixed(8));
-          console.log("Coin Control: Selected input " + cUTXO.id.substr(0, 6) + "(" + cUTXO.vout + ")... (Added " + (cUTXO.sats / COIN).toFixed(8) + " SCC - Total: " + txValue + ")");
+          txValue += cUTXO.sats / COIN;
+          trx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         }
 
         trx.addoutput(sendAddress, sendAmount); // Sending to this address
@@ -440,16 +432,11 @@
         console.log("Constructing SCP-" + cToken.version + " stake claim TX for " + (cAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
         // Use our first UTXO, as the fees will be incredibly low anyway
         trx = bitjs.transaction();
-        let usedUTXOs = [];
         let cUTXO;
-        for (const cSelectedUTXO of WALLET.getUTXOsPtr()) {
-          if (cSelectedUTXO.spent) continue;
+        for (const cSelectedUTXO of WALLET.getCoinsToSpend(10000)) {
           cUTXO = cSelectedUTXO;
-          if (cUTXO.sats > 200000) {
-            trx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
-            usedUTXOs.push(cUTXO);
-            break;
-          }
+          trx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
+          break;
         }
         trx.addoutputburn(0.00000001, cToken.contract + " redeem");
 
@@ -458,7 +445,7 @@
         let valuechange = (parseFloat(cUTXO.sats / COIN) - parseFloat(totalSent)).toFixed(8);
         if (totalSent <= WALLET.getBalance()) {
           trx.addoutput(strPubkey, valuechange); // Change Output
-          sendTransaction(trx.sign(WALLET.getPrivkey(), 1), usedUTXOs);
+          sendTransaction(trx.sign(WALLET.getPrivkey(), 1), [cUTXO]);
           domStakingRedeem.setAttribute('onclick', '');
           domStakingRedeem.classList.add('disabled');
           domStakingRedeem.innerText = 'Redeeming...';
@@ -478,20 +465,11 @@
         console.log("Constructing SCP-" + version + " deployment TX");
         // Use our first UTXO, as the fees will be incredibly low anyway
         trx = bitjs.transaction();
-        let usedUTXOs = [];
-        let txValue = 0;
-        for (const cUTXO of WALLET.getUTXOsPtr()) {
-          if (cUTXO.spent) continue;
-          if (txValue > (nDeployFee + (1000 / COIN))) {
-            // Required Coin Control value met, yahoo!
-            console.log("Coin Control: TX Constructed! Selected " + trx.inputs.length + " input(s) (" + txValue + " SCC)");
-            break;
-          }
+        let cUTXO;
+        for (const cSelectedUTXO of WALLET.getCoinsToSpend((nDeployFee + 1000) * COIN)) {
+          cUTXO = cSelectedUTXO;
           trx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
-          usedUTXOs.push(cUTXO);
-          txValue += Number((cUTXO.sats / COIN).toFixed(8));
-          txValue = Number(txValue.toFixed(8));
-          console.log("Coin Control: Selected input " + cUTXO.id.substr(0, 6) + "(" + cUTXO.vout + ")... (Added " + (cUTXO.sats / COIN).toFixed(8) + " SCC - Total: " + txValue + ")");
+          break;
         }
         // The SCP VM command
         trx.addoutputburn(0.00000001, "SCPCREATE" + version + " " + params.join(" "));
@@ -500,10 +478,10 @@
 
         let nFee = WALLET.getFee(trx.serialize().length);
         let totalSent = (parseFloat(nFee) + parseFloat(nDeployFee)).toFixed(8);
-        let valuechange = (parseFloat(txValue) - parseFloat(totalSent)).toFixed(8);
+        let valuechange = (parseFloat(cUTXO.sats / COIN) - parseFloat(totalSent)).toFixed(8);
         if (totalSent <= WALLET.getBalance()) {
           trx.addoutput(strPubkey, valuechange); // Change Output
-          sendTransaction(trx.sign(WALLET.getPrivkey(), 1), usedUTXOs);
+          sendTransaction(trx.sign(WALLET.getPrivkey(), 1), [cUTXO]);
           M.toast({html: 'Deploying! Please wait for the contract to confirm in a block!', displayLength: 7500});
         } else {
           console.warn("SCP-" + version + " Deployment:\nFee: " + nFee + " SCC\nChange: " + valuechange + " SCC\nTotal: " + totalSent + " SCC");
@@ -519,14 +497,10 @@
         trx = bitjs.transaction();
         let usedUTXOs = [];
         let cUTXO;
-        for (const cSelectedUTXO of WALLET.getUTXOsPtr()) {
-          if (cSelectedUTXO.spent) continue;
+        for (const cSelectedUTXO of WALLET.getCoinsToSpend(10000)) {
           cUTXO = cSelectedUTXO;
-          if (cUTXO.sats > 200000) {
-            trx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
-            usedUTXOs.push(cUTXO);
-            break;
-          }
+          trx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
+          break;
         }
         trx.addoutputburn(0.00000001, contract + " mint " + amount);
 
@@ -535,7 +509,7 @@
         let valuechange = (parseFloat(cUTXO.sats / COIN) - parseFloat(totalSent)).toFixed(8);
         if (totalSent <= WALLET.getBalance()) {
           trx.addoutput(strPubkey, valuechange); // Change Output
-          sendTransaction(trx.sign(WALLET.getPrivkey(), 1), usedUTXOs);
+          sendTransaction(trx.sign(WALLET.getPrivkey(), 1), [cUTXO]);
           M.toast({html: 'Minting, please wait for your mint to confirm on the network!', displayLength: 7500});
         } else {
           console.warn("Mint: " + (amount / COIN).toLocaleString('en-GB') + " tokens\nFee: " + nFee + " SCC\nChange: " + valuechange + " SCC\nTotal: " + totalSent + " SCC");
@@ -551,14 +525,10 @@
         trx = bitjs.transaction();
         let usedUTXOs = [];
         let cUTXO;
-        for (const cSelectedUTXO of WALLET.getUTXOsPtr()) {
-          if (cSelectedUTXO.spent) continue;
+        for (const cSelectedUTXO of WALLET.getCoinsToSpend(10000)) {
           cUTXO = cSelectedUTXO;
-          if (cUTXO.sats > 200000) {
-            trx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
-            usedUTXOs.push(cUTXO);
-            break;
-          }
+          trx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
+          break;
         }
         trx.addoutputburn(0.00000001, contract + " burn " + amount);
 
@@ -567,7 +537,7 @@
         let valuechange = (parseFloat(cUTXO.sats / COIN) - parseFloat(totalSent)).toFixed(8);
         if (totalSent <= WALLET.getBalance()) {
           trx.addoutput(strPubkey, valuechange); // Change Output
-          sendTransaction(trx.sign(WALLET.getPrivkey(), 1), usedUTXOs);
+          sendTransaction(trx.sign(WALLET.getPrivkey(), 1), [cUTXO]);
           M.toast({html: 'Burning, please wait for your burn to confirm on the network!', displayLength: 7500});
         } else {
           console.warn("Burn: " + (amount / COIN).toLocaleString('en-GB') + " tokens\nFee: " + nFee + " SCC\nChange: " + valuechange + " SCC\nTotal: " + totalSent + " SCC");
@@ -828,6 +798,7 @@
           WALLET.setKeys(null, null, encwif);
           // Focus on the password entry
           document.getElementById("pass1").focus();
+          getUnspentTransactions();
         } else {
           // No encrypted wallet available, check for an unencrypted key
           let tmpwifkey = localStorage.getItem("tmpwifkey");
