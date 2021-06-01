@@ -82,13 +82,12 @@ var from_b58 = function (
 var randArr = new Uint8Array(32) //create a typed array of 32 bytes (256 bits)
 //Wallet Import
 importWallet = function (newWif = false) {
-  if (walletAlreadyMade != 0) {
+  if (WALLET.getPubkey()) {
     var walletConfirm = window.confirm("Do you really want to import a new address? If you haven't saved the last private key, the key will get LOST forever alongside ANY funds with it.");
   } else {
     walletConfirm = true;
   }
   if (walletConfirm) {
-    walletAlreadyMade++;
     //Wallet Import Format to Private Key
     var privateKeyWIF = newWif || document.getElementById("privateKey").value;
     if (!newWif) {
@@ -151,13 +150,12 @@ importWallet = function (newWif = false) {
 
 //Wallet Generation
 generateWallet = async function (strPrefix = false) {
-  if (walletAlreadyMade != 0 && strPrefix === false) {
+  if (WALLET.getPubkey() && strPrefix === false) {
     var walletConfirm = window.confirm("Do you really want to generate a new address? If you haven't saved the last private key the key will get lost forever and any funds with it.");
   } else {
     walletConfirm = true;
   }
   if (walletConfirm) {
-    walletAlreadyMade++;
     var randArr = new Uint8Array(32);
     window.crypto.getRandomValues(randArr); //populate array with cryptographically secure random numbers
     var privateKeyBytes = [];

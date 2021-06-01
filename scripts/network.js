@@ -95,7 +95,7 @@ var getMempoolLight = function (arrUTXOList) {
         }
       }
       // Update the GUI with the newly cached UTXO set
-      balance = getBalance(true);
+      getBalance(true);
       refreshSendBalance();
     }
     request.send();
@@ -147,17 +147,4 @@ var sendTransaction = function (hex, usedUTXOs = []) {
   } else {
     console.log("hex undefined");
   }
-}
-var calculatefee = function (bytes) {
-  // TEMPORARY: Hardcoded fee per-byte
-  fee = Number(((bytes * 2) / COIN).toFixed(8)); // 2 sats/byte
-  /*var request = new XMLHttpRequest()
-  request.open('GET', url + '/api/v1/estimatefee/10', false)
-  request.onload = function () {
-    data = JSON.parse(this.response)
-    console.log(data);
-    console.log('current fee rate' + data['result']);
-    fee = data['result'];
-  }
-  request.send()*/
 }
