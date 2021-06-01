@@ -1,3 +1,5 @@
+const { toDB } = require("../lib/wallet");
+
 //ByteToHexString Convertions
 function byteToHexString(uint8arr) {
   if (!uint8arr) {
@@ -82,203 +84,189 @@ var from_b58 = function (
 var randArr = new Uint8Array(32) //create a typed array of 32 bytes (256 bits)
 //Wallet Import
 importWallet = function (newWif = false) {
-  if (WALLET.getPubkey()) {
-    var walletConfirm = window.confirm("Do you really want to import a new address? If you haven't saved the last private key, the key will get LOST forever alongside ANY funds with it.");
-  } else {
-    walletConfirm = true;
+  //Wallet Import Format to Private Key
+  var privateKeyWIF = newWif || document.getElementById("privateKey").value;
+  if (!newWif) {
+    document.getElementById("privateKey").value = "";
+    toggleWallet();
   }
-  if (walletConfirm) {
-    //Wallet Import Format to Private Key
-    var privateKeyWIF = newWif || document.getElementById("privateKey").value;
-    if (!newWif) {
-      document.getElementById("privateKey").value = "";
-      toggleWallet();
-    }
-    var byteArryConvert = from_b58(privateKeyWIF, MAP)
-    var droplfour = byteArryConvert.slice(0, byteArryConvert.length - 4);
-    var key = droplfour.slice(1, droplfour.length);
-    var privateKeyBytes = key.slice(0, key.length - 1);
-    if (debug) {
-      //WIF to Private Key
-      console.log(byteToHexString(privateKeyWIF));
-      console.log(byteToHexString(byteArryConvert));
-      console.log(byteToHexString(droplfour));
-      console.log(byteToHexString(privateKeyBytes));
-    }
-    //Public Key Generation
-    var privateKeyBigInt = BigInteger.fromByteArrayUnsigned(Crypto.util.hexToBytes(byteToHexString(privateKeyBytes).toUpperCase()));
-    var curve = EllipticCurve.getSECCurveByName("secp256k1");
-    var curvePt = curve.getG().multiply(privateKeyBigInt);
-    var x = curvePt.getX().toBigInteger();
-    var y = curvePt.getY().toBigInteger();
-    var publicKeyBytes = EllipticCurve.integerToBytes(x, 32);
-    publicKeyBytes = publicKeyBytes.concat(EllipticCurve.integerToBytes(y, 32));
-    publicKeyBytes.unshift(0x04);
-    if (bitjs.compressed == true) {
-      var publicKeyBytesCompressed = EllipticCurve.integerToBytes(x, 32)
-      if (y.isEven()) {
-        publicKeyBytesCompressed.unshift(0x02)
-      } else {
-        publicKeyBytesCompressed.unshift(0x03)
-      }
-      var pubKeyExtended = publicKeyBytesCompressed;
+  var byteArryConvert = from_b58(privateKeyWIF, MAP)
+  var droplfour = byteArryConvert.slice(0, byteArryConvert.length - 4);
+  var key = droplfour.slice(1, droplfour.length);
+  var privateKeyBytes = key.slice(0, key.length - 1);
+  if (debug) {
+    //WIF to Private Key
+    console.log(byteToHexString(privateKeyWIF));
+    console.log(byteToHexString(byteArryConvert));
+    console.log(byteToHexString(droplfour));
+    console.log(byteToHexString(privateKeyBytes));
+  }
+  //Public Key Generation
+  var privateKeyBigInt = BigInteger.fromByteArrayUnsigned(Crypto.util.hexToBytes(byteToHexString(privateKeyBytes).toUpperCase()));
+  var curve = EllipticCurve.getSECCurveByName("secp256k1");
+  var curvePt = curve.getG().multiply(privateKeyBigInt);
+  var x = curvePt.getX().toBigInteger();
+  var y = curvePt.getY().toBigInteger();
+  var publicKeyBytes = EllipticCurve.integerToBytes(x, 32);
+  publicKeyBytes = publicKeyBytes.concat(EllipticCurve.integerToBytes(y, 32));
+  publicKeyBytes.unshift(0x04);
+  if (bitjs.compressed == true) {
+    var publicKeyBytesCompressed = EllipticCurve.integerToBytes(x, 32)
+    if (y.isEven()) {
+      publicKeyBytesCompressed.unshift(0x02)
     } else {
-      var pubKeyExtended = publicKeyBytes;
+      publicKeyBytesCompressed.unshift(0x03)
     }
-    var publicKeyHex = byteToHexString(pubKeyExtended).toUpperCase()
-    const pubKeyHashing = new jsSHA("SHA-256", "HEX", { "numRounds": 1 });
-    pubKeyHashing.update(publicKeyHex);
-    const pubKeyHash = pubKeyHashing.getHash("HEX");
-    var pubKeyHashRipemd160 = byteToHexString(ripemd160(hexStringToByte(pubKeyHash))).toUpperCase()
-    var pubKeyHashNetwork = PUBKEY_ADDRESS.toString(16) + pubKeyHashRipemd160;
-    const pubKeyHashingS = new jsSHA("SHA-256", "HEX", { "numRounds": 2 });
-    pubKeyHashingS.update(pubKeyHashNetwork);
-    const pubKeyHashingSF = pubKeyHashingS.getHash("HEX").toUpperCase();
-    var checksumPubKey = String(pubKeyHashingSF).substr(0, 8).toUpperCase()
-    var pubKeyPreBase = pubKeyHashNetwork + checksumPubKey
-    var pubKey = to_b58(hexStringToByte(pubKeyPreBase), MAP)
-    WALLET.setKeys(pubKey, privateKeyWIF);
-    console.log(pubKey);
-    if (!newWif) {
-        // Hide the encryption warning
-      //document.getElementById('genKeyWarning').style.display = 'block';
-    }
-    // Load UTXOs from explorer
-    getUnspentTransactions();
+    var pubKeyExtended = publicKeyBytesCompressed;
+  } else {
+    var pubKeyExtended = publicKeyBytes;
   }
+  var publicKeyHex = byteToHexString(pubKeyExtended).toUpperCase()
+  const pubKeyHashing = new jsSHA("SHA-256", "HEX", { "numRounds": 1 });
+  pubKeyHashing.update(publicKeyHex);
+  const pubKeyHash = pubKeyHashing.getHash("HEX");
+  var pubKeyHashRipemd160 = byteToHexString(ripemd160(hexStringToByte(pubKeyHash))).toUpperCase()
+  var pubKeyHashNetwork = PUBKEY_ADDRESS.toString(16) + pubKeyHashRipemd160;
+  const pubKeyHashingS = new jsSHA("SHA-256", "HEX", { "numRounds": 2 });
+  pubKeyHashingS.update(pubKeyHashNetwork);
+  const pubKeyHashingSF = pubKeyHashingS.getHash("HEX").toUpperCase();
+  var checksumPubKey = String(pubKeyHashingSF).substr(0, 8).toUpperCase()
+  var pubKeyPreBase = pubKeyHashNetwork + checksumPubKey
+  var pubKey = to_b58(hexStringToByte(pubKeyPreBase), MAP)
+  WALLET.setKeys(pubKey, privateKeyWIF);
+  console.log(pubKey);
+  if (!newWif) {
+      // Hide the encryption warning
+    //document.getElementById('genKeyWarning').style.display = 'block';
+  }
+  // Load UTXOs from explorer
+  getUnspentTransactions();
 }
 
 //Wallet Generation
 generateWallet = async function (strPrefix = false) {
-  if (WALLET.getPubkey() && strPrefix === false) {
-    var walletConfirm = window.confirm("Do you really want to generate a new address? If you haven't saved the last private key the key will get lost forever and any funds with it.");
-  } else {
-    walletConfirm = true;
-  }
-  if (walletConfirm) {
-    var randArr = new Uint8Array(32);
-    window.crypto.getRandomValues(randArr); //populate array with cryptographically secure random numbers
-    var privateKeyBytes = [];
-    for (var i = 0; i < randArr.length; ++i)
-      privateKeyBytes[i] = randArr[i];
-    //Private Key Generation
-    var privateKeyHex = byteToHexString(privateKeyBytes).toUpperCase();
-    var privateKeyAndVersion = SECRET_KEY.toString(16) + privateKeyHex + "01";
-    const shaObj = new jsSHA("SHA-256", "HEX", { "numRounds": 2 });
-    shaObj.update(privateKeyAndVersion);
-    const hash = shaObj.getHash("HEX");
-    var checksum = String(hash).substr(0, 8).toUpperCase();
-    var keyWithChecksum = privateKeyAndVersion + checksum;
-    var privateKeyWIF = to_b58(hexStringToByte(keyWithChecksum), MAP);
-    //Public Key Generation
-    var privateKeyBigInt = BigInteger.fromByteArrayUnsigned(Crypto.util.hexToBytes(byteToHexString(privateKeyBytes).toUpperCase()));
-    var curve = EllipticCurve.getSECCurveByName("secp256k1");
-    var curvePt = curve.getG().multiply(privateKeyBigInt);
-    var x = curvePt.getX().toBigInteger();
-    var y = curvePt.getY().toBigInteger();
-    var publicKeyBytes = EllipticCurve.integerToBytes(x, 32);
-    publicKeyBytes = publicKeyBytes.concat(EllipticCurve.integerToBytes(y, 32));
-    publicKeyBytes.unshift(0x04);
-    if (bitjs.compressed == true) {
-      var publicKeyBytesCompressed = EllipticCurve.integerToBytes(x, 32)
-      if (y.isEven()) {
-        publicKeyBytesCompressed.unshift(0x02)
-      } else {
-        publicKeyBytesCompressed.unshift(0x03)
-      }
-      var pubKeyExtended = publicKeyBytesCompressed;
+  var randArr = new Uint8Array(32);
+  window.crypto.getRandomValues(randArr); //populate array with cryptographically secure random numbers
+  var privateKeyBytes = [];
+  for (var i = 0; i < randArr.length; ++i)
+    privateKeyBytes[i] = randArr[i];
+  //Private Key Generation
+  var privateKeyHex = byteToHexString(privateKeyBytes).toUpperCase();
+  var privateKeyAndVersion = SECRET_KEY.toString(16) + privateKeyHex + "01";
+  const shaObj = new jsSHA("SHA-256", "HEX", { "numRounds": 2 });
+  shaObj.update(privateKeyAndVersion);
+  const hash = shaObj.getHash("HEX");
+  var checksum = String(hash).substr(0, 8).toUpperCase();
+  var keyWithChecksum = privateKeyAndVersion + checksum;
+  var privateKeyWIF = to_b58(hexStringToByte(keyWithChecksum), MAP);
+  //Public Key Generation
+  var privateKeyBigInt = BigInteger.fromByteArrayUnsigned(Crypto.util.hexToBytes(byteToHexString(privateKeyBytes).toUpperCase()));
+  var curve = EllipticCurve.getSECCurveByName("secp256k1");
+  var curvePt = curve.getG().multiply(privateKeyBigInt);
+  var x = curvePt.getX().toBigInteger();
+  var y = curvePt.getY().toBigInteger();
+  var publicKeyBytes = EllipticCurve.integerToBytes(x, 32);
+  publicKeyBytes = publicKeyBytes.concat(EllipticCurve.integerToBytes(y, 32));
+  publicKeyBytes.unshift(0x04);
+  if (bitjs.compressed == true) {
+    var publicKeyBytesCompressed = EllipticCurve.integerToBytes(x, 32)
+    if (y.isEven()) {
+      publicKeyBytesCompressed.unshift(0x02)
     } else {
-      var pubKeyExtended = publicKeyBytes;
+      publicKeyBytesCompressed.unshift(0x03)
     }
-    var publicKeyHex = byteToHexString(pubKeyExtended).toUpperCase()
-    const pubKeyHashing = new jsSHA("SHA-256", "HEX", { "numRounds": 1 });
-    pubKeyHashing.update(publicKeyHex);
-    const pubKeyHash = pubKeyHashing.getHash("HEX");
-    var pubKeyHashRipemd160 = byteToHexString(ripemd160(hexStringToByte(pubKeyHash))).toUpperCase()
-    var pubKeyHashNetwork = PUBKEY_ADDRESS.toString(16) + pubKeyHashRipemd160
-    const pubKeyHashingS = new jsSHA("SHA-256", "HEX", { "numRounds": 2 });
-    pubKeyHashingS.update(pubKeyHashNetwork);
-    const pubKeyHashingSF = pubKeyHashingS.getHash("HEX").toUpperCase();
-    var checksumPubKey = String(pubKeyHashingSF).substr(0, 8).toUpperCase()
-    var pubKeyPreBase = pubKeyHashNetwork + checksumPubKey
-    var pubKey = to_b58(hexStringToByte(pubKeyPreBase), MAP)
-    WALLET.setKeys(pubKey, privateKeyWIF);
-    //Debug Console
-    if (debug && strPrefix === false) {
-      console.log("Private Key")
-      console.log(privateKeyHex)
-      console.log("Private Key Plus Leading Digits")
-      console.log(privateKeyAndVersion)
-      console.log("Double SHA-256 Hash")
-      console.log(hash)
-      console.log('CheckSum')
-      console.log(checksum)
-      console.log('Key With CheckSum')
-      console.log(keyWithChecksum)
-      console.log('Private Key')
-      console.log(privateKeyWIF)
-      console.log('Public Key')
-      console.log(publicKeyHex)
-      console.log('Public Key Extened')
-      console.log(byteToHexString(pubKeyExtended))
-      console.log('SHA256 Public Key')
-      console.log(pubKeyHash)
-      console.log('RIPEMD160 Public Key')
-      console.log(pubKeyHashRipemd160)
-      console.log('PubKeyHash w/NetworkBytes')
-      console.log(pubKeyHashNetwork)
-      console.log('2x SHA256 Public Key Secound Time')
-      console.log(pubKeyHashingSF)
-      console.log("CheckSum Public Key")
-      console.log(checksumPubKey)
-      console.log("Pub Key with Checksum")
-      console.log(pubKeyPreBase)
-      console.log('Public Key Base 64')
-      console.log(pubKey)
-    }
-    // VANITY ONLY: During a search, we don't update the DOM until a match is found, or the renderer consumes a shitload of resources.
-    let nRet = {
-      pubkey: null,
-      privkey: null,
-      vanity_match: false
-    }
-    if (strPrefix === false || (strPrefix !== false && pubKey.toLowerCase().startsWith(strPrefix))) {
-      //QR Codes
-      /*
-      var typeNumber = 4;
-      var errorCorrectionLevel = 'L';
-      var qr = qrcode(typeNumber, errorCorrectionLevel);
-      qr.addData('scc:' + privateKeyWIF);
-      qr.make();
-      document.getElementById('PrivateQR').innerHTML = qr.createImgTag();
-      */
-
-      // VANITY ONLY: If we reached here during a vanity search, we found our match!
-      nRet.pubkey       = pubKey;
-      nRet.privkey      = privateKeyWIF;
-      if (strPrefix)
-        nRet.vanity_match = true;
-    }
-    return nRet;
+    var pubKeyExtended = publicKeyBytesCompressed;
+  } else {
+    var pubKeyExtended = publicKeyBytes;
   }
+  var publicKeyHex = byteToHexString(pubKeyExtended).toUpperCase()
+  const pubKeyHashing = new jsSHA("SHA-256", "HEX", { "numRounds": 1 });
+  pubKeyHashing.update(publicKeyHex);
+  const pubKeyHash = pubKeyHashing.getHash("HEX");
+  var pubKeyHashRipemd160 = byteToHexString(ripemd160(hexStringToByte(pubKeyHash))).toUpperCase()
+  var pubKeyHashNetwork = PUBKEY_ADDRESS.toString(16) + pubKeyHashRipemd160
+  const pubKeyHashingS = new jsSHA("SHA-256", "HEX", { "numRounds": 2 });
+  pubKeyHashingS.update(pubKeyHashNetwork);
+  const pubKeyHashingSF = pubKeyHashingS.getHash("HEX").toUpperCase();
+  var checksumPubKey = String(pubKeyHashingSF).substr(0, 8).toUpperCase()
+  var pubKeyPreBase = pubKeyHashNetwork + checksumPubKey
+  var pubKey = to_b58(hexStringToByte(pubKeyPreBase), MAP)
+  WALLET.setKeys(pubKey, privateKeyWIF);
+  //Debug Console
+  if (debug && strPrefix === false) {
+    console.log("Private Key")
+    console.log(privateKeyHex)
+    console.log("Private Key Plus Leading Digits")
+    console.log(privateKeyAndVersion)
+    console.log("Double SHA-256 Hash")
+    console.log(hash)
+    console.log('CheckSum')
+    console.log(checksum)
+    console.log('Key With CheckSum')
+    console.log(keyWithChecksum)
+    console.log('Private Key')
+    console.log(privateKeyWIF)
+    console.log('Public Key')
+    console.log(publicKeyHex)
+    console.log('Public Key Extened')
+    console.log(byteToHexString(pubKeyExtended))
+    console.log('SHA256 Public Key')
+    console.log(pubKeyHash)
+    console.log('RIPEMD160 Public Key')
+    console.log(pubKeyHashRipemd160)
+    console.log('PubKeyHash w/NetworkBytes')
+    console.log(pubKeyHashNetwork)
+    console.log('2x SHA256 Public Key Secound Time')
+    console.log(pubKeyHashingSF)
+    console.log("CheckSum Public Key")
+    console.log(checksumPubKey)
+    console.log("Pub Key with Checksum")
+    console.log(pubKeyPreBase)
+    console.log('Public Key Base 64')
+    console.log(pubKey)
+  }
+  // VANITY ONLY: During a search, we don't update the DOM until a match is found, or the renderer consumes a shitload of resources.
+  let nRet = {
+    pubkey: null,
+    privkey: null,
+    vanity_match: false
+  }
+  if (strPrefix === false || (strPrefix !== false && pubKey.toLowerCase().startsWith(strPrefix))) {
+    //QR Codes
+    /*
+    var typeNumber = 4;
+    var errorCorrectionLevel = 'L';
+    var qr = qrcode(typeNumber, errorCorrectionLevel);
+    qr.addData('scc:' + privateKeyWIF);
+    qr.make();
+    document.getElementById('PrivateQR').innerHTML = qr.createImgTag();
+    */
+    // VANITY ONLY: If we reached here during a vanity search, we found our match!
+    nRet.pubkey       = pubKey;
+    nRet.privkey      = privateKeyWIF;
+    if (strPrefix)
+      nRet.vanity_match = true;
+  }
+  return nRet;
 }
 
 encryptWallet = async function (forcedPass = false) {
   // Encrypt the wallet WIF with AES-GCM and a user-chosen password - suitable for browser storage
   let encWIF = await encrypt(WALLET.getPrivkey(), forcedPass);
   if (typeof encWIF !== "string") return false;
-  // Set the encrypted wallet in localStorage
-  localStorage.setItem("encwif", encWIF);
+  // Set the encrypted wallet in DB
+  WALLET.setKeys(null, null, encWIF);
   return encWIF;
 }
 
 decryptWallet = async function (forcedPass = false) {
   // Check if there's any encrypted WIF available, if so, prompt to decrypt it
-  let encWif = localStorage.getItem("encwif");
+  let encWif = WALLET.getPrivkeyEnc();
   if (!encWif || encWif.length < 1) {
     console.log("No local encrypted wallet found!");
     return false;
   }
+  WALLET.setKeys(null, null, encWif);
   let decWif = await decrypt(encWif, forcedPass);
   if (decWif === "decryption failed!") {
     return false;
@@ -288,5 +276,5 @@ decryptWallet = async function (forcedPass = false) {
 }
 
 hasEncryptedWallet = function () {
-  return localStorage.getItem("encwif") ? true : false;
+  return WALLET.getPrivkeyEnc().length > 0 ? true : false;
 }

@@ -13,6 +13,8 @@
   <link href="fontawesome/css/fontawesome.min.css" rel="stylesheet">
   <link href="fontawesome/css/all.min.css" rel="stylesheet">
 
+  <script type="text/javascript" src="../lib/database/index.js"></script>
+
   <script>
     'use strict';
     window.$ = window.jQuery = require('jquery');
@@ -21,7 +23,6 @@
       errorMsg.innerHTML = "";
       const nFirstPass = document.getElementById("pass1").value;
       const nSecondPass = document.getElementById("pass2").value;
-
       // Check the password meets minimum requirements
       if (nFirstPass.length < 8)      return errorMsg.innerHTML = '<div class="alert alert-danger-custom" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> &nbsp;Password is too short, please use a minimum of 8 characters!</div><br>';
       if (nFirstPass.length > 200)    return errorMsg.innerHTML = '<div class="alert alert-danger-custom" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> &nbsp;Password is too long, please use a maximum of 200 characters!</div><br>';
@@ -262,9 +263,9 @@
       document.getElementById('importPage').style.display = "block";
     }
 
-    onload = () => {
+    onload = async () => {
       // Check if we have an encrypted wallet
-      if (localStorage.getItem("encwif")) {
+      if ((await getWallet()) || localStorage.getItem("encwif")) {
         // Take the user to the login screen
         window.location.href = "index.html";
       } else {

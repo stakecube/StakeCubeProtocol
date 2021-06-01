@@ -147,6 +147,12 @@
           nLoginError.innerHTML = "";
           document.getElementById("pass1").value = "";
           switchToDashboard();
+          DB.setWallet(WALLET.toDB()).then(() => {
+            if (localStorage.getItem("encwif")) {
+              localStorage.removeItem("encwif");
+              console.log("DB: Migrated 'encwif' from LS to Backend DB!");
+            }
+          });
           // Give the cache a kick
           setTimeout(() => {
             getBalance(true);
@@ -212,9 +218,6 @@
     let cachedTokens = [];
     let cachedBlockCount = 0;
     let cachedActivity = [];
-
-    // Privkey storage
-    let privkeyEncrypted = null;
 
     // Statistical / Informational data
     let valueUSD = 0;
@@ -684,18 +687,27 @@
       let strNewSecret = document.getElementById("authSecretImport").value;
       let testToken = authenticator.generate(strNewSecret);
       if (testToken && testToken.toString().length === 6) {
-        localStorage.setItem("authsecret", strNewSecret);
+        WALLET.set2FAkey(strNewSecret);
+        DB.setWallet(WALLET.toDB());
       }
     }
 
     function remove2FA() {
-      localStorage.removeItem("authsecret");
+      WALLET.set2FAkey("");
+      DB.setWallet(WALLET.toDB());
       refreshAuthenticator();
     }
 
     let lastAuthCode = null;
     function refreshAuthenticator() {
-      let strSecret = localStorage.getItem("authsecret");
+      let checkForSecret = localStorage.getItem("authsecret");
+      if (checkForSecret) {
+        WALLET.set2FAkey(checkForSecret);
+        localStorage.removeItem("authsecret");
+        console.log("DB: Migrated 2FA LS to Backend DB!");
+        DB.setWallet(WALLET.toDB());
+      }
+      let strSecret = WALLET.get2FAkey();
       if (!strSecret) {
         // No authentication linked
         domAuthImport.style.display = "";
@@ -799,61 +811,61 @@
         document.getElementById("version").style.display = "none";
         document.getElementById("versionLogin").style.display = "none";
       }
-      // Check for an encrypted wallet, if one exists, pull up the login screen!
-      let encwif = localStorage.getItem("encwif");
-      if (encwif && encwif.length > 1) {
-        console.log("Encrypted key found: " + encwif);
-        privkeyEncrypted = encwif;
-        switchToLogin();
-        // Focus on the password entry
-        document.getElementById("pass1").focus();
-      } else {
-        // No encrypted wallet available, check for an unencrypted key
-        let tmpwifkey = localStorage.getItem("tmpwifkey");
-        let tmppass = localStorage.getItem("tmppass");
-        if (!tmppass) throw "Unable to find encwif, and no tmppass available, bailing out!";
-        console.log("Unable to find encrypted keys, but tmppass is available, checking for imported wifkey...");
-        if (tmpwifkey) {
-          console.log("Encrypting import key...");
-          // Save decrypted copy in memory, immediately erase from disk
-          WALLET.setKeys(false, tmpwifkey);
-          localStorage.removeItem("tmpwifkey");
-          // Encrypt wallet and save it to disk
-          encryptWallet(tmppass).then(newEncwif => {
-            console.log("Encrypted wallet!");
-            // Erase the tmppass from disk and memory
-            tmppass = null;
-            localStorage.removeItem("tmppass");
-            // Load the new keys
-            privkeyEncrypted = newEncwif;
-            localStorage.setItem("encwif", privkeyEncrypted);
-            importWallet(WALLET.getPrivkey());
-            // Load the Dashboard screen
-            switchToDashboard();
-            // Give the cache a kick
-            setTimeout(() => {
-              getBalance(true);
-            }, 750);
-          });
+      switchToLogin();
+      init().then(() => {
+        // Check for an encrypted wallet, if one exists, pull up the login screen!
+        let encwif = WALLET.getPrivkeyEnc() || localStorage.getItem("encwif");
+        if (encwif && encwif.length > 1) {
+          console.log("Encrypted key found: " + encwif);
+          WALLET.setKeys(null, null, encwif);
+          // Focus on the password entry
+          document.getElementById("pass1").focus();
         } else {
-          console.log("Deriving new key...")
-          generateWallet().then(objWallet => {
-            // Save decrypted copy in memory
-            WALLET.setKeys(false, objWallet.privkey);
+          // No encrypted wallet available, check for an unencrypted key
+          let tmpwifkey = localStorage.getItem("tmpwifkey");
+          let tmppass = localStorage.getItem("tmppass");
+          if (!tmppass) throw "Unable to find encwif, and no tmppass available, bailing out!";
+          console.log("Unable to find encrypted keys, but tmppass is available, checking for imported wifkey...");
+          if (tmpwifkey) {
+            console.log("Encrypting import key...");
+            // Save decrypted copy in memory, immediately erase from disk
+            WALLET.setKeys(null, tmpwifkey);
+            localStorage.removeItem("tmpwifkey");
             // Encrypt wallet and save it to disk
             encryptWallet(tmppass).then(newEncwif => {
               console.log("Encrypted wallet!");
-              privkeyEncrypted = newEncwif;
-              localStorage.setItem("encwif", privkeyEncrypted);
               // Erase the tmppass from disk and memory
               tmppass = null;
               localStorage.removeItem("tmppass");
+              // Load the new keys
+              WALLET.setKeys(null, null, newEncwif);
+              importWallet(WALLET.getPrivkey());
               // Load the Dashboard screen
               switchToDashboard();
+              // Give the cache a kick
+              setTimeout(() => {
+                getBalance(true);
+              }, 750);
             });
-          });
+          } else {
+            console.log("Deriving new key...");
+            generateWallet().then(objWallet => {
+              // Save decrypted copy in memory
+              WALLET.setKeys(false, objWallet.privkey);
+              // Encrypt wallet and save it to disk
+              encryptWallet(tmppass).then(newEncwif => {
+                console.log("Encrypted wallet!");
+                WALLET.setKeys(null, null, newEncwif);
+                // Erase the tmppass from disk and memory
+                tmppass = null;
+                localStorage.removeItem("tmppass");
+                // Load the Dashboard screen
+                switchToDashboard();
+              });
+            });
+          }
         }
-      }
+      });
     }
   </script>
 
