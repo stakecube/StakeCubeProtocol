@@ -313,7 +313,7 @@
               if (cToken.account.unclaimed_balance > 0 && (cToken.token.supply + cToken.account.unclaimed_balance) < cToken.token.maxSupply)
                 stakingText = ' <i style="opacity:0.5;">(+' + nRewards.toLocaleString('en-GB', { maximumFractionDigits: (nRewards > 0.1 ? 2 : 8 ) }) + ')</i>';
             }
-            strDashTokens += '<div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px;' + stakingStyle + '" ' + stakingButton + '><img src="circular-logo.png" style="width:32px; height:32px;"><span style="margin-left:10px;">' + formatName(cToken.token.ticker, 8) + '</span><span class="float-end theme-color-secondary">' + nBal.toLocaleString('en-GB', { maximumFractionDigits: (nBal > 1 ? 2 : 8) }) + stakingText + '</span></div>';
+            strDashTokens += '<div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px;' + stakingStyle + '" ' + stakingButton + '><img src="circular-logo.png" style="width:32px; height:32px;"><span style="position:relative;margin-left:10px;top:-5px;">' + formatName(cToken.token.ticker, 8) + '<sup style="left: -' + (formatName(cToken.token.ticker, 8).length * 0.93) + 'em;top: 15px;"><i style="opacity: 0.75;font-size:0.9em;">SCP-' + cToken.token.version + '</i></sup></span><span class="float-end theme-color-secondary">' + nBal.toLocaleString('en-GB', { maximumFractionDigits: (nBal > 1 ? 2 : 8) }) + stakingText + '</span></div>';
             strSendTokens += '<option value="scptoken-' + cToken.token.contract + '" data-thumbnail="circular-logo.png">' + formatName(cToken.token.name, 10) + ' (' + cToken.token.ticker + ')</option>';
           }
           dashboardTokens.innerHTML += strDashTokens;
@@ -332,7 +332,7 @@
           domActivitySubtitle.innerHTML = "";
           let amountToLoad = cachedActivity.length, i;
           if (WALLET.getIncomingUTXOs().length > 0) {
-            domActivitySubtitle.innerHTML = '<center style="margin-top: 25px; margin-bottom: 25px;"><p>You have incoming pending transactions!</p></center>';
+            domActivitySubtitle.innerHTML = '<center style="margin-top: 25px; margin-bottom: 25px;"><p>You have pending transactions!</p></center>';
           }
           let strActivityList = "";
           for (i=0; i<amountToLoad; i++) {
