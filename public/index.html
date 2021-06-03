@@ -434,10 +434,13 @@
         if (params.length < 3) return console.error("SCP token deployment requires params!\nE.g; deploySCP(1, ['CatCoin', 'CAT', " + COIN + "])");
         console.log("Constructing SCP-" + version + " deployment TX");
         let cTx = bitjs.transaction();
-        // Add input
-        let cUTXO = WALLET.getCoinsToSpend((nDeployFee * COIN) + 1000, false)[0];
-        if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
-        cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
+        // Inputs
+        let nDeployCost = (nDeployFee * COIN) + 1000;
+        let usedUTXOs = WALLET.getCoinsToSpend(nDeployCost);
+        let nUTXOs = usedUTXOs.reduce((a, b) => {return a + b.sats}, 0);
+        for (const cUTXO of usedUTXOs)
+          cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
+        if (nDeployCost >= nUTXOs) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
         // SCP output
         cTx.addoutputburn(0.00000001, "SCPCREATE" + version + " " + params.join(" "));
         // Static Deployment fee (Sent to the SCC burn address)
@@ -445,10 +448,10 @@
         // Fee & Change output
         let nFee = WALLET.getFee(cTx.serialize().length);
         let nSpent = (parseFloat(nFee) + parseFloat(nDeployFee)).toFixed(8);
-        let nChange = (parseFloat(cUTXO.sats / COIN) - parseFloat(nSpent)).toFixed(8);
+        let nChange = (parseFloat(nUTXOs / COIN) - parseFloat(nSpent)).toFixed(8);
         cTx.addoutput(WALLET.getPubkey(), nChange);
         // Broadcast
-        sendTransaction(cTx.sign(WALLET.getPrivkey(), 1), [cUTXO]);
+        sendTransaction(cTx.sign(WALLET.getPrivkey(), 1), usedUTXOs);
         M.toast({html: 'Deploying! Please wait for the contract to confirm in a block!', displayLength: 7500});
     }
 
