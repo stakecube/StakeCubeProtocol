@@ -435,7 +435,7 @@
         console.log("Constructing SCP-" + version + " deployment TX");
         let cTx = bitjs.transaction();
         // Add input
-        let cUTXO = WALLET.getCoinsToSpend((nDeployFee * COIN) + 1000, true)[0];
+        let cUTXO = WALLET.getCoinsToSpend((nDeployFee * COIN) + 1000, false)[0];
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
         cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         // SCP output
