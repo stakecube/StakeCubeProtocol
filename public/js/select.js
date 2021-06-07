@@ -29,7 +29,7 @@ function setCoinSelector(img, text, value) {
   $(".b").toggle();
 
   // Update available balance display
-  let strPubkey = WALLET.getPubkey();
+  let strPubkey = WALLET.getActiveWallet().getPubkey();
   let nSendBalanceDisplay = 0;
   if (value === "scc") {
     nSendBalanceDisplay = getBalance();

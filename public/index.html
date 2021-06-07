@@ -144,7 +144,7 @@
           nLoginError.innerHTML = "";
           document.getElementById("pass1").value = "";
           switchToDashboard();
-          DB.setWallet(WALLET.toDB()).then(() => {
+          DB.setWallet(WALLET.getActiveWallet().toDB()).then(() => {
             if (localStorage.getItem("encwif")) {
               localStorage.removeItem("encwif");
               console.log("DB: Migrated 'encwif' from LS to Backend DB!");
@@ -278,7 +278,7 @@
         if (valueUSD > 0)
           domBalanceUSD.innerText = (nBalance * valueUSD).toFixed(2);
         // And update the Receive page pubkey
-        let strPubkey = WALLET.getPubkey();
+        let strPubkey = WALLET.getActiveWallet().getPubkey();
         domReceiveAddress.innerText = strPubkey;
 
         // --- Update SCP token balances
@@ -381,13 +381,13 @@
         let nFee = WALLET.getFee(cTx.serialize().length);
         let nSpent = (parseFloat(nFee) + parseFloat(sendAmount)).toFixed(8);
         let nChange = (parseFloat(nUTXOs / COIN) - parseFloat(nSpent)).toFixed(8);
-        cTx.addoutput(WALLET.getPubkey(), nChange);
+        cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
-        sendTransaction(cTx.sign(WALLET.getPrivkey(), 1), usedUTXOs);
+        sendTransaction(cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1), usedUTXOs);
       } else {
         let strToken = coinSelection.split('scptoken-')[1];
         let cToken = isFullnode ? TOKENS.getToken(strToken) : getCachedToken(strToken);
-        let cAccount = isFullnode ? cToken.getAccount(WALLET.getPubkey()) : getCachedAccount(cToken, WALLET.getPubkey());
+        let cAccount = isFullnode ? cToken.getAccount(WALLET.getActiveWallet().getPubkey()) : getCachedAccount(cToken, WALLET.getActiveWallet().getPubkey());
         if ((cAccount.balance / COIN) < sendAmount) return M.toast({html: 'You don\'t have enough ' + cToken.ticker + '!', displayLength: 3000});
         console.log("Constructing SCP-" + cToken.version + " Transfer TX for: " + sendAmount + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
         let cTx = bitjs.transaction();
@@ -399,15 +399,15 @@
         // Fee & Change output
         let nFee = WALLET.getFee(cTx.serialize().length);
         let nChange = (parseFloat(cUTXO.sats / COIN) - parseFloat(nFee)).toFixed(8);
-        cTx.addoutput(WALLET.getPubkey(), nChange);
+        cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
-        sendTransaction(cTx.sign(WALLET.getPrivkey(), 1), [cUTXO]);
+        sendTransaction(cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1), [cUTXO]);
       }
     }
 
     function claimStakingRewards(contract) {
         let cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
-        let cAccount = isFullnode ? cToken.getAccount(WALLET.getPubkey()) : getCachedAccount(cToken, WALLET.getPubkey());
+        let cAccount = isFullnode ? cToken.getAccount(WALLET.getActiveWallet().getPubkey()) : getCachedAccount(cToken, WALLET.getActiveWallet().getPubkey());
         console.log("Constructing SCP-" + cToken.version + " stake claim TX for " + (cAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
         let cTx = bitjs.transaction();
         // Add input
@@ -419,9 +419,9 @@
         // Fee & Change output
         let nFee = WALLET.getFee(cTx.serialize().length);
         let nChange = (parseFloat(cUTXO.sats / COIN) - parseFloat(nFee)).toFixed(8);
-        cTx.addoutput(WALLET.getPubkey(), nChange);
+        cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
-        sendTransaction(cTx.sign(WALLET.getPrivkey(), 1), [cUTXO]);
+        sendTransaction(cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1), [cUTXO]);
         domStakingRedeem.setAttribute('onclick', '');
         domStakingRedeem.classList.add('disabled');
         domStakingRedeem.innerText = 'Redeeming...';
@@ -449,9 +449,9 @@
         let nFee = WALLET.getFee(cTx.serialize().length);
         let nSpent = (parseFloat(nFee) + parseFloat(nDeployFee)).toFixed(8);
         let nChange = (parseFloat(nUTXOs / COIN) - parseFloat(nSpent)).toFixed(8);
-        cTx.addoutput(WALLET.getPubkey(), nChange);
+        cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
-        sendTransaction(cTx.sign(WALLET.getPrivkey(), 1), usedUTXOs);
+        sendTransaction(cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1), usedUTXOs);
         M.toast({html: 'Deploying! Please wait for the contract to confirm in a block!', displayLength: 7500});
     }
 
@@ -467,9 +467,9 @@
         // Fee & Change output
         let nFee = WALLET.getFee(cTx.serialize().length);
         let nChange = (parseFloat(cUTXO.sats / COIN) - parseFloat(nFee)).toFixed(8);
-        cTx.addoutput(WALLET.getPubkey(), nChange);
+        cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
-        sendTransaction(cTx.sign(WALLET.getPrivkey(), 1), [cUTXO]);
+        sendTransaction(cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1), [cUTXO]);
         M.toast({html: 'Minting, please wait for your mint to confirm on the network!', displayLength: 7500});
     }
 
@@ -486,9 +486,9 @@
         // Fee & Change output
         let nFee = WALLET.getFee(cTx.serialize().length);
         let nChange = (parseFloat(cUTXO.sats / COIN) - parseFloat(nFee)).toFixed(8);
-        cTx.addoutput(WALLET.getPubkey(), nChange);
+        cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
-        sendTransaction(cTx.sign(WALLET.getPrivkey(), 1), [cUTXO]);
+        sendTransaction(cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1), [cUTXO]);
         M.toast({html: 'Burning, please wait for your mint to confirm on the network!', displayLength: 7500});
     }
 
@@ -498,7 +498,7 @@
 
     function refreshSendBalance() {
       // Update available balance display
-      let strPubkey = WALLET.getPubkey();
+      let strPubkey = WALLET.getActiveWallet().getPubkey();
       let nSendBalanceDisplay = 0;
       let strCurrency = document.getElementById("sendingCoinVal").value;
       if (strCurrency === "scc") {
@@ -532,7 +532,7 @@
     let guiStakingAccount;
     let guiStakingStatus;
     function refreshStakingStatus(contract) {
-      let strPubkey = WALLET.getPubkey();
+      let strPubkey = WALLET.getActiveWallet().getPubkey();
       if (isFullnode) {
         guiStakingToken   = TOKENS.getToken(contract);
         guiStakingAccount = guiStakingToken.getAccount(strPubkey);
@@ -610,13 +610,13 @@
       let testToken = authenticator.generate(strNewSecret);
       if (testToken && testToken.toString().length === 6) {
         WALLET.set2FAkey(strNewSecret);
-        DB.setWallet(WALLET.toDB());
+        DB.setWallet(WALLET.getActiveWallet().toDB());
       }
     }
 
     function remove2FA() {
       WALLET.set2FAkey("");
-      DB.setWallet(WALLET.toDB());
+      DB.setWallet(WALLET.getActiveWallet().toDB());
       refreshAuthenticator();
     }
 
@@ -627,7 +627,7 @@
         WALLET.set2FAkey(checkForSecret);
         localStorage.removeItem("authsecret");
         console.log("DB: Migrated 2FA LS to Backend DB!");
-        DB.setWallet(WALLET.toDB());
+        DB.setWallet(WALLET.getActiveWallet().toDB());
       }
       let strSecret = WALLET.get2FAkey();
       if (!strSecret) {
@@ -673,7 +673,7 @@
     setInterval(() => {
       // Check block count + UTXO sync every 10 seconds
       getBlockCount();
-      if (WALLET.getPubkey())
+      if (WALLET.getActiveWallet().getPubkey())
         getUnspentTransactions();
       // Update Dashboard stats
       if (valueUSD > 0) {
@@ -743,10 +743,15 @@
       switchToLogin();
       init().then(() => {
         // Check for an encrypted wallet, if one exists, pull up the login screen!
-        let encwif = WALLET.getPrivkeyEnc() || localStorage.getItem("encwif");
+        let cWallet = WALLET.getActiveWallet() || new WALLET.Wallet();
+        let encwif = false;
+        if (cWallet && cWallet.getPrivkeyEnc())
+          encwif = cWallet.getPrivkeyEnc();
+        else
+          localStorage.getItem("encwif");
         if (encwif && encwif.length > 1) {
           console.log("Encrypted key found: " + encwif);
-          WALLET.setKeys(null, null, encwif);
+          cWallet.setKeys(null, null, encwif);
           getUnspentTransactions();
         } else {
           // No encrypted wallet available, check for an unencrypted key
@@ -757,7 +762,10 @@
           if (tmpwifkey) {
             console.log("Encrypting import key...");
             // Save decrypted copy in memory, immediately erase from disk
-            WALLET.setKeys(null, tmpwifkey);
+            cWallet.setKeys(null, tmpwifkey);
+            // This looks strange, but it's happening for pointer-safety reasons, trust me
+            cWallet = WALLET.addWallet(cWallet);
+            console.log(cWallet);
             localStorage.removeItem("tmpwifkey");
             // Encrypt wallet and save it to disk
             encryptWallet(tmppass).then(newEncwif => {
@@ -766,9 +774,9 @@
               tmppass = null;
               localStorage.removeItem("tmppass");
               // Load the new keys
-              WALLET.setKeys(null, null, newEncwif);
-              importWallet(WALLET.getPrivkey());
-              DB.setWallet(WALLET.toDB());
+              let strPubkey = WALLET.sccjs.pubFromPriv(WALLET.getActiveWallet().getPrivkey());
+              cWallet.setKeys(strPubkey, null, newEncwif);
+              DB.setWallet(cWallet.toDB());
               // Load the Dashboard screen
               switchToDashboard();
               // Give the cache a kick
@@ -778,14 +786,14 @@
             });
           } else {
             console.log("Deriving new key...");
-            generateWallet().then(objWallet => {
+            WALLET.createWallet().then(objWallet => {
               // Save decrypted copy in memory
-              WALLET.setKeys(false, objWallet.privkey);
+              cWallet.setKeys(objWallet.pubkey, objWallet.privkey);
               // Encrypt wallet and save it to disk
               encryptWallet(tmppass).then(newEncwif => {
                 console.log("Encrypted wallet!");
-                WALLET.setKeys(null, null, newEncwif);
-                DB.setWallet(WALLET.toDB());
+                cWallet.setKeys(null, null, newEncwif);
+                DB.setWallet(cWallet.toDB());
                 // Erase the tmppass from disk and memory
                 tmppass = null;
                 localStorage.removeItem("tmppass");
@@ -937,7 +945,7 @@
               <div class="alert alert-danger-custom" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> Please make sure to only send SCC or SCP tokens to this address. Other coins will be lost and cannot be reversed.</div><br>
               
               <center>
-                <div onclick="copyToClipboard(WALLET.getPubkey(), 'Address')" class="refresh-button hover-darker">
+                <div onclick="copyToClipboard(WALLET.getActiveWallet().getPubkey(), 'Address')" class="refresh-button hover-darker">
                   <span id="receiveAddress" class="font-weight-bold"></span>
                   <span style="padding-left:6px;">
                     <i class="far fa-copy"></i>
