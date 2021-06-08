@@ -83,7 +83,7 @@ function createWindow () {
     webPreferences: {
       nodeIntegration: true
     },
-    icon: "public/sc-logo.ico",
+    icon: "public/imgs/sc-logo.ico",
     backgroundColor: "#f4f6f8"
   })
 

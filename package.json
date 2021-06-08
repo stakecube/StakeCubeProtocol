@@ -32,16 +32,16 @@
   "config": {
     "forge": {
       "packagerConfig": {
-        "icon": "public/sc-logo.ico"
+        "icon": "public/imgs/sc-logo.ico"
       },
       "makers": [
         {
           "name": "@electron-forge/maker-squirrel",
           "config": {
             "setupExe": "SCP Installer.exe",
-            "loadingGif": "public/spinner.gif",
-            "iconUrl": "https://raw.githubusercontent.com/stakecube/StakeCubeProtocol/main/public/sc-logo.ico",
-            "setupIcon": "public/sc-logo.ico"
+            "loadingGif": "public/imgs/spinner.gif",
+            "iconUrl": "https://raw.githubusercontent.com/stakecube/StakeCubeProtocol/main/public/imgs/sc-logo.ico",
+            "setupIcon": "public/imgs/sc-logo.ico"
           }
         },
         {
