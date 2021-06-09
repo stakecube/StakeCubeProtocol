@@ -359,9 +359,20 @@ div.omrs-input-group {
     cursor: default
 }
 
-.darkText,
+.darkText {
+  color:#fff !important;
+}
 .accordion-button::after {
-  color:#fff!important;
+  filter: invert(20%);
+}
+
+.accordion-button::after:not(.collapsed) {
+  filter: invert(100%);
+}
+
+.accordion-button:focus {
+  border-color: rgba(0, 67, 167, 0.75)!important;
+  box-shadow: none;
 }
 
 .accordion-button,
@@ -372,5 +383,5 @@ div.omrs-input-group {
 
 .accordion-button:not(.collapsed) {
   color: #0c63e4;
-  background-color: rgba(0, 0, 0, 0)!important;
+  background-color: rgba(0, 67, 167, 0.15)!important;
 }

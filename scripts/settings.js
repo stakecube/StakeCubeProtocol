@@ -21,6 +21,7 @@ function toggleSetting(evt) {
 
 // Loads all settings from disk
 function loadSettings() {
+  if (localStorage.length === 0) return;
   for (const dbKey of Object.keys(localStorage)) {
     let dbValue = localStorage[dbKey];
     let boolVal = dbValue === "true" ? true : false;

@@ -671,6 +671,10 @@
       require("electron").shell.openExternal(url);
     }
 
+    function showFileInExplorer(path) {
+      require("electron").shell.showItemInFolder(path);
+    }
+
     function formatName(name, limit) {
       return (name.length > limit ? name.substr(0, limit) + "…" : name);
     }
@@ -1095,7 +1099,7 @@
                   <div class="row">
                     <div class="col-9">
                       <span style="font-size:14px;">Allow 'Enter' key to continue actions</span><br>
-                      <span style="font-size:11px; color:#97a1b1;">Disabling this will mean hitting 'Enter' does will not perform or continue any actions or dialogs.<br>This setting is ignored on all Password fields.</span>
+                      <span style="font-size:11px; color:#97a1b1;">Disabling this will mean hitting 'Enter' will not perform or continue any actions or dialogs.<br>This setting is ignored on all Password fields.</span>
                     </div>
                     <div class="col-3">
                       <div class="form-check form-switch" style="font-size:14px;">
@@ -1117,81 +1121,46 @@
                       </div>
                     </div>
                   </div>
-                  
-                  <hr style="color: #bcc4d2; display: none;">
-
-                  <div class="row" style="display: none;">
-                    <div class="col-9">
-                      <span style="font-size:14px;">How many taco's do you want for dinner?</span><br>
-                      <span style="font-size:11px; color:#97a1b1;">Basicly a description of the taco here</span>
-                    </div>
-                    <div class="col-3">
-                      <div class="form-check" style="font-size:14px;">
-                        <input class="form-check-input darkBorder" type="radio" name="flexRadioDefault" id="flexRadioDefault1">
-                        <label class="form-check-label" for="flexRadioDefault1">
-                          Default radio
-                        </label>
-                      </div>
-                      <div class="form-check" style="font-size:14px;">
-                        <input class="form-check-input darkBorder" type="radio" name="flexRadioDefault" id="flexRadioDefault2" checked>
-                        <label class="form-check-label" for="flexRadioDefault2">
-                          Default checked radio
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <hr style="color: #bcc4d2; display: none;">
-
-                  <div class="row" style="display: none;">
-                    <div class="col-9">
-                      <span style="font-size:14px;">How many taco's do you want for dinner?</span><br>
-                      <span style="font-size:11px; color:#97a1b1;">Basicly a description of the taco here</span>
-                    </div>
-                    <div class="col-3">
-                      <div class="form-check form-switch" style="font-size:14px;">
-                        <input class="form-check-input darkBorder" type="checkbox" id="flexSwitchCheckDefault">
-                        <label class="form-check-label" for="flexSwitchCheckDefault">Default switch checkbox input</label>
-                      </div>
-                    </div>
-                  </div>
-
-                  <hr style="color: #bcc4d2; display: none;">
-
-                  <div class="row" style="display: none;">
-                    <div class="col-9">
-                      <span style="font-size:14px;">How many taco's do you want for dinner?</span><br>
-                      <span style="font-size:11px; color:#97a1b1;">Basicly a description of the taco here</span>
-                    </div>
-                    <div class="col-3">
-                      <input type="range" class="form-range" id="customRange1">
-                    </div>
-                  </div>
-
                 </div>
               </div>
             </div>
-            <div class="accordion-item" style="display: none;">
+            <div class="accordion-item">
               <h2 class="accordion-header" id="headingTwo">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
                   <span class="darkText">Wallet</span>
                 </button>
               </h2>
               <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
                 <div class="accordion-body">
-                  Nothing to find here
-                </div>
-              </div>
-            </div>
-            <div class="accordion-item" style="display: none;">
-              <h2 class="accordion-header" id="headingThree">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-                  <span class="darkText">Privacy & Security</span>
-                </button>
-              </h2>
-              <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
-                <div class="accordion-body">
-                  Also nothing here uwu
+                  
+                  <div class="row" style="display: none;">
+                    <div class="col-9">
+                      <span style="font-size:14px;">How many taco's do you want for dinner?</span><br>
+                      <span style="font-size:11px; color:#97a1b1;">Basicly a description of the taco here</span>
+                    </div>
+                    <div class="col-3">
+                      <select class="form-select form-select-sm" aria-label=".form-select-sm example">
+                        <option selected>Open this select menu</option>
+                        <option value="1">One</option>
+                        <option value="2">Two</option>
+                        <option value="3">Three</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <hr style="color: #bcc4d2; display: none;">
+
+                  <div class="row">
+                    <div class="col-9">
+                      <span style="font-size:14px;">Export Wallet</span><br>
+                      <span style="font-size:11px; color:#97a1b1;">This will highlight your private wallet file in your file explorer. You can use this file to move your wallet to another device, or as an encrypted backup method. (Contains: Encrypted Privkey, Pubkey & 2FA secret)</span>
+                    </div>
+                    <div class="col-3">
+                      <div class="form-check form-switch" style="font-size:14px;">
+                        <button class="btn btn-danger" onclick="showFileInExplorer(DB.appdata.getAppDataPath('SCPWallet\\wallet.json'))">Export Wallet</button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
