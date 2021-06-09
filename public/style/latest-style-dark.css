@@ -358,3 +358,19 @@ div.omrs-input-group {
     justify-content: space-between;
     cursor: default
 }
+
+.darkText,
+.accordion-button::after {
+  color:#fff!important;
+}
+
+.accordion-button,
+.accordion-collapse,
+.darkBorder {
+  border-color:#214666;
+}
+
+.accordion-button:not(.collapsed) {
+  color: #0c63e4;
+  background-color: rgba(0, 0, 0, 0)!important;
+}

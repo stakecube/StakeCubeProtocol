@@ -8,6 +8,7 @@ function switchToLogin() {
   domSendPage.style.display = "none";
   domAuthPage.style.display = "none";
   domStakingPage.style.display = "none";
+  domSettingsPage.style.display = "none";
 
   // Show
   domLoginPage.style.display = "block";
@@ -23,6 +24,7 @@ function switchToSend() {
   domLoginPage.style.display = "none";
   domAuthPage.style.display = "none";
   domStakingPage.style.display = "none";
+  domSettingsPage.style.display = "none";
 
   // Show
   domSendPage.style.display = "block";
@@ -53,6 +55,7 @@ function switchToDashboard() {
   domLoginPage.style.display = "none";
   domAuthPage.style.display = "none";
   domStakingPage.style.display = "none";
+  domSettingsPage.style.display = "none";
 
   // Show
   domDashboardPage.style.display = "block";
@@ -76,6 +79,7 @@ function switchToReceive() {
   domLoginPage.style.display = "none";
   domAuthPage.style.display = "none";
   domStakingPage.style.display = "none";
+  domSettingsPage.style.display = "none";
 
   // Show
   domReceivePage.style.display = "block";
@@ -106,6 +110,7 @@ function switchToAuth() {
   domLoginPage.style.display = "none";
   domReceivePage.style.display = "none";
   domStakingPage.style.display = "none";
+  domSettingsPage.style.display = "none";
 
   // Show
   domAuthPage.style.display = "block";
@@ -126,10 +131,31 @@ function switchToStaking(contract) {
   domDashboardPage.style.display = "none";
   domLoginPage.style.display = "none";
   domReceivePage.style.display = "none";
+  domSettingsPage.style.display = "none";
 
   // Show
   domStakingPage.style.display = "block";
   domHeader.style.display = "block";
 
   currentStakingToken = contract;
+}
+
+
+function switchToSettings() {
+  // Hide
+  domSendPage.style.display = "none";
+  domDashboardPage.style.display = "none";
+  domLoginPage.style.display = "none";
+  domReceivePage.style.display = "none";
+  domStakingPage.style.display = "none";
+  domAuthPage.style.display = "none";
+
+  // Show
+  domHeader.style.display = "block";
+  domSettingsPage.style.display = "block";
+
+  // Remove active
+  domSendBtn.classList.remove('active');
+  domDashboardBtn.classList.remove('active');
+  domReceiveBtn.classList.remove('active');
 }

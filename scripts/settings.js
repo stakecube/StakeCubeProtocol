@@ -1,5 +1,39 @@
 // Settings Defaults
-var debug = false;
+var debug = false;         // Debugging for transactions, networking, etc.
+var allowEnterKey = true;  // Allow the 'Enter' key to continue actions on dialogs & forms.
+var display2FAMenu = true; // Displays the 2FA button in the header menu.
+
+// Toggles a setting via a UI checkbox
+function toggleSetting(evt) {
+  if (!evt) return;
+  let checked = evt.checked;
+  let strSetting = evt.getAttribute('setting');
+  // We know the toggle status & the setting, now let's apply it!
+  if (strSetting === "allowEnterKey")  allowEnterKey = checked;
+  if (strSetting === "display2FAMenu") {
+    dom2FAMenu.style.display = checked ? "" : "none";
+    display2FAMenu = checked;
+  }
+  // Now save to disk and log!
+  localStorage.setItem(strSetting, checked);
+  console.log("Settings: Set '" + strSetting + "' to " + checked);
+}
+
+// Loads all settings from disk
+function loadSettings() {
+  for (const dbKey of Object.keys(localStorage)) {
+    let dbValue = localStorage[dbKey];
+    let boolVal = dbValue === "true" ? true : false;
+    if (dbKey === "allowEnterKey") {
+      allowEnterKey = boolVal;
+      document.getElementById(dbKey + "Setting").checked = boolVal;
+    }
+    if (dbKey === "display2FAMenu") {
+      display2FAMenu = boolVal;
+      document.getElementById(dbKey + "Setting").checked = boolVal;
+    }
+  }
+}
 
 /* Theme and UI settings */
 var domTheme;

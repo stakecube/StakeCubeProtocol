@@ -193,13 +193,16 @@
                 Receive
               </a>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" id="2faBtnMenu">
               <a class="nav-link" href="#" id="2faBtn" onclick="switchToAuth()">
                 <i class="fas fa-fingerprint" style="margin-right: 5px;"></i>
                 2FA
               </a>
             </li>
           </ul>
+          <form class="d-flex" style="margin-bottom:0px;">
+            <a href="#" onclick="switchToSettings()"><i class="fas fa-cog"></i></a>
+          </form>
         </div>
       </div>
     </nav>
@@ -227,11 +230,13 @@
     let domSendBtn;
     let domReceiveBtn;
     let dom2FABtn;
+    let dom2FAMenu;
     let domDashboardPage;
     let domSendPage;
     let domReceivePage;
     let domAuthPage;
     let domStakingPage;
+    let domSettingsPage;
 
     let domPass1Visibility;
 
@@ -699,6 +704,8 @@
       domThemeButton = document.getElementById("themeButton");
       // Initialize theme from disk
       loadTheme();
+      // Load settings from disk
+      loadSettings();
       domHeader = document.getElementById("guiHeader");
       domLoginPage = document.getElementById("loginPage");
       domPass1Visibility = document.getElementById("pass1Visibility");
@@ -707,6 +714,7 @@
       domReceivePage = document.getElementById('receivePage');
       domAuthPage = document.getElementById('authPage');
       domStakingPage = document.getElementById('stakingPage');
+      domSettingsPage = document.getElementById('settingsPage');
       domAuthDisplay = document.getElementById('authDisplay');
       domAuthImport = document.getElementById('authImport');
       domAuthTitle = document.getElementById('authTitle');
@@ -726,6 +734,9 @@
       domSendBtn = document.getElementById("sendBtn");
       domReceiveBtn = document.getElementById("receiveBtn");
       dom2FABtn = document.getElementById("2faBtn");
+      dom2FAMenu = document.getElementById("2faBtnMenu");
+      if (!display2FAMenu)
+        dom2FAMenu.style.display = "none";
       domStakingTitle = document.getElementById("stakingTitle");
       domStakingSubtitle = document.getElementById("stakingSubtitle");
       domStakingApy = document.getElementById("stakingApy");
@@ -920,8 +931,16 @@
                 </div>
 
                 <div class="col text-end"><br>
-                  <button class="btn btn-layout btn-theme" onclick="sendTransactionGUI()">Send Transaction</button><br>
+                  <button class="btn btn-layout btn-theme" id="sendTx" onclick="sendTransactionGUI()">Send Transaction</button><br>
                 </div>
+
+                <script>
+                  $("#sendTx").on("keydown", function(e){
+                    if(e.keyCode === 13){
+                      if (!allowEnterKey) e.preventDefault();
+                    }
+                  });
+                </script>
               </div>
             </div>
           </div>
@@ -1037,7 +1056,149 @@
         </div>
         <div class="col-2"></div>
       </div>
+    </div>
 
+    <div class="container marketing pt-navbar" id="settingsPage">
+      <h4 class="mb-5 theme-color-secondary font-weight-bold">Settings</h4>
+
+
+      <div class="card card-prop mb-4">
+        <div class="card-body">
+
+          <div class="accordion" id="accordionExample">
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                  <span class="darkText">Personalization</span>
+                </button>
+              </h2>
+              <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                <div class="accordion-body">
+                  
+                  <div class="row" style="display: none;">
+                    <div class="col-9">
+                      <span style="font-size:14px;">How many taco's do you want for dinner?</span><br>
+                      <span style="font-size:11px; color:#97a1b1;">Basicly a description of the taco here</span>
+                    </div>
+                    <div class="col-3">
+                      <select class="form-select form-select-sm" aria-label=".form-select-sm example">
+                        <option selected>Open this select menu</option>
+                        <option value="1">One</option>
+                        <option value="2">Two</option>
+                        <option value="3">Three</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <hr style="color: #bcc4d2; display: none;">
+
+                  <div class="row">
+                    <div class="col-9">
+                      <span style="font-size:14px;">Allow 'Enter' key to continue actions</span><br>
+                      <span style="font-size:11px; color:#97a1b1;">Disabling this will mean hitting 'Enter' does will not perform or continue any actions or dialogs.<br>This setting is ignored on all Password fields.</span>
+                    </div>
+                    <div class="col-3">
+                      <div class="form-check form-switch" style="font-size:14px;">
+                        <input class="form-check-input darkBorder" type="checkbox" value="" id="allowEnterKeySetting" checked="true" setting="allowEnterKey" onclick="toggleSetting(this)">
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <hr style="color: #bcc4d2;">
+
+                  <div class="row">
+                    <div class="col-9">
+                      <span style="font-size:14px;">Display the 2FA menu</span><br>
+                      <span style="font-size:11px; color:#97a1b1;">Disabling this will hide the 2FA button from the header menu.<br>This will not remove or lose any 2FA codes, only hide them visually.</span>
+                    </div>
+                    <div class="col-3">
+                      <div class="form-check form-switch" style="font-size:14px;">
+                        <input class="form-check-input darkBorder" type="checkbox" value="" id="display2FAMenuSetting" checked="true" setting="display2FAMenu" onclick="toggleSetting(this)">
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <hr style="color: #bcc4d2; display: none;">
+
+                  <div class="row" style="display: none;">
+                    <div class="col-9">
+                      <span style="font-size:14px;">How many taco's do you want for dinner?</span><br>
+                      <span style="font-size:11px; color:#97a1b1;">Basicly a description of the taco here</span>
+                    </div>
+                    <div class="col-3">
+                      <div class="form-check" style="font-size:14px;">
+                        <input class="form-check-input darkBorder" type="radio" name="flexRadioDefault" id="flexRadioDefault1">
+                        <label class="form-check-label" for="flexRadioDefault1">
+                          Default radio
+                        </label>
+                      </div>
+                      <div class="form-check" style="font-size:14px;">
+                        <input class="form-check-input darkBorder" type="radio" name="flexRadioDefault" id="flexRadioDefault2" checked>
+                        <label class="form-check-label" for="flexRadioDefault2">
+                          Default checked radio
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <hr style="color: #bcc4d2; display: none;">
+
+                  <div class="row" style="display: none;">
+                    <div class="col-9">
+                      <span style="font-size:14px;">How many taco's do you want for dinner?</span><br>
+                      <span style="font-size:11px; color:#97a1b1;">Basicly a description of the taco here</span>
+                    </div>
+                    <div class="col-3">
+                      <div class="form-check form-switch" style="font-size:14px;">
+                        <input class="form-check-input darkBorder" type="checkbox" id="flexSwitchCheckDefault">
+                        <label class="form-check-label" for="flexSwitchCheckDefault">Default switch checkbox input</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr style="color: #bcc4d2; display: none;">
+
+                  <div class="row" style="display: none;">
+                    <div class="col-9">
+                      <span style="font-size:14px;">How many taco's do you want for dinner?</span><br>
+                      <span style="font-size:11px; color:#97a1b1;">Basicly a description of the taco here</span>
+                    </div>
+                    <div class="col-3">
+                      <input type="range" class="form-range" id="customRange1">
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item" style="display: none;">
+              <h2 class="accordion-header" id="headingTwo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                  <span class="darkText">Wallet</span>
+                </button>
+              </h2>
+              <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
+                <div class="accordion-body">
+                  Nothing to find here
+                </div>
+              </div>
+            </div>
+            <div class="accordion-item" style="display: none;">
+              <h2 class="accordion-header" id="headingThree">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                  <span class="darkText">Privacy & Security</span>
+                </button>
+              </h2>
+              <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
+                <div class="accordion-body">
+                  Also nothing here uwu
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
     <i id="themeButton" onclick="loadNextTheme();" class="fas fa-sun" style="position: fixed; bottom: 10px; left: 10px; color: black; opacity: 0.5; cursor: pointer;"></i>
   </main>
