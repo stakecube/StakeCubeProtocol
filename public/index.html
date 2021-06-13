@@ -144,7 +144,7 @@
           nLoginError.innerHTML = "";
           document.getElementById("pass1").value = "";
           switchToDashboard();
-          DB.setWallet(WALLET.getActiveWallet().toDB()).then(() => {
+          DB.setWallet(WALLET.toDB()).then(() => {
             if (localStorage.getItem("encwif")) {
               localStorage.removeItem("encwif");
               console.log("DB: Migrated 'encwif' from LS to Backend DB!");
@@ -615,13 +615,13 @@
       let testToken = authenticator.generate(strNewSecret);
       if (testToken && testToken.toString().length === 6) {
         WALLET.set2FAkey(strNewSecret);
-        DB.setWallet(WALLET.getActiveWallet().toDB());
+        DB.setWallet(WALLET.toDB());
       }
     }
 
     function remove2FA() {
       WALLET.set2FAkey("");
-      DB.setWallet(WALLET.getActiveWallet().toDB());
+      DB.setWallet(WALLET.toDB());
       refreshAuthenticator();
     }
 
@@ -632,7 +632,7 @@
         WALLET.set2FAkey(checkForSecret);
         localStorage.removeItem("authsecret");
         console.log("DB: Migrated 2FA LS to Backend DB!");
-        DB.setWallet(WALLET.getActiveWallet().toDB());
+        DB.setWallet(WALLET.toDB());
       }
       let strSecret = WALLET.get2FAkey();
       if (!strSecret) {
@@ -791,7 +791,7 @@
               // Load the new keys
               let strPubkey = WALLET.sccjs.pubFromPriv(WALLET.getActiveWallet().getPrivkey());
               cWallet.setKeys(strPubkey, null, newEncwif);
-              DB.setWallet(cWallet.toDB());
+              DB.setWallet(WALLET.toDB());
               // Load the Dashboard screen
               switchToDashboard();
               // Give the cache a kick
@@ -808,7 +808,7 @@
               encryptWallet(tmppass).then(newEncwif => {
                 console.log("Encrypted wallet!");
                 cWallet.setKeys(null, null, newEncwif);
-                DB.setWallet(cWallet.toDB());
+                DB.setWallet(WALLET.toDB());
                 // Erase the tmppass from disk and memory
                 tmppass = null;
                 localStorage.removeItem("tmppass");
