@@ -1,8 +1,7 @@
 'use strict';
-const {app, BrowserWindow} = require('electron')
-const path = require('path')
+const {app, BrowserWindow} = require('electron');
 try {
-  require('electron-reloader')(module)
+  require('electron-reloader')(module);
 } catch (_) {}
 
 if (handleSquirrelEvent()) {
@@ -72,34 +71,44 @@ function handleSquirrelEvent() {
   }
 };
 
+let DB = require('./lib/database/index.js');
+const { platform } = require("os");
+
 let mainWindow;
 
 function createWindow () {
   mainWindow = new BrowserWindow({
-    width: 1024, // Replace this value with 1024 when going into production!
+    width: 1024,
     height: 679,
     minWidth: 1024,
     minHeight: 540,
     webPreferences: {
       nodeIntegration: true
     },
-    icon: "public/imgs/sc-logo.ico",
+    // MacOS: png, others: ico
+    icon: "public/imgs/sc-logo." + (platform() === "darwin" ? "png" : "ico"),
     backgroundColor: "#f4f6f8"
-  })
+  });
 
-  mainWindow.loadFile('public/begin.html')
+  // If the user has a wallet, load the index app, otherwise load the 'setup/begin' app
+  DB.getWallet().then(hasWallet => {
+    if (hasWallet === null || !hasWallet)
+      mainWindow.loadFile('public/begin.html');
+    else
+      mainWindow.loadFile('public/index.html');
+  });
   
   mainWindow.on('closed', function () {
-    mainWindow = null
-  })
+    mainWindow = null;
+  });
 }
 
-app.on('ready', createWindow)
+app.on('ready', createWindow);
 
 app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit()
+  if (process.platform !== 'darwin') app.quit();
 })
 
 app.on('activate', function () {
-  if (mainWindow === null) createWindow()
+  if (mainWindow === null) createWindow();
 })

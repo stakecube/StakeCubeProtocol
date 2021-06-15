@@ -27,7 +27,7 @@
     "jquery": "^3.6.0",
     "otplib": "^12.0.1",
     "regedit": "^3.0.3",
-    "scc-js": "^1.2.1"
+    "scc-js": "^1.2.3"
   },
   "config": {
     "forge": {
