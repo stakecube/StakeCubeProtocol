@@ -13,8 +13,6 @@
   <link href="fontawesome/css/fontawesome.min.css" rel="stylesheet">
   <link href="fontawesome/css/all.min.css" rel="stylesheet">
 
-  <script type="text/javascript" src="../lib/database/index.js"></script>
-
   <script>
     'use strict';
     window.$ = window.jQuery = require('jquery');
@@ -59,7 +57,7 @@
 
 <body class="navbarSpecial">
   <main>
-    <div class="container marketing" id="mainPage" style="display: none;">
+    <div class="container marketing" id="mainPage" style="display: block;">
       <div class="verticalalign">
         <div class="vertical-center color-white">
           <center>
@@ -262,20 +260,7 @@
       // Show
       document.getElementById('importPage').style.display = "block";
     }
-
-    onload = async () => {
-      // Check if we have an encrypted wallet
-      if ((await getWallet()) || localStorage.getItem("encwif")) {
-        // Take the user to the login screen
-        window.location.href = "index.html";
-      } else {
-        switchToMain();
-      }
-    }
   </script>
   <script src="js/bootstrap.bundle.min.js"></script>
-  <script src="js/select.js"></script>
-
 </body>
-
 </html>
