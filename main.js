@@ -1,6 +1,5 @@
 'use strict';
 const {app, BrowserWindow} = require('electron');
-let DB = require('./lib/database/index.js');
 try {
   require('electron-reloader')(module);
 } catch (_) {}
@@ -72,6 +71,9 @@ function handleSquirrelEvent() {
   }
 };
 
+let DB = require('./lib/database/index.js');
+const { platform } = require("os");
+
 let mainWindow;
 
 function createWindow () {
@@ -83,7 +85,8 @@ function createWindow () {
     webPreferences: {
       nodeIntegration: true
     },
-    icon: "public/imgs/sc-logo.ico",
+    // MacOS: png, others: ico
+    icon: "public/imgs/sc-logo." + (platform() === "darwin" ? "png" : "ico"),
     backgroundColor: "#f4f6f8"
   });
 
