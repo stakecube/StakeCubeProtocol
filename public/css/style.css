@@ -90,8 +90,6 @@ body {
 
 #a li{
   list-style: none;
-  /* padding-top: 5px;
-  padding-bottom: 5px; */
   padding: 5px;
 }
 
@@ -125,7 +123,6 @@ body {
 
 .btn-select{
   width: 100%;
-  /* max-width: 350px; */
   height: 45px;
   border-radius: 5px;
   background-color: #fff;
