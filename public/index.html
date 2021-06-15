@@ -16,13 +16,6 @@
   <!--- IMPORTANT: CHAIN PARAMS BELOW, DO NOT EDIT UNLESS YOU'RE ABSOLUTELY CERTAIN YOU KNOW WHAT YOU'RE DOING  --->
   <script>
     'use strict';
-    // In most BTC-derived coins, the below parameters can be found in the 'src/chainparams.cpp' Mainnet configuration.
-    // These below params share the same names as the CPP params, so finding and editing these is easy-peasy!
-
-    /* chainparams */
-    const PUBKEY_ADDRESS = 125;
-    const SCRIPT_ADDRESS = 117;
-    const SECRET_KEY     = 253;
 
     // The amount of satoshis that make a full coin
     const COIN = 100000000;
@@ -30,23 +23,12 @@
   
   <!-- Functional Libraries (Cryptography, Hashing, Encryption, Encoding, etc) -->
   <script type="text/javascript" src="../scripts/libs/aes-gcm.js"></script>
-  <script type="text/javascript" src="../scripts/libs/crypto-min.js"></script>
-  <script type="text/javascript" src="../scripts/libs/crypto-sha256.js"></script>
-  <script type="text/javascript" src="../scripts/libs/crypto-sha256-hmac.js"></script>
-  <script type="text/javascript" src="../scripts/libs/ripemd160.js"></script>
-  <script type="text/javascript" src="../scripts/libs/jsbn.js"></script>
-  <script type="text/javascript" src="../scripts/libs/ellipticcurve.js"></script>
-  <script type="text/javascript" src="../scripts/libs/qrcode.js"></script>
-  <script type="text/javascript" src="../scripts/libs/sha256.js"></script>
-
-  <!-- Core Libraries (Script OPCodes, etc) -->
-  <script type="text/javascript" src="../scripts/libs/core-lib/script.js"></script>
 
   <!-- Interface Framework Libraries (GUI, wallet management, networking, etc) -->
+  <script type="text/javascript" src="../scripts/libs/qrcode.js"></script>
   <script type="text/javascript" src="../scripts/settings.js"></script>
   <script type="text/javascript" src="../scripts/wallet.js"></script>
   <script type="text/javascript" src="../scripts/network.js"></script>
-  <script type="text/javascript" src="../scripts/bitTrx.js"></script>
   <script type="text/javascript" src="js/switchPages.js"></script>
 
   <!-- SCP LIBRARY GOES BELOW -->
@@ -373,7 +355,7 @@
       let sendAddress = document.getElementById("sendAddress").value;
       if (coinSelection === "scc") {
         console.log("Constructing TX of value: " + sendAmount + " SCC");
-        let cTx = bitjs.transaction();
+        let cTx = WALLET.sccjs.tx.transaction();
         // Inputs
         let usedUTXOs = WALLET.getCoinsToSpend(sendAmount * COIN);
         let nUTXOs = usedUTXOs.reduce((a, b) => {return a + b.sats}, 0);
@@ -388,14 +370,16 @@
         let nChange = (parseFloat(nUTXOs / COIN) - parseFloat(nSpent)).toFixed(8);
         cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
-        sendTransaction(cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1), usedUTXOs);
+        cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
+          sendTransaction(strSignedTx, usedUTXOs);
+        });
       } else {
         let strToken = coinSelection.split('scptoken-')[1];
         let cToken = isFullnode ? TOKENS.getToken(strToken) : getCachedToken(strToken);
         let cAccount = isFullnode ? cToken.getAccount(WALLET.getActiveWallet().getPubkey()) : getCachedAccount(cToken, WALLET.getActiveWallet().getPubkey());
         if ((cAccount.balance / COIN) < sendAmount) return M.toast({html: 'You don\'t have enough ' + cToken.ticker + '!', displayLength: 3000});
         console.log("Constructing SCP-" + cToken.version + " Transfer TX for: " + sendAmount + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
-        let cTx = bitjs.transaction();
+        let cTx = WALLET.sccjs.tx.transaction();
         // Add input
         let cUTXO = WALLET.getCoinsToSpend(10000, true)[0];
         cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
@@ -406,7 +390,9 @@
         let nChange = (parseFloat(cUTXO.sats / COIN) - parseFloat(nFee)).toFixed(8);
         cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
-        sendTransaction(cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1), [cUTXO]);
+        cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
+          sendTransaction(strSignedTx, [cUTXO]);
+        });
       }
     }
 
@@ -414,7 +400,7 @@
         let cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
         let cAccount = isFullnode ? cToken.getAccount(WALLET.getActiveWallet().getPubkey()) : getCachedAccount(cToken, WALLET.getActiveWallet().getPubkey());
         console.log("Constructing SCP-" + cToken.version + " stake claim TX for " + (cAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
-        let cTx = bitjs.transaction();
+        let cTx = WALLET.sccjs.tx.transaction();
         // Add input
         let cUTXO = WALLET.getCoinsToSpend(10000, true)[0];
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
@@ -426,19 +412,21 @@
         let nChange = (parseFloat(cUTXO.sats / COIN) - parseFloat(nFee)).toFixed(8);
         cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
-        sendTransaction(cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1), [cUTXO]);
-        domStakingRedeem.setAttribute('onclick', '');
-        domStakingRedeem.classList.add('disabled');
-        domStakingRedeem.innerText = 'Redeeming...';
-        domStakingSubtitle.innerText = 'Your stake is being redeemed! Please wait until the next block to see your balance update.';
-        M.toast({html: 'Redeeming, please wait for your claim to confirm on the network!', displayLength: 7500});
+        cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
+          sendTransaction(strSignedTx, [cUTXO]);
+          domStakingRedeem.setAttribute('onclick', '');
+          domStakingRedeem.classList.add('disabled');
+          domStakingRedeem.innerText = 'Redeeming...';
+          domStakingSubtitle.innerText = 'Your stake is being redeemed! Please wait until the next block to see your balance update.';
+          M.toast({html: 'Redeeming, please wait for your claim to confirm on the network!', displayLength: 7500});
+        });
     }
 
     function deploySCP(version = 1, params = []) {
         if (!Number.isSafeInteger(version)) return console.error("SCP token must have a version integer!");
         if (params.length < 3) return console.error("SCP token deployment requires params!\nE.g; deploySCP(1, ['CatCoin', 'CAT', " + COIN + "])");
         console.log("Constructing SCP-" + version + " deployment TX");
-        let cTx = bitjs.transaction();
+        let cTx = WALLET.sccjs.tx.transaction();
         // Inputs
         let nDeployCost = (nDeployFee * COIN) + 1000;
         let usedUTXOs = WALLET.getCoinsToSpend(nDeployCost);
@@ -456,13 +444,15 @@
         let nChange = (parseFloat(nUTXOs / COIN) - parseFloat(nSpent)).toFixed(8);
         cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
-        sendTransaction(cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1), usedUTXOs);
-        M.toast({html: 'Deploying! Please wait for the contract to confirm in a block!', displayLength: 7500});
+        cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
+          sendTransaction(strSignedTx, usedUTXOs);
+          M.toast({html: 'Deploying! Please wait for the contract to confirm in a block!', displayLength: 7500});
+        });
     }
 
     function mintSCP(contract, amount) {
         console.log("Constructing SCP mint TX for " + (amount / COIN).toLocaleString('en-GB'));
-        let cTx = bitjs.transaction();
+        let cTx = WALLET.sccjs.tx.transaction();
         // Add input
         let cUTXO = WALLET.getCoinsToSpend(10000, true)[0];
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
@@ -474,14 +464,16 @@
         let nChange = (parseFloat(cUTXO.sats / COIN) - parseFloat(nFee)).toFixed(8);
         cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
-        sendTransaction(cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1), [cUTXO]);
-        M.toast({html: 'Minting, please wait for your mint to confirm on the network!', displayLength: 7500});
+        cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
+          sendTransaction(strSignedTx, [cUTXO]);
+          M.toast({html: 'Minting, please wait for your mint to confirm on the network!', displayLength: 7500});
+        });
     }
 
     function burnSCP(contract, amount) {
         console.log("Constructing SCP burn TX for " + (amount / COIN).toLocaleString('en-GB'));
         // Use our first UTXO, as the fees will be incredibly low anyway
-        let cTx = bitjs.transaction();
+        let cTx = WALLET.sccjs.tx.transaction();
         // Add input
         let cUTXO = WALLET.getCoinsToSpend(10000, true)[0];
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
@@ -493,8 +485,10 @@
         let nChange = (parseFloat(cUTXO.sats / COIN) - parseFloat(nFee)).toFixed(8);
         cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
-        sendTransaction(cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1), [cUTXO]);
-        M.toast({html: 'Burning, please wait for your mint to confirm on the network!', displayLength: 7500});
+        cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
+          sendTransaction(strSignedTx, [cUTXO]);
+          M.toast({html: 'Burning, please wait for your mint to confirm on the network!', displayLength: 7500});
+        });
     }
 
     function autofillSendingAmount() {
