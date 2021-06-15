@@ -90,8 +90,9 @@ body {
 
 #a li{
   list-style: none;
-  padding-top: 5px;
-  padding-bottom: 5px;
+  /* padding-top: 5px;
+  padding-bottom: 5px; */
+  padding: 5px;
 }
 
 #a li:hover{
@@ -103,13 +104,13 @@ body {
 }
 
 #a li span, .btn-select li span{
-  margin-left: 30px;
+  margin-left: 10px;
 }
 
 .b{
   display: none;
   width: 100%;
-  max-width: 340px;
+  max-width: 350px;
   box-shadow: 0 6px 12px rgba(0,0,0,.03);
   border: 1px solid rgba(0,0,0,.15);
   border-radius: 5px;
@@ -124,8 +125,8 @@ body {
 
 .btn-select{
   width: 100%;
-  max-width: 350px;
-  height: 40px;
+  /* max-width: 350px; */
+  height: 45px;
   border-radius: 5px;
   background-color: #fff;
   border: 1px solid #e6e6e6;

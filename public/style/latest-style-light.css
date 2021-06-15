@@ -14,7 +14,7 @@
 }
 
 .login-page {
-  padding:30px;
+  padding:30px 10px;
   padding-bottom:20px;
   color:#5a5a5a;
 }
@@ -26,6 +26,10 @@
 
 .theme-color-secondary {
   color: #304258!important;
+}
+
+.card-body {
+  min-height: 170px !important;
 }
 
 .card-prop {
