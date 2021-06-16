@@ -48,9 +48,9 @@
             <i id="versionLogin" style="position: static;color: white;opacity: 0.6;font-size: small;cursor: default;letter-spacing: 1px;"></i>
             <br><br>
           </center>
-            <div class="row">
-              <div class="col-2"></div>
-              <div class="col-8">
+          <div class="container">
+            <div class="row align-items-center" style="height: 50%;">
+              <div class="col-sm-10 offset-sm-1">
                 <div class="login-card card-prop2 mb-4">
                   <div class="card-body font-gray">
                     <div class="login-page">
@@ -110,8 +110,8 @@
                   </div>
                 </div>
               </div>
-              <div class="col-2"></div>
             </div>
+          </div>
         </div>
       </div>
     </div>
@@ -328,7 +328,7 @@
           }
           domActivityList.innerHTML += strActivityList;
         } else {
-          domActivityList.innerHTML = "<center><p>You have no activity!</p></center>";
+          domActivityList.innerHTML = "<center style='margin-top:30px;'><p>You have no activity!</p></center>";
         }
       }
 
@@ -822,7 +822,7 @@
       <h4 class="mb-5 theme-color-secondary font-weight-bold">Dashboard</h4>
 
       <div class="row">
-        <div class="col-7">
+        <div class="col-md-7">
 
           <div class="card card-prop mb-4">
             <div class="card-body">
@@ -849,7 +849,7 @@
           </div>
 
         </div>
-        <div class="col-5">
+        <div class="col-md-5">
 
           <div class="card card-prop mb-4">
             <div class="card-body">
@@ -884,8 +884,7 @@
       <h4 class="mb-5 theme-color-secondary font-weight-bold">Send</h4>
 
       <div class="row">
-        <div class="col-2"></div>
-        <div class="col-8">
+        <div class="col-lg-8 offset-lg-2">
 
           <div class="card card-prop mb-4">
             <div class="card-body">
@@ -894,11 +893,12 @@
               <div class="alert alert-danger-custom" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> &nbsp;Please make sure to enter the correct address. Transactions cannot be reversed.</div><br>
 
               <div class="row">
-                <div class="col-6">
+                <div class="col-sm-12">
                   <select id="sendingCoin" class="vodiapicker">
                     <option value="" data-thumbnail="imgs/i.png" disabled selected hidden>-</option>
                     <option value="scc" data-thumbnail="imgs/circular-logo.png">StakeCubeCoin (SCC)</option>
                   </select>
+                  <p>Select Token:</p>
                   <div class="lang-select">
                     <button id="sendingCoinVal" class="btn-select" value="scc"></button>
                     <div class="b" style="z-index:1000;">
@@ -909,7 +909,7 @@
               </div><br>
 
               <div class="row">
-                <div class="col-6">
+                <div class="col-md-6" style="margin: 20px 0;">
                   <div class="omrs-input-group" style="width:100%; margin-bottom: 0px;">
                     <label class="omrs-input-underlined">
                       <input required id="sendAmount" type="text">
@@ -918,8 +918,8 @@
                   </div>
                   <span style="font-size: 13px; top:5px; position: relative;">Available: <span id="sendingCoinBalance" onclick="autofillSendingAmount()" style="cursor: pointer;" class="badge badge-theme" style="margin-bottom:0px">-</label></span>
                 </div>
-                
-                <div class="col-6">
+
+                <div class="col-md-6" style="margin: 20px 0;">
                   <div class="omrs-input-group" style="width:100%;">
                     <label class="omrs-input-underlined">
                       <input required id="sendAddress" type="text">
@@ -944,7 +944,6 @@
           </div>
 
         </div>
-        <div class="col-2"></div>
       </div>
 
     </div>
@@ -953,9 +952,7 @@
       <h4 class="mb-5 theme-color-secondary font-weight-bold">Receive</h4>
 
       <div class="row">
-        <div class="col-2"></div>
-        <div class="col-8">
-
+        <div class="col-lg-8 offset-lg-2">
           <div class="card card-prop mb-4">
             <div class="card-body">
               <div class="card-title font-gray font-weight-bold">Receive address</div>
@@ -973,9 +970,7 @@
               <center><img id="receiveQR" style="width: 25%;height:auto;image-rendering:pixelated;"></center>
             </div>
           </div>
-
         </div>
-        <div class="col-2"></div>
       </div>
 
     </div>
@@ -984,9 +979,7 @@
       <h4 class="mb-5 theme-color-secondary font-weight-bold">StakeCube 2FA</h4>
 
       <div class="row">
-        <div class="col-2"></div>
-        <div class="col-8">
-
+        <div class="col-lg-8 offset-lg-2">
           <div class="card card-prop mb-4">
             <div class="card-body">
               <div id="authTitle" class="card-title font-gray font-weight-bold">Setup your 2FA</div>
@@ -1019,9 +1012,7 @@
               <center id="authReset"><button onclick="remove2FA()" style="margin-top: 10px;" class="btn btn-danger btn-layout">Remove 2FA</button></center>
             </div>
           </div>
-
         </div>
-        <div class="col-2"></div>
       </div>
 
     </div>
@@ -1034,9 +1025,7 @@
       </center>
       <br>
       <div class="row">
-        <div class="col-2"></div>
-        <div class="col-8">
-
+        <div class="col-lg-8 offset-lg-2">
           <div class="card card-prop mb-4">
             <div class="card-body">
               <div class="card-title font-gray font-weight-bold" id="stakingTitle">Loading...</div>
@@ -1050,9 +1039,7 @@
               </center><br><br>
             </div>
           </div>
-
         </div>
-        <div class="col-2"></div>
       </div>
     </div>
 
@@ -1092,12 +1079,18 @@
 
                   <div class="row">
                     <div class="col-9">
-                      <span style="font-size:14px;">Allow 'Enter' key to continue actions</span><br>
-                      <span style="font-size:11px; color:#97a1b1;">Disabling this will mean hitting 'Enter' will not perform or continue any actions or dialogs.<br>This setting is ignored on all Password fields.</span>
+                      <span>Allow 'Enter' key to continue actions</span><br>
+                      <span style="font-size:12px; color:#97a1b1;">Disabling this will mean hitting 'Enter' will not perform or continue any actions or dialogs.<br>This setting is ignored on all Password fields.</span>
                     </div>
                     <div class="col-3">
-                      <div class="form-check form-switch" style="font-size:14px;">
-                        <input class="form-check-input darkBorder" type="checkbox" value="" id="allowEnterKeySetting" checked="true" setting="allowEnterKey" onclick="toggleSetting(this)">
+                      <div class="container">
+                        <div class="row align-items-center justify-content-center" style="height: 100%;">
+                          <div class="col-md-6">
+                            <div class="form-check form-switch">
+                              <input class="form-check-input darkBorder" type="checkbox" value="" id="allowEnterKeySetting" checked="true" setting="allowEnterKey" onclick="toggleSetting(this)">
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1106,12 +1099,18 @@
 
                   <div class="row">
                     <div class="col-9">
-                      <span style="font-size:14px;">Display the 2FA menu</span><br>
-                      <span style="font-size:11px; color:#97a1b1;">Disabling this will hide the 2FA button from the header menu.<br>This will not remove or lose any 2FA codes, only hide them visually.</span>
+                      <span>Display the 2FA menu</span><br>
+                      <span style="font-size:12px; color:#97a1b1;">Disabling this will hide the 2FA button from the header menu.<br>This will not remove or lose any 2FA codes, only hide them visually.</span>
                     </div>
                     <div class="col-3">
-                      <div class="form-check form-switch" style="font-size:14px;">
-                        <input class="form-check-input darkBorder" type="checkbox" value="" id="display2FAMenuSetting" checked="true" setting="display2FAMenu" onclick="toggleSetting(this)">
+                      <div class="container">
+                        <div class="row align-items-center justify-content-center" style="height: 100%;">
+                          <div class="col-md-6">
+                            <div class="form-check form-switch">
+                              <input class="form-check-input darkBorder" type="checkbox" value="" id="display2FAMenuSetting" checked="true" setting="display2FAMenu" onclick="toggleSetting(this)">
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1127,13 +1126,17 @@
               <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
                 <div class="accordion-body">
                   <div class="row">
-                    <div class="col-9">
-                      <span style="font-size:14px;">Export Wallet</span><br>
-                      <span style="font-size:11px; color:#97a1b1;">This will highlight your private wallet file in your file explorer. You can use this file to move your wallet to another device, or as an encrypted backup method. (Contains: Encrypted Privkey, Pubkey & 2FA secret)</span>
+                    <div class="col-sm-9">
+                      <span>Export Wallet</span><br>
+                      <span style="font-size:12px; color:#97a1b1;">This will highlight your private wallet file in your file explorer. You can use this file to move your wallet to another device, or as an encrypted backup method. (Contains: Encrypted Privkey, Pubkey & 2FA secret)</span>
                     </div>
-                    <div class="col-3">
-                      <div class="form-check form-switch" style="font-size:14px;">
-                        <button class="btn btn-danger" onclick="showFileInExplorer(DB.appdata.getAppDataPath('SCPWallet\\wallet.json'))">Export Wallet</button>
+                    <div class="col-sm-3">
+                      <div class="container" style="padding: 10px 0;">
+                        <div class="row align-items-center justify-content-center" style="height: 100%;">
+                          <div class="col-md-6">
+                            <button class="btn btn-primary" onclick="showFileInExplorer(DB.appdata.getAppDataPath('SCPWallet\\wallet.json'))" style="width: 100%; min-width: 80px;">Export Wallet</button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>

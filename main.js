@@ -80,7 +80,7 @@ function createWindow () {
   mainWindow = new BrowserWindow({
     width: 1024,
     height: 679,
-    minWidth: 1024,
+    minWidth: 480,
     minHeight: 540,
     webPreferences: {
       nodeIntegration: true
@@ -89,6 +89,9 @@ function createWindow () {
     icon: "public/imgs/sc-logo." + (platform() === "darwin" ? "png" : "ico"),
     backgroundColor: "#f4f6f8"
   });
+
+  // disable default menu
+  mainWindow.setMenu(null)
 
   // If the user has a wallet, load the index app, otherwise load the 'setup/begin' app
   DB.getWallet().then(hasWallet => {
