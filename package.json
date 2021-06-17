@@ -21,6 +21,7 @@
     "electron-reloader": "^1.2.0"
   },
   "dependencies": {
+    "bent": "^7.3.12",
     "bitcoin-rpc-promise": "^2.1.6",
     "electron-squirrel-startup": "^1.0.0",
     "express": "^4.17.1",
