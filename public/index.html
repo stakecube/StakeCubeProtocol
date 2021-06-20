@@ -357,7 +357,7 @@
         console.log("Constructing TX of value: " + sendAmount + " SCC");
         let cTx = WALLET.sccjs.tx.transaction();
         // Inputs
-        let usedUTXOs = WALLET.getCoinsToSpend(sendAmount * COIN);
+        let usedUTXOs = WALLET.getCoinsToSpend(sendAmount * COIN, false, WALLET.getActiveWallet().getPubkey());
         let nUTXOs = usedUTXOs.reduce((a, b) => {return a + b.sats}, 0);
         for (const cUTXO of usedUTXOs)
           cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
@@ -381,7 +381,7 @@
         console.log("Constructing SCP-" + cToken.version + " Transfer TX for: " + sendAmount + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
         let cTx = WALLET.sccjs.tx.transaction();
         // Add input
-        let cUTXO = WALLET.getCoinsToSpend(10000, true)[0];
+        let cUTXO = WALLET.getCoinsToSpend(10000, true, WALLET.getActiveWallet().getPubkey())[0];
         cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         // SCP output
         cTx.addoutputburn(0.00000001, cToken.contract + " send " + (sendAmount * COIN).toFixed(0) + " " + sendAddress);
@@ -402,7 +402,7 @@
         console.log("Constructing SCP-" + cToken.version + " stake claim TX for " + (cAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
         let cTx = WALLET.sccjs.tx.transaction();
         // Add input
-        let cUTXO = WALLET.getCoinsToSpend(10000, true)[0];
+        let cUTXO = WALLET.getCoinsToSpend(10000, true, WALLET.getActiveWallet().getPubkey())[0];
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
         cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         // SCP output
@@ -429,7 +429,7 @@
         let cTx = WALLET.sccjs.tx.transaction();
         // Inputs
         let nDeployCost = (nDeployFee * COIN) + 1000;
-        let usedUTXOs = WALLET.getCoinsToSpend(nDeployCost);
+        let usedUTXOs = WALLET.getCoinsToSpend(nDeployCost, false, WALLET.getActiveWallet().getPubkey());
         let nUTXOs = usedUTXOs.reduce((a, b) => {return a + b.sats}, 0);
         for (const cUTXO of usedUTXOs)
           cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
@@ -454,7 +454,7 @@
         console.log("Constructing SCP mint TX for " + (amount / COIN).toLocaleString('en-GB'));
         let cTx = WALLET.sccjs.tx.transaction();
         // Add input
-        let cUTXO = WALLET.getCoinsToSpend(10000, true)[0];
+        let cUTXO = WALLET.getCoinsToSpend(10000, true, WALLET.getActiveWallet().getPubkey())[0];
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
         cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         // SCP output
@@ -475,7 +475,7 @@
         // Use our first UTXO, as the fees will be incredibly low anyway
         let cTx = WALLET.sccjs.tx.transaction();
         // Add input
-        let cUTXO = WALLET.getCoinsToSpend(10000, true)[0];
+        let cUTXO = WALLET.getCoinsToSpend(10000, true, WALLET.getActiveWallet().getPubkey())[0];
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
         cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         // SCP output

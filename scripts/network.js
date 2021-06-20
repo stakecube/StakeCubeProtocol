@@ -57,7 +57,7 @@ var getUnspentTransactions = function () {
     // Convert explorer dataset into UTXO classes and merge with the current set
     let arrNewUTXOs = [];
     for (const rawUTXO of data) {
-      arrNewUTXOs.push(new WALLET.UTXO(rawUTXO.txid, rawUTXO.outputIndex, rawUTXO.script, rawUTXO.satoshis));
+      arrNewUTXOs.push(new WALLET.UTXO(WALLET.getActiveWallet().getPubkey(), rawUTXO.txid, rawUTXO.outputIndex, rawUTXO.script, rawUTXO.satoshis));
     }
     getMempoolLight(arrNewUTXOs);
   }
@@ -73,12 +73,13 @@ var getMempoolLight = function (arrUTXOList) {
         // Search all VOUTs belonging to us, add them to our wallet
         for (rawVout of rawTX.vout) {
           if (rawVout.scriptPubKey && rawVout.scriptPubKey.addresses && rawVout.scriptPubKey.addresses.length > 0) {
-            if (rawVout.scriptPubKey.addresses[0] === WALLET.getActiveWallet().getPubkey()) {
-              // Found a mempool vout for our wallet!
-              let cUTXO = new WALLET.UTXO(rawTX.txid, rawVout.n, rawVout.scriptPubKey.hex, rawVout.valueSat);
-              cUTXO.mempool = true;
-              arrUTXOList.push(cUTXO);
-            }
+            // Check if our wallet contains this address
+            let cWallet = WALLET.getWallet(rawVout.scriptPubKey.addresses[0]);
+            if (!cWallet) continue;
+            // Found a mempool vout for our wallet!
+            let cUTXO = new WALLET.UTXO(cWallet.getPubkey(), rawTX.txid, rawVout.n, rawVout.scriptPubKey.hex, rawVout.valueSat);
+            cUTXO.mempool = true;
+            arrUTXOList.push(cUTXO);
           }
         }
       }
