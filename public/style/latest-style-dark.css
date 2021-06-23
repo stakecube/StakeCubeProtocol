@@ -14,7 +14,7 @@ input {
 }
 
 .main-html {
-  background: linear-gradient(90deg, rgba(13, 229, 244, 0.1), rgba(10, 83, 181, 0.3) 100%);
+  background: linear-gradient(90deg, rgba(0, 90, 255, 0.1), rgba(10, 83, 181, 0.37) 100%);
   background-color: black;
 }
 
@@ -23,16 +23,16 @@ input {
 }
 
 .navbar-colour {
-  background: linear-gradient(90deg, #0043a7, #06183d 80%);
+  background: linear-gradient(90deg, #00398e, #05112a 80%);
   border-bottom-style: solid;
-  border-color: #0043a7;
+  border-color: #0066ff;
   border-width: 1px;
 }
 
 .page-gradient {
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, rgba(13, 229, 244, 0.1), rgba(10, 83, 181, 0.3) 100%);
+  background: linear-gradient(90deg, rgba(0, 90, 255, 0.1), rgba(10, 83, 181, 0.37) 100%);
   background-color: black;
 }
 
@@ -57,7 +57,7 @@ input {
 }
 
 .theme-color-secondary {
-  color: #5897e3!important;
+  color: #2487ff!important
 }
 
 .card-body {
@@ -67,9 +67,9 @@ input {
 .card-prop {
   border: none;
   border-radius: 15px;
-  -moz-box-shadow: 0 0 3px #5897e3;
-  -webkit-box-shadow: 0 0 3px #5897e3;
-  box-shadow: 0 0 3px #5897e3;
+  -moz-box-shadow: 0 0 3px #0074ff;
+  -webkit-box-shadow: 0 0 3px #0074ff;
+  box-shadow: 0 0 3px #0074ff;
 }
 
 .alert-danger-custom {
