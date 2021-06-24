@@ -56,8 +56,16 @@ input {
   opacity: 0.8;
 }
 
+.fas-higher-contrast {
+  color: white;
+}
+
+.fas-higher-contrast:hover {
+  opacity: 0.6 !important;
+}
+
 .theme-color-secondary {
-  color: #2487ff!important
+  color: #2487ff !important;
 }
 
 .card-body {

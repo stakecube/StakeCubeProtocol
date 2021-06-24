@@ -40,8 +40,17 @@
   box-shadow: 0 0 40px #eaeaea;
 }
 
- /* width */
- ::-webkit-scrollbar {
+.fas-higher-contrast {
+  color: white;
+  opacity: 1;
+}
+
+.fas-higher-contrast:hover {
+  opacity: 0.75;
+}
+
+/* width */
+::-webkit-scrollbar {
   width: 5px;
   left: -100px;
 }
