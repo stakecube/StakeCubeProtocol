@@ -12,14 +12,6 @@
   <link id="themeSheet" themeIndex="0" href="style/latest-style-light.css" rel="stylesheet">
   <link href="fontawesome/css/fontawesome.min.css" rel="stylesheet">
   <link href="fontawesome/css/all.min.css" rel="stylesheet">
-
-  <!--- IMPORTANT: CHAIN PARAMS BELOW, DO NOT EDIT UNLESS YOU'RE ABSOLUTELY CERTAIN YOU KNOW WHAT YOU'RE DOING  --->
-  <script>
-    'use strict';
-
-    // The amount of satoshis that make a full coin
-    const COIN = 100000000;
-  </script>
   
   <!-- Functional Libraries (Cryptography, Hashing, Encryption, Encoding, etc) -->
   <script type="text/javascript" src="../scripts/libs/aes-gcm.js"></script>
@@ -742,9 +734,9 @@
       domStakingRewards = document.getElementById("stakingRewards");
       domStakingRedeem = document.getElementById("stakingRedeem");
       // Don't need to cache these as it's just one-time use
-      if (npm_package) {
-        document.getElementById("version").innerText = "v" + npm_package.version;
-        document.getElementById("versionLogin").innerText = "v" + npm_package.version;
+      if (npmPackage) {
+        document.getElementById("version").innerText = "v" + npmPackage.version;
+        document.getElementById("versionLogin").innerText = "v" + npmPackage.version;
       } else {
         document.getElementById("version").style.display = "none";
         document.getElementById("versionLogin").style.display = "none";

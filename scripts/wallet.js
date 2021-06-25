@@ -1,12 +1,13 @@
 encryptWallet = async function(forcedPass = false) {
     // Encrypt the wallet WIF with AES-GCM and a user-chosen password - suitable for browser storage
     const cWallet = WALLET.getActiveWallet();
-    const encWIF = await encrypt(cWallet.getPrivkey(), forcedPass);
-    if (typeof encWIF !== 'string') return false;
+    const strWIF = cWallet.getPrivkey();
+    const strEncWIF = await encrypt(strWIF, forcedPass);
+    if (typeof strEncWIF !== 'string') return false;
     // Set the encrypted wallet and pubkey in DB
-    const pubkeyDeriv = cWallet.getPubkey() || WALLET.sccjs.pubFromPriv(cWallet.getPrivkey());
-    cWallet.setKeys(pubkeyDeriv, null, encWIF);
-    return encWIF;
+    const strPubkey = cWallet.getPubkey() || WALLET.sccjs.pubFromPriv(strWIF);
+    cWallet.setKeys(strPubkey, null, strEncWIF);
+    return strEncWIF;
 };
 
 decryptWallet = async function(forcedPass = false) {

@@ -1,5 +1,4 @@
 // Settings Defaults
-const debug = false; // Debugging for transactions, networking, etc.
 let allowEnterKey = true; // Allow the 'Enter' key to continue actions on dialogs & forms.
 let display2FAMenu = true; // Displays the 2FA button in the header menu.
 
@@ -49,7 +48,7 @@ function loadTheme() {
         domTheme.setAttribute('themeIndex', nThemeIndex);
     } else {
         nThemeIndex = 0;
-        console.log('No themes on disk, loading default! (' + cssThemes[0] + ')');
+        console.log('No themes on disk, loading default: ' + cssThemes[0]);
     }
     // Update theme button
     if (cssThemes[nThemeIndex].startsWith('dark')) {
