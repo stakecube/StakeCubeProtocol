@@ -15,7 +15,7 @@ module.exports = {
       "eol-last": 2,
       "eqeqeq": [2, "always"],
       "indent": [2, 4],
-      "keyword-spacing": [2, { "before": true, "after": true, "overrides": { "if": { "after": false }, "for": { "after": false }, "while": { "after": false }, "catch": { "after": false }, "switch": { "after": false } } }],
+      "keyword-spacing": [2, { "before": true, "after": true, "overrides": { "catch": { "after": false } } }],
       "max-depth": [1, 3],
       "max-len": [1, { "code": 80, "ignoreComments": true }],
       "max-statements": [1, 15],
