@@ -28,7 +28,7 @@ module.exports = {
     'object-curly-spacing': [2, 'never'],
     'quotes': [2, 'single', 'avoid-escape'],
     'semi': [1, 'always'],    
-    'keyword-spacing': [2, {'before': true, 'after': true}],
+    'keyword-spacing': [2, {'before': true, 'after': true,'overrides': { 'if': { 'after': false }, 'for': { 'after': false }, 'while': { 'after': false }, 'catch': { 'after': false } } }],
     'semi-spacing': [2, {'before': false, 'after': true}],
     'space-unary-ops': 2,
     'indent': [2, 4],    
