@@ -665,6 +665,14 @@
       return (name.length > limit ? name.substr(0, limit) + "…" : name);
     }
 
+    function percentOf(partial, full) {
+      return (partial / full) * 100;
+    }
+
+    function percentChange(decrease, oldNumber) {
+      return (decrease / oldNumber) * 100;
+    }
+
     setInterval(() => {
       // Check block count + UTXO sync every 10 seconds
       getBlockCount();
