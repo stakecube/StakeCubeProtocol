@@ -351,6 +351,12 @@
       let coinSelection = document.getElementById("sendingCoinVal").value;
       let sendAmount = Number(document.getElementById("sendAmount").value);
       let sendAddress = document.getElementById("sendAddress").value;
+      if (!sendAmount || !Number.isFinite(sendAmount)) {
+        return M.toast({html: 'Please enter a valid amount!', displayLength: 2000});
+      }
+      if (!sendAddress || sendAddress.length !== 34 || !sendAddress.startsWith("s")) {
+        return M.toast({html: 'Please enter a valid address!', displayLength: 2000});
+      }
       if (coinSelection === "scc") {
         console.log("Constructing TX of value: " + sendAmount + " SCC");
         let cTx = WALLET.sccjs.tx.transaction();
