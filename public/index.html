@@ -429,6 +429,22 @@
     function deploySCP(version = 1, params = []) {
         if (!Number.isSafeInteger(version)) return console.error("SCP token must have a version integer!");
         if (params.length < 3) return console.error("SCP token deployment requires params!\nE.g; deploySCP(1, ['CatCoin', 'CAT', " + COIN + "])");
+        // Ensure SCP params look atleast somewhat sane
+        for (const param of params) {
+          if (typeof param === 'string') {
+            if (param.length === 0)  return M.toast({html: 'No empty strings allowed!', displayLength: 3000});
+            if (param.length > 24)   return M.toast({html: 'No strings over 24 chars allowed!', displayLength: 4000});
+            if (param.includes(' ')) return M.toast({html: 'No spaces allowed in SCP strings!', displayLength: 4000});
+          } else
+          if (typeof param === 'number') {
+            // No floats allowed
+            if (!Number.isInteger(param))    return M.toast({html: 'No floats allowed! Please use integers\nRef: ' + param, displayLength: 4000});
+            // No integers larger than the safe integer 
+            if (!Number.isSafeInteger(param)) return M.toast({html: 'An integer is too large, unsafe to deploy!\nRef: ' + ((param / COIN) / 1000000) + " mil", displayLength: 4000});
+          } else {
+            return M.toast({html: 'Unsupported param detected: ' + typeof param, displayLength: 3000});
+          }
+        }
         console.log("Constructing SCP-" + version + " deployment TX");
         let cTx = WALLET.sccjs.tx.transaction();
         // Inputs
