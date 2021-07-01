@@ -349,8 +349,8 @@
 
     function sendTransactionGUI() {
       let coinSelection = document.getElementById("sendingCoinVal").value;
-      let sendAmount = Number(document.getElementById("sendAmount").value);
-      let sendAddress = document.getElementById("sendAddress").value;
+      let sendAmount = Number(document.getElementById("sendAmount").value.trim());
+      let sendAddress = document.getElementById("sendAddress").value.trim();
       if (!sendAmount || !Number.isFinite(sendAmount)) {
         return M.toast({html: 'Please enter a valid amount!', displayLength: 2000});
       }
