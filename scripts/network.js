@@ -97,8 +97,8 @@ const sendTransaction = function(hex, usedUTXOs = []) {
             data = this.response;
             if (data.length === 64) {
                 // Reset text inputs
-                document.getElementById("sendAmount").value = "";
-                document.getElementById("sendAddress").value = "";
+                document.getElementById('sendAmount').value = '';
+                document.getElementById('sendAddress').value = '';
                 // Notify as a success
                 console.log('Transaction sent! ' + data);
                 M.toast({
