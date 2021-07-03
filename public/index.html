@@ -198,12 +198,14 @@
     let cachedTokens = [];
     let cachedBlockCount = 0;
     let cachedActivity = [];
+    let cachedCoinDeltas = [];
 
     // Statistical / Informational data
     let valueUSD = 0;
     let currentSupply = 0;
 
     // Cached DOM elements
+    let activityViewSCP = true;
     let domHeader;
     let domLoginPage;
     let domDashboardBtn;
@@ -308,29 +310,95 @@
         }
 
         // Update activity widget
-        if (isFullnode)
+        if (isFullnode) {
           cachedActivity = TOKENS.getActivityByAccount(strPubkey).reverse();
-        else
-          getActivityByAccountLight(strPubkey);
-        if (cachedActivity.length > 0) {
-          domActivityList.innerHTML = "";
-          domActivitySubtitle.innerHTML = "";
-          let amountToLoad = cachedActivity.length, i;
-          if (WALLET.getIncomingUTXOs().length > 0) {
-            domActivitySubtitle.innerHTML = '<center style="margin-top: 25px; margin-bottom: 25px;"><p>You have pending transactions!</p></center>';
-          }
-          let strActivityList = "";
-          for (i=0; i<amountToLoad; i++) {
-            let nValue = cachedActivity[i].amount / COIN;
-            strActivityList += '<div class="mt-4" style="cursor: pointer;" onclick="openExternalURL(\'https://scc.ccore.online/transaction/' + cachedActivity[i].id + '\')"><div class="float-start text-center">Block ' + cachedActivity[i].block.toLocaleString('en-GB') + '</div><span class="float-end ' + ((cachedActivity[i].type === 'received' || cachedActivity[i].type === 'staked') ? "plus" : "minus") + '-balance-color font-weight-bold" style="position:relative; top:11px;"><i style="text-transform: capitalize;padding-right:5px;">' + cachedActivity[i].type + '</i> ' + ((cachedActivity[i].type === 'received' || cachedActivity[i].type === 'staked') ? "+" : "-") + nValue.toLocaleString('en-GB', { maximumFractionDigits: nValue > 1 ? 2 : 8, minimumFractionDigits: 2 }) + ' ' + cachedActivity[i].token.ticker + '</span></div><br><br>' + (i !== 4 ? '<hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">' : '');
-          }
-          domActivityList.innerHTML += strActivityList;
+          rpcMain.call('getaddressdeltas', {
+            'addresses': [strPubkey]
+          }).then(res => {
+            cachedCoinDeltas = res.reverse();
+          }).catch(e => {
+            // Fallback incase this node doesn't support address indexing
+            getDeltasByAccountLight(strPubkey);
+          });
         } else {
-          domActivityList.innerHTML = "<center style='margin-top:30px;'><p>You have no activity!</p></center>";
+          getActivityByAccountLight(strPubkey);
+          getDeltasByAccountLight(strPubkey);
         }
+        // Fetch SCC Deltas (a list of changes on this address)
+        renderActivity();
       }
 
       return Number(nBalance.toFixed(8));
+    }
+
+    function renderActivity() {
+      // Our 'view' is either SCP or SCC, depending on the user's Activity settings
+      const arrView = activityViewSCP ? cachedActivity : cachedCoinDeltas;
+      let strActivityList = "";
+      if (arrView.length > 0) {
+        domActivityList.innerHTML = "";
+        domActivitySubtitle.innerHTML = "";
+        if (WALLET.getIncomingUTXOs().length > 0) {
+          domActivitySubtitle.innerHTML = '<center style="margin-top: 25px; margin-bottom: 25px;"><p>You have pending transactions!</p></center>';
+        }
+        let arrTxView = [];
+        // (SCC view ONLY) Sort the individual output deltas into per-transaction deltas
+        if (!activityViewSCP) {
+          for (const cDelta of arrView) {
+            let fFoundTx = false;
+            for (const cTxDelta of arrTxView) {
+              // Found a previous TX delta for this output, merge into one
+              if (cDelta.txid === cTxDelta.txid) {
+                cTxDelta.satoshis += cDelta.satoshis;
+                fFoundTx = true;
+              }
+            }
+            // Didn't find any TX deltas, add a new one (Deep Clone)
+            if (!fFoundTx) {
+              arrTxView.push(JSON.parse(JSON.stringify(cDelta)));
+            }
+          }
+        } else {
+          arrTxView = arrView;
+        }
+        // View SCP or SCC depending on the user's settings
+        let i = 0;
+        for (const cActivity of arrTxView) {
+          if (!activityViewSCP && isScpTx(cActivity.txid)) continue;
+          if (limitActivity && i >= 200) break;
+          i++;
+          const nValue = (cActivity.amount || cActivity.satoshis) / COIN;
+          const strTx  = (cActivity.id || cActivity.txid);
+          const strBlk = (cActivity.block || cActivity.height).toLocaleString('en-GB');
+          let strType;
+          if (activityViewSCP) {
+            strType = cActivity.type;
+          } else {
+            if (cActivity.satoshis >= 0)
+              strType = 'received';
+            else
+              strType = 'sent';
+          }
+          const strTypeColour = ((strType === 'received' || strType === 'staked') ? "plus" : "minus");
+          const strTypeSymbol = ((strType === 'received' || strType === 'staked') ? "+" : "-");
+          const strCoinTicker = cActivity.token ? cActivity.token.ticker : 'SCC';
+          strActivityList += '<div class="mt-4" style="cursor: pointer;" onclick="openExternalURL(\'https://scc.ccore.online/transaction/' + strTx + '\')"><div class="float-start text-center">Block ' + strBlk + '</div><span class="float-end ' + strTypeColour + '-balance-color font-weight-bold" style="position:relative; top:11px;"><i style="text-transform: capitalize;padding-right:5px;">' + strType + '</i> ' + strTypeSymbol + Math.abs(nValue).toLocaleString('en-GB', { maximumFractionDigits: nValue > 1 ? 2 : 8, minimumFractionDigits: 2 }) + ' ' + strCoinTicker + '</span></div><br><br>' + (i !== 4 ? '<hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">' : '');
+        }
+        domActivityList.innerHTML += strActivityList;
+      } else {
+        domActivityList.innerHTML = "<center style='margin-top:30px;'><p>You have no activity!</p></center>";
+      }
+    }
+
+    function setActivityView(viewSCP) {
+      activityViewSCP = viewSCP;
+      let btnSCC = document.getElementById("domActivitySCC");
+      let btnSCP = document.getElementById("domActivitySCP");
+      btnSCC.style.opacity = viewSCP ? 0.4 : 1;
+      btnSCP.style.opacity = viewSCP ? 1 : 0.4;
+      btnSCC.style.cursor  = viewSCP ? 'pointer' : 'default';
+      btnSCP.style.cursor  = viewSCP ? 'default' : 'pointer';
+      renderActivity();
     }
 
     function getCachedToken(contract) {
@@ -343,6 +411,13 @@
     function getCachedAccount(ctoken, address) {
       for (const account of ctoken.owners) {
         if (account.address === address) return account;
+      }
+      return false;
+    }
+
+    function isScpTx(strTx) {
+      for (const cActivity of cachedActivity) {
+        if (cActivity.id === strTx) return true;
       }
       return false;
     }
@@ -869,6 +944,8 @@
           <div class="card card-prop mb-4">
             <div class="card-body">
               <div class="card-title font-gray font-weight-bold">Activity</div>
+              <span id="domActivitySCC" onclick="setActivityView(false);" style="cursor: pointer; opacity: 0.4;" class="badge badge-theme">SCC</span>
+              <span id="domActivitySCP" onclick="setActivityView(true);" style="cursor: default;" class="badge badge-theme">SCP</span>
               <div id="activitySubtitle"></div> 
               <div id="activityList" style="overflow-y: auto; max-height: 320px; padding-right: 10px;">
                 <center><p>Loading Activity</p></center>
@@ -1136,6 +1213,26 @@
                           <div class="col-md-6">
                             <div class="form-check form-switch">
                               <input class="form-check-input darkBorder" type="checkbox" value="" id="display2FAMenuSetting" checked="true" setting="display2FAMenu" onclick="toggleSetting(this)">
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr style="color: #bcc4d2;">
+
+                  <div class="row">
+                    <div class="col-9">
+                      <span>Limit Activity to 200 TXs</span><br>
+                      <span style="font-size:12px; color:#97a1b1;">Disabling this will let the Activity display unlimited TXs, however this may cause performance issues on large wallets.</span>
+                    </div>
+                    <div class="col-3">
+                      <div class="container">
+                        <div class="row align-items-center justify-content-center" style="height: 100%;">
+                          <div class="col-md-6">
+                            <div class="form-check form-switch">
+                              <input class="form-check-input darkBorder" type="checkbox" value="" id="limitActivitySetting" checked="true" setting="limitActivity" onclick="toggleSetting(this)">
                             </div>
                           </div>
                         </div>

@@ -1,6 +1,7 @@
 // Settings Defaults
 let allowEnterKey = true; // Allow the 'Enter' key to continue actions on dialogs & forms.
 let display2FAMenu = true; // Displays the 2FA button in the header menu.
+let limitActivity = true; // Limit the activity list to increase performance on large wallets.
 
 // Toggles a setting via a UI checkbox
 function toggleSetting(evt) {
@@ -12,6 +13,10 @@ function toggleSetting(evt) {
     if (strSetting === 'display2FAMenu') {
         dom2FAMenu.style.display = checked ? '' : 'none';
         display2FAMenu = checked;
+    }
+    if (strSetting === 'limitActivity') {
+        limitActivity = checked;
+        renderActivity();
     }
     // Now save to disk and log!
     localStorage.setItem(strSetting, checked);
@@ -30,6 +35,10 @@ function loadSettings() {
         }
         if (dbKey === 'display2FAMenu') {
             display2FAMenu = boolVal;
+            document.getElementById(dbKey + 'Setting').checked = boolVal;
+        }
+        if (dbKey === 'limitActivity') {
+            limitActivity = boolVal;
             document.getElementById(dbKey + 'Setting').checked = boolVal;
         }
     }

@@ -79,6 +79,11 @@ const getActivityByAccountLight = function(address) {
     };
     request.send();
 };
+const getDeltasByAccountLight = function(address) {
+    NET.getDeltasLight(address).then(res => {
+        cachedCoinDeltas = JSON.parse(res).reverse();
+    });
+};
 const getStakingStatusLight = function(contract, address) {
     const request = new XMLHttpRequest();
     request.open('GET', 'https://stakecubecoin.net/web3/scp/getstakingstatus/' +
