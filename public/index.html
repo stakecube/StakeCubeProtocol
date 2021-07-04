@@ -382,7 +382,7 @@
           const strTypeColour = ((strType === 'received' || strType === 'staked') ? "plus" : "minus");
           const strTypeSymbol = ((strType === 'received' || strType === 'staked') ? "+" : "-");
           const strCoinTicker = cActivity.token ? cActivity.token.ticker : 'SCC';
-          strActivityList += '<div class="mt-4" style="cursor: pointer;" onclick="openExternalURL(\'https://scc.ccore.online/transaction/' + strTx + '\')"><div class="float-start text-center">Block ' + strBlk + '</div><span class="float-end ' + strTypeColour + '-balance-color font-weight-bold" style="position:relative; top:11px;"><i style="text-transform: capitalize;padding-right:5px;">' + strType + '</i> ' + strTypeSymbol + Math.abs(nValue).toLocaleString('en-GB', { maximumFractionDigits: nValue > 1 ? 2 : 8, minimumFractionDigits: 2 }) + ' ' + strCoinTicker + '</span></div><br><br>' + (i !== 4 ? '<hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">' : '');
+          strActivityList += '<div class="mt-4" style="cursor: pointer;" onclick="openExternalURL(\'https://scc.ccore.online/transaction/' + strTx + '\')"><div class="float-start text-center">Block ' + strBlk + '</div><span class="float-end ' + strTypeColour + '-balance-color font-weight-bold" style="position:relative; top:11px;"><i style="text-transform: capitalize;padding-right:5px;">' + strType + '</i> ' + strTypeSymbol + Math.abs(nValue).toLocaleString('en-GB', { maximumFractionDigits: nValue > 1 ? 2 : 8, minimumFractionDigits: 2 }) + ' ' + strCoinTicker + '</span></div><br><br><hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">';
         }
         domActivityList.innerHTML += strActivityList;
       } else {
