@@ -93,38 +93,34 @@ const getStakingStatusLight = function(contract, address) {
     };
     request.send();
 };
-const sendTransaction = function(hex, usedUTXOs = []) {
-    if (typeof hex !== 'undefined') {
-        const request = new XMLHttpRequest();
-        request.open('GET', 'https://stakecubecoin.net/web3/submittx?tx=' + hex,
-            true);
-        request.onload = function() {
-            data = this.response;
-            if (data.length === 64) {
-                // Reset text inputs
-                document.getElementById('sendAmount').value = '';
-                document.getElementById('sendAddress').value = '';
-                // Notify as a success
-                console.log('Transaction sent! ' + data);
-                M.toast({
-                    'html': 'Transaction Sent!',
-                    'displayLength': 2000
-                });
-                // Mark UTXOs as spent
-                for (const cUTXO of usedUTXOs) {
-                    cUTXO.spent = true;
-                }
-                // Refresh UTXOs from on-chain and mempool
-                getUnspentTransactions();
-            } else {
-                M.toast({
-                    'html': 'Error sending transaction!',
-                    'displayLength': 3000
-                });
+const sendTransaction = function(hex, usedUTXOs = [], message = "Transaction Sent!") {
+    const request = new XMLHttpRequest();
+    request.open('GET', 'https://stakecubecoin.net/web3/submittx?tx=' + hex,
+        true);
+    request.onload = function() {
+        data = this.response;
+        if (data.length === 64) {
+            // Reset text inputs
+            document.getElementById('sendAmount').value = '';
+            document.getElementById('sendAddress').value = '';
+            // Notify as a success
+            console.log(message + ' \nTX-ID: ' + data);
+            M.toast({
+                'html': message,
+                'displayLength': 1000 + (message.length * 75)
+            });
+            // Mark UTXOs as spent
+            for (const cUTXO of usedUTXOs) {
+                cUTXO.spent = true;
             }
-        };
-        request.send();
-    } else {
-        console.log('hex undefined');
-    }
+            // Refresh UTXOs from on-chain and mempool
+            getUnspentTransactions();
+        } else {
+            M.toast({
+                'html': 'Error sending transaction!',
+                'displayLength': 3000
+            });
+        }
+    };
+    request.send();
 };

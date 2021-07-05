@@ -492,12 +492,11 @@
         cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
-          sendTransaction(strSignedTx, [cUTXO]);
+          sendTransaction(strSignedTx, [cUTXO], 'Redeeming, please wait for your claim to confirm on the network!');
           domStakingRedeem.setAttribute('onclick', '');
           domStakingRedeem.classList.add('disabled');
           domStakingRedeem.innerText = 'Redeeming...';
-          domStakingSubtitle.innerText = 'Your stake is being redeemed! Please wait until the next block to see your balance update.';
-          M.toast({html: 'Redeeming, please wait for your claim to confirm on the network!', displayLength: 7500});
+          //domStakingSubtitle.innerText = 'Your stake is being redeemed! Please wait until the next block to see your balance update.';
         });
     }
 
@@ -540,8 +539,7 @@
         cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
-          sendTransaction(strSignedTx, usedUTXOs);
-          M.toast({html: 'Deploying! Please wait for the contract to confirm in a block!', displayLength: 7500});
+          sendTransaction(strSignedTx, usedUTXOs, 'Deploying! Please wait for the contract to confirm in a block!');
         });
     }
 
@@ -560,8 +558,7 @@
         cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
-          sendTransaction(strSignedTx, [cUTXO]);
-          M.toast({html: 'Minting, please wait for your mint to confirm on the network!', displayLength: 7500});
+          sendTransaction(strSignedTx, [cUTXO], 'Minting, please wait for your mint to confirm on the network!');
         });
     }
 
@@ -581,8 +578,7 @@
         cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
-          sendTransaction(strSignedTx, [cUTXO]);
-          M.toast({html: 'Burning, please wait for your mint to confirm on the network!', displayLength: 7500});
+          sendTransaction(strSignedTx, [cUTXO], 'Burning, please wait for your mint to confirm on the network!');
         });
     }
 
