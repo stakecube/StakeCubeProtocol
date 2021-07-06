@@ -93,7 +93,7 @@ const getStakingStatusLight = function(contract, address) {
     };
     request.send();
 };
-const sendTransaction = function(hex, usedUTXOs = [], message = "Transaction Sent!") {
+const sendTransaction = function(hex, usedUTXOs = [], message = 'Transaction Sent!') {
     const request = new XMLHttpRequest();
     request.open('GET', 'https://stakecubecoin.net/web3/submittx?tx=' + hex,
         true);
