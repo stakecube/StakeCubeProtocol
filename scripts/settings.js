@@ -2,6 +2,7 @@
 let allowEnterKey = true; // Allow the 'Enter' key to continue actions on dialogs & forms.
 let display2FAMenu = true; // Displays the 2FA button in the header menu.
 let limitActivity = true; // Limit the activity list to increase performance on large wallets.
+let hideZeroBalance = true; // Hide wallets from view when they have no balance.
 
 // Toggles a setting via a UI checkbox
 function toggleSetting(evt) {
@@ -18,6 +19,7 @@ function toggleSetting(evt) {
         limitActivity = checked;
         renderActivity();
     }
+    if (strSetting === 'hideZeroBalance') hideZeroBalance = checked;
     // Now save to disk and log!
     localStorage.setItem(strSetting, checked);
     console.log("Settings: Set '" + strSetting + "' to " + checked);
@@ -39,6 +41,10 @@ function loadSettings() {
         }
         if (dbKey === 'limitActivity') {
             limitActivity = boolVal;
+            document.getElementById(dbKey + 'Setting').checked = boolVal;
+        }
+        if (dbKey === 'hideZeroBalance') {
+            hideZeroBalance = boolVal;
             document.getElementById(dbKey + 'Setting').checked = boolVal;
         }
     }

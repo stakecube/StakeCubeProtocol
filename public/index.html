@@ -291,6 +291,7 @@
           let strSendTokens = "";
           for (const cToken of cachedTokens) {
             let nBal = cToken.account.balance / COIN;
+            if (hideZeroBalance && nBal <= 0) continue;
             let stakingButton = 'onclick="switchToStaking(\'' + cToken.token.contract + '\')"';
             let stakingStyle = 'cursor:pointer;';
             let stakingText = '';
@@ -634,7 +635,7 @@
     }
 
     function autofillSendingAmount() {
-      document.getElementById("sendAmount").value = domSendingBalance.innerText;
+      document.getElementById("sendAmount").value = domSendingBalance.innerText.replace(/,/g, '');
     }
 
     function refreshSendBalance() {
@@ -1303,6 +1304,26 @@
                           <div class="col-md-6">
                             <div class="form-check form-switch">
                               <input class="form-check-input darkBorder" type="checkbox" value="" id="limitActivitySetting" checked="true" setting="limitActivity" onclick="toggleSetting(this)">
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr style="color: #bcc4d2;">
+
+                  <div class="row">
+                    <div class="col-9">
+                      <span>Hide Empty Wallets</span><br>
+                      <span style="font-size:12px; color:#97a1b1;">Disabling this will display empty (0-balance) wallets in their respective area.</span>
+                    </div>
+                    <div class="col-3">
+                      <div class="container">
+                        <div class="row align-items-center justify-content-center" style="height: 100%;">
+                          <div class="col-md-6">
+                            <div class="form-check form-switch">
+                              <input class="form-check-input darkBorder" type="checkbox" value="" id="hideZeroBalanceSetting" checked="true" setting="hideZeroBalance" onclick="toggleSetting(this)">
                             </div>
                           </div>
                         </div>
