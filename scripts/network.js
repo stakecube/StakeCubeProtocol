@@ -104,14 +104,16 @@ const sendTransaction = function(hex, usedUTXOs = [], message = 'Transaction Sen
             document.getElementById('sendAmount').value = '';
             document.getElementById('sendAddress').value = '';
             // Notify as a success
-            console.log(message + ' \nTX-ID: ' + data);
-            M.toast({
-                'html': message,
-                'displayLength': 1000 + (message.length * 75)
-            });
-            // Mark UTXOs as spent
-            for (const cUTXO of usedUTXOs) {
-                cUTXO.spent = true;
+            if (message) {
+                console.log(message + ' \nTX-ID: ' + data);
+                M.toast({
+                    'html': message,
+                    'displayLength': 1000 + (message.length * 75)
+                });
+                // Mark UTXOs as spent
+                for (const cUTXO of usedUTXOs) {
+                    cUTXO.spent = true;
+                }
             }
             // Refresh UTXOs from on-chain and mempool
             getUnspentTransactions();

@@ -228,6 +228,9 @@
     let domSendingBalance;
     let domActivitySubtitle;
     let domActivityList;
+    let domActivitySCC;
+    let domActivitySCP;
+    let domClaimAllBtn;
 
     let domMarketcap;
     let domPrice;
@@ -392,12 +395,10 @@
 
     function setActivityView(viewSCP) {
       activityViewSCP = viewSCP;
-      let btnSCC = document.getElementById("domActivitySCC");
-      let btnSCP = document.getElementById("domActivitySCP");
-      btnSCC.style.opacity = viewSCP ? 0.4 : 1;
-      btnSCP.style.opacity = viewSCP ? 1 : 0.4;
-      btnSCC.style.cursor  = viewSCP ? 'pointer' : 'default';
-      btnSCP.style.cursor  = viewSCP ? 'default' : 'pointer';
+      domActivitySCC.style.opacity = viewSCP ? 0.4 : 1;
+      domActivitySCP.style.opacity = viewSCP ? 1 : 0.4;
+      domActivitySCC.style.cursor  = viewSCP ? 'pointer' : 'default';
+      domActivitySCP.style.cursor  = viewSCP ? 'default' : 'pointer';
       renderActivity();
     }
 
@@ -481,7 +482,7 @@
         console.log("Constructing SCP-" + cToken.version + " stake claim TX for " + (cAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
         let cTx = WALLET.sccjs.tx.transaction();
         // Add input
-        let cUTXO = WALLET.getCoinsToSpend(10000, true, WALLET.getActiveWallet().getPubkey())[0];
+        let cUTXO = WALLET.getCoinsToSpend(2000, true, WALLET.getActiveWallet().getPubkey())[0];
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
         cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         // SCP output
@@ -498,6 +499,56 @@
           domStakingRedeem.innerText = 'Redeeming...';
           //domStakingSubtitle.innerText = 'Your stake is being redeemed! Please wait until the next block to see your balance update.';
         });
+    }
+
+    let isClaiming = false;
+    async function claimAll() {
+      if (isClaiming) return console.log("Cancelled sequential claim, a claim is already being performed!");
+      isClaiming = true;
+      let nClaims = 0;
+      const cWallet = WALLET.getActiveWallet();
+      for (const cToken of cachedTokens) {
+          if (cToken.token.version !== 2) continue;
+          if (cToken.account.unclaimed_balance <= 0) continue;
+          // Let's claim the rewards!
+          domClaimAllBtn.style.opacity = 0.4;
+          domClaimAllBtn.style.cursor = "default";
+          domClaimAllBtn.innerText = "Claiming " + cToken.token.ticker;
+          // Init wallet & TX constructor
+          let cTx = WALLET.sccjs.tx.transaction();
+          // Asynchronously sync UTXOs with the network
+          await WALLET.refreshUTXOs(cWallet.getPubkey());
+          // Add input
+          let cUTXO = WALLET.getCoinsToSpend(2000, true, cWallet.getPubkey())[0];
+          if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
+          cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
+          // SCP output
+          cTx.addoutputburn(0.00000001, cToken.token.contract + " redeem");
+          // Fee & Change output
+          let nFee = WALLET.getFee(cTx.serialize().length);
+          let nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
+          cTx.addoutput(cWallet.getPubkey(), nChange);
+          // Sign & Broadcast
+          const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
+          await NET.broadcastTx(strSignedTx);
+          nClaims++;
+          // Mark UTXO as spent
+          cUTXO.spent = true;
+          // If no available UTXOs: Sleep to allow the mempool time to return our fresh UTXO set
+          if (!WALLET.getAvailableUTXOs(cWallet.getPubkey()).length)
+            await sleep(1000);
+        }
+        await sleep(1000);
+        // Refresh the final UTXO set after a small sleep
+        await WALLET.refreshUTXOs(cWallet.getPubkey());
+        // Reset Claim All button
+        domClaimAllBtn.innerText = "Claim All";
+        domClaimAllBtn.style.cursor = "pointer";
+        //domClaimAllBtn.style.display = "none";
+        domClaimAllBtn.style.opacity = 1;
+        // Notify the user, finished!
+        isClaiming = false;
+        return M.toast({html: 'Redeemed ' + nClaims + ' rewards! Please wait for confirmations.', displayLength: 5000});
     }
 
     function deploySCP(version = 1, params = []) {
@@ -745,6 +796,21 @@
       if (domStakingPage.style.display === "block" && currentStakingToken) {
         refreshStakingStatus(currentStakingToken);
       }
+
+      // Also use this to update the Claim All button's visibility
+      if (cachedTokens.length) {
+        let nPendingStakes = 0;
+        for (const cToken of cachedTokens) {
+          if (cToken.token.version !== 2) continue;
+          if (cToken.account.unclaimed_balance <= 0) continue;
+          nPendingStakes++;
+        }
+        if (nPendingStakes > 1) {
+          domClaimAllBtn.style.display = "inline-block";
+        } else if (domClaimAllBtn.style.display !== "none") {
+          domClaimAllBtn.style.display = "none";
+        }
+      }
     }
 
     function copyToClipboard(text, name) {
@@ -770,6 +836,10 @@
 
     function percentChange(decrease, oldNumber) {
       return (decrease / oldNumber) * 100;
+    }
+
+    const sleep = (milliseconds) => {
+      return new Promise(resolve => setTimeout(resolve, milliseconds));
     }
 
     setInterval(() => {
@@ -828,6 +898,9 @@
       domDashboardBtn = document.getElementById("dashboardBtn");
       domActivitySubtitle = document.getElementById("activitySubtitle");
       domActivityList = document.getElementById("activityList");
+      domActivitySCC = document.getElementById("domActivitySCC");
+      domActivitySCP = document.getElementById("domActivitySCP");
+      domClaimAllBtn = document.getElementById("domClaimAllBtn");
       domSendBtn = document.getElementById("sendBtn");
       domReceiveBtn = document.getElementById("receiveBtn");
       dom2FABtn = document.getElementById("2faBtn");
@@ -968,8 +1041,9 @@
 
           <div class="card card-prop mb-4">
             <div class="card-body">
-              <div class="card-title font-gray font-weight-bold" style="margin-bottom:30px;">SCP Tokens</div>
-              <div id="dashboardTokens" style="overflow-y: auto; max-height: 200px; padding-right: 10px;">
+              <div class="card-title font-gray font-weight-bold" style="margin-bottom:10px;">SCP Tokens</div>
+              <span id="domClaimAllBtn" onclick="claimAll();" style="display: none; cursor: pointer;" class="badge badge-theme">Claim All</span>
+              <div id="dashboardTokens" style="overflow-y: auto; max-height: 200px; padding-right: 10px; margin-top: 10px;">
                 <center><p>Loading SCP</p></center>
               </div>
             </div>
