@@ -463,6 +463,7 @@
         let cTx = WALLET.sccjs.tx.transaction();
         // Add input
         let cUTXO = WALLET.getCoinsToSpend(10000, true, WALLET.getActiveWallet().getPubkey())[0];
+        if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
         cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         // SCP output
         cTx.addoutputburn(0.00000001, cToken.contract + " send " + (sendAmount * COIN).toFixed(0) + " " + sendAddress);
