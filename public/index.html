@@ -46,11 +46,9 @@
                 <div class="login-card card-prop2 mb-4">
                   <div class="card-body font-gray">
                     <div class="login-page">
-                      <center><h5 class="mb-3">Unlock your wallet</h5></center>
-
-                      <span id="errMess"><br></span>
-                      
                       <center>
+                        <h5 class="mb-3">Unlock your wallet</h5>
+                        <br>
                         <div class="omrs-input-group" style="width:100%; margin-bottom:10px;">
                           <label style="display: flex;" class="omrs-input-underlined">
                             <input required id="pass1" type="password" autofocus>
@@ -112,10 +110,8 @@
   <script>
     function finishLogin() {
       let nPass = document.getElementById("pass1").value;
-      let nLoginError = document.getElementById("errMess");
       decryptWallet(nPass).then(done => {
         if (done) {
-          nLoginError.innerHTML = "";
           document.getElementById("pass1").value = "";
           switchToDashboard();
           DB.setWallet(WALLET.toDB()).then(() => {
