@@ -11,7 +11,7 @@ encryptWallet = async function(forcedPass = false) {
 };
 
 decryptWallet = async function(forcedPass = false) {
-    if (typeof forcedPass === "string" && forcedPass.length === 0) return false;
+    if (typeof forcedPass === 'string' && forcedPass.length === 0) return false;
     // Check if there's any encrypted WIF available, if so, prompt to decrypt it
     const cWallet = WALLET.getActiveWallet();
     const encWif = cWallet.getPrivkeyEnc();
