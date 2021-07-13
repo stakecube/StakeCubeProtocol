@@ -94,12 +94,14 @@ function createWindow() {
     // mainWindow.setMenu(null)
 
     // If the user has a wallet, load the index app, otherwise load the 'setup/begin' app
-    DB.getWallet().then(hasWallet => {
-        if (hasWallet === null || !hasWallet) {
-            mainWindow.loadFile('public/begin.html');
-        } else {
-            mainWindow.loadFile('public/index.html');
-        }
+    DB.init().then(() => {
+        DB.getWallet().then(hasWallet => {
+            if (hasWallet === null || !hasWallet) {
+                mainWindow.loadFile('public/begin.html');
+            } else {
+                mainWindow.loadFile('public/index.html');
+            }
+        });
     });
 
     mainWindow.on('closed', function() {
