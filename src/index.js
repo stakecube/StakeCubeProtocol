@@ -632,58 +632,41 @@ async function init(forcedCorePath = false) {
 
         // Prepare RPC connection
         // A TX Index is required to retrieve raw transaction information from the chain, this is required to use SC-Protocol
-        const hasIndexing = DB.getConfigValue('txindex', false);
-        if (!hasIndexing) {
-            return {
-                'error': true,
-                'message': 'Init: No transaction index (-txindex=1) detected!',
-                'id': 0
-            };
+        const txindex = DB.getConfigValue('txindex', false);
+        if (!txindex || Number(txindex) !== 1) {
+            return 'Init: Finished - Running as Lightwallet! (No txindex ' +
+                   'enabled: txindex=0)';
         }
 
-        const hasAddrIndexing = DB.getConfigValue('addressindex', false);
-        if (!hasAddrIndexing) {
-            console.warn('Init: No address index (-addressindex=1) detected!' +
+        const addrIndex = DB.getConfigValue('addressindex', false);
+        if (!addrIndex || Number(addrIndex) !== 1) {
+            console.warn('Init: No address index (addressindex=1) detected!' +
                          '\nPlease enable address indexing if you with to ' +
                          'use a Wallet or provide SCC Balance APIs!');
         }
 
         const server = DB.getConfigValue('server', false);
-        if (!server) {
-            return {
-                'error': true,
-                'message': 'Init: No RPC server (-server=1) detected!',
-                'id': 1
-            };
+        if (!server || Number(server) !== 1) {
+            return 'Init: Finished - Running as Lightwallet! (No RPC server ' +
+                   'enabled: server=0)';
         }
 
         const rpcUser = DB.getConfigValue('rpcuser', false);
         if (!rpcUser) {
-            return {
-                'error': true,
-                'message': 'Init: No RPC username (-rpcuser=xyz...) ' +
-                           'detected!',
-                'id': 2
-            };
+            return 'Init: Finished - Running as Lightwallet! (No rpcuser ' +
+                   'found)';
         }
 
         const rpcPass = DB.getConfigValue('rpcpassword', false);
         if (!rpcPass) {
-            return {
-                'error': true,
-                'message': 'Init: No RPC password (-rpcpassword=zyx...) ' +
-                           'detected!',
-                'id': 3
-            };
+            return 'Init: Finished - Running as Lightwallet! (No rpcpassword ' +
+                   'found)';
         }
 
         const rpcPort = DB.getConfigValue('rpcport', 39999);
         if (!rpcPort) {
-            return {
-                'error': true,
-                'message': 'Init: No RPC port (-rpcport=39999) detected!',
-                'id': 4
-            };
+            return 'Init: Finished - Running as Lightwallet! (No rpcport ' +
+                   'found)';
         }
 
         rpcMain = RPC;
@@ -693,26 +676,15 @@ async function init(forcedCorePath = false) {
         try {
             const uptime = await rpcMain.call('uptime');
             if (!Number.isFinite(Number(uptime))) {
-                return {
-                    'error': true,
-                    'message': 'Init: Unable to connect to the RPC!',
-                    'id': 5
-                };
+                return 'Init: Finished - Running as Lightwallet! (Good ' +
+                       'configs, but no RPC response)';
             }
             // RPC Connection successful!
             isFullnode = true;
-            return {
-                'error': false,
-                'message': 'Init: Successfully connected to the RPC!',
-                'id': 6
-            };
+            return 'Init: Finished - Running as Fullnode! (Syncing)';
         } catch(e) {
-            return {
-                'error': true,
-                'message': 'Init: Unable to connect to the RPC!',
-                'rejection': e,
-                'id': 5
-            };
+            return 'Init: Finished - Running as Lightwallet! (Good configs, ' +
+                   'but no RPC response)';
         }
     } catch(e) {
         console.error('Init: FATAL ERROR!');
