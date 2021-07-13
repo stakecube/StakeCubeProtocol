@@ -26,18 +26,18 @@ let TOKENS;
 let WALLET;
 try {
 // GUI
-    DB = require('../lib/database/index.js');
-    NET = require('../lib/network.js');
-    RPC = require('../lib/rpc.js');
-    TOKENS = require('../lib/token.js');
-    WALLET = require('../lib/wallet.js');
+    DB = require('../src/database/index.js');
+    NET = require('../src/network.js');
+    RPC = require('../src/rpc.js');
+    TOKENS = require('../src/token.js');
+    WALLET = require('../src/wallet.js');
     isGUI = true;
     // It's more tricky to fetch the package.json file when GUI-packed, so... here's the workaround!
     try {
         // Unpacked
         let strFile;
         try {
-            // starting index.js from /lib/..
+            // starting index.js from /src/..
             strFile = DB.fs.readFileSync('../package.json', 'utf8');
             isGUI = false;
         } catch(e) {
@@ -599,8 +599,6 @@ app.get('/api/v1/wallet/stake/:address/:currency', async function(req, res) {
 app.listen(3000);
 
 async function init(forcedCorePath = false) {
-    // Ensure the SCPWallet Data Directory exists
-    DB.fs.mkdirSync(DB.scpPath, { 'recursive': true });
     // Initialize the DB, load configs into memory
     await DB.init(forcedCorePath);
     // Loop the StakeCubeCoin.conf file for RPC username and password params, if any
@@ -627,7 +625,9 @@ async function init(forcedCorePath = false) {
             // Set 2FA (resides in the root object, regardless of wallet format)
             WALLET.set2FAkey(rawDBWallet.opt2FA);
             // Log the amount of wallets we've loaded
-            console.log('Init: Loaded ' + WALLET.countWallets() + ' wallets!');
+            const nWalletCount = WALLET.countWallets();
+            console.log('Init: Loaded ' + nWalletCount + ' wallet' +
+                        (nWalletCount !== 1 ? 's' : '') + '!');
         }
 
         // Prepare RPC connection
@@ -636,7 +636,7 @@ async function init(forcedCorePath = false) {
         if (!hasIndexing) {
             return {
                 'error': true,
-                'message': 'No transaction index (-txindex=1) detected!',
+                'message': 'Init: No transaction index (-txindex=1) detected!',
                 'id': 0
             };
         }
@@ -652,7 +652,7 @@ async function init(forcedCorePath = false) {
         if (!server) {
             return {
                 'error': true,
-                'message': 'No RPC server (-server=1) detected!',
+                'message': 'Init: No RPC server (-server=1) detected!',
                 'id': 1
             };
         }
@@ -661,7 +661,7 @@ async function init(forcedCorePath = false) {
         if (!rpcUser) {
             return {
                 'error': true,
-                'message': 'No RPC username (-rpcuser=xyz...) ' +
+                'message': 'Init: No RPC username (-rpcuser=xyz...) ' +
                            'detected!',
                 'id': 2
             };
@@ -671,7 +671,7 @@ async function init(forcedCorePath = false) {
         if (!rpcPass) {
             return {
                 'error': true,
-                'message': 'No RPC password (-rpcpassword=zyx...) ' +
+                'message': 'Init: No RPC password (-rpcpassword=zyx...) ' +
                            'detected!',
                 'id': 3
             };
@@ -681,7 +681,7 @@ async function init(forcedCorePath = false) {
         if (!rpcPort) {
             return {
                 'error': true,
-                'message': 'No RPC port (-rpcport=39999) detected!',
+                'message': 'Init: No RPC port (-rpcport=39999) detected!',
                 'id': 4
             };
         }
@@ -695,7 +695,7 @@ async function init(forcedCorePath = false) {
             if (!Number.isFinite(Number(uptime))) {
                 return {
                     'error': true,
-                    'message': 'Unable to connect to the RPC!',
+                    'message': 'Init: Unable to connect to the RPC!',
                     'id': 5
                 };
             }
@@ -703,19 +703,19 @@ async function init(forcedCorePath = false) {
             isFullnode = true;
             return {
                 'error': false,
-                'message': 'Successfully connected to the RPC!',
+                'message': 'Init: Successfully connected to the RPC!',
                 'id': 6
             };
         } catch(e) {
             return {
                 'error': true,
-                'message': 'Unable to connect to the RPC!',
+                'message': 'Init: Unable to connect to the RPC!',
                 'rejection': e,
                 'id': 5
             };
         }
     } catch(e) {
-        console.error('SCC.CONF FATAL ERROR:');
+        console.error('Init: FATAL ERROR!');
         console.error(e);
     }
 }
@@ -1158,7 +1158,7 @@ async function processState(newMsg, tx) {
     return true;
 }
 
-// Util stuff (should probably be put into a lib/util.js module, #soon)
+// Util stuff (should probably be put into a src/util.js module, #soon)
 function isNil(a) {
     if (a === undefined || a === null || !a) return true; return false;
 }

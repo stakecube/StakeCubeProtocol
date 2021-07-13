@@ -5,7 +5,7 @@ const { ESLint } = require('eslint');
     const eslint = new ESLint({ 'fix': true });
 
     // 2. Lint files. This doesn't modify target files.
-    const results = await eslint.lintFiles(['lib/**/*.js', 'scripts/*.js']);
+    const results = await eslint.lintFiles(['src/**/*.js']);
 
     // 3. Modify the files with the fixed code.
     await ESLint.outputFixes(results);

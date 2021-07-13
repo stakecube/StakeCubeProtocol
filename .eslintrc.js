@@ -5,7 +5,7 @@ module.exports = {
   "extends": [
       "standard"
   ],
-  "ignorePatterns": ["scripts/libs/*.js"],
+  "ignorePatterns": ["scripts/*.js"],
   "rules": {
       "array-bracket-spacing": [2, "never"],
       "block-scoped-var": 2,

@@ -71,7 +71,7 @@ function handleSquirrelEvent() {
     }
 }
 
-const DB = require('./lib/database/index.js');
+const DB = require('./src/database/index.js');
 const { platform } = require('os');
 
 let mainWindow;

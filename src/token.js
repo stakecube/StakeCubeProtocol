@@ -293,8 +293,8 @@ class SCP2Token extends SCP1Token {
                 }
             }
         } else {
-            ret.note = 'this address does not inherit an account for this SCP-2' +
-                     ' token';
+            ret.note = 'this address does not inherit an account for this ' +
+                       'SCP-2 token';
         }
         return ret;
     }
