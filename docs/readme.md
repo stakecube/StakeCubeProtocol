@@ -18,12 +18,19 @@ to use custom themes with light and dark available as default.
 | [SCP-1](scp-1.md) | Token |
 | [SCP-2](scp-2.md) | Token |
 
+## API Documentation
+| Endpoints | Description |
+|---------|---------|
+| Activity | Endpoints related to SCP, SCC and accounts history / transactions |
+| Wallet | Endpoints related to addresses, account transactions and balances |
+| Tokens | Endpoints related to Token Protocol Standards |
+| Misc | Endpoints related to all miscellaneous functions |
+
 ## Guides
 
 | Topic | Links
 |---------|---------|
 | Installation | en - [de](de/installation.md) |
-| API Docs | en - de |
 
 ## Explorer
 
