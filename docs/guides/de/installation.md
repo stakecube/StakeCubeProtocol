@@ -29,7 +29,9 @@ Hardware Empfehlung für SCP (ohne SCC):
 > Für diese Anleitung wird folgende Systemumgebung genutzt:
 > - Betriebssystem: Ubuntu 20.04 LTS
 > - Die Installation wird im /home/ Verzeichnis des Server durchgeführt. 
-> - Editor: nano (sudo apt install nano)
+> - Editor: nano ( sudo apt install nano )
+> - Git für SCP Download ( sudo apt install git )
+> - Unzip um Archive zu entpacken ( sudo apt install unzip )
 
 ## Installationsanleitung
 Bringen Sie das Betriebssystem auf den aktuellsten Stand:
@@ -42,12 +44,6 @@ sudo apt upgrade
 ### StakeCubeCoin
 
 Die folgenden Schritte beschreiben, wie Sie SCC herunterladen und starten.
-
-*Optional:* Sollten Sie standardmäßig kein Werkzeug haben, um *.zip Dateien zu entpacken, installieren Sie:
-
-```bash
-sudo apt install unzip
-```
 
 Laden Sie den SCC Daemon für Linux herunter:
 
@@ -117,14 +113,16 @@ StartLimitBurst=5
 WantedBy=multi-user.target
 ```
 
-Starten Sie den Service und damit den SCC Daemon:
+Starten Sie den Service (und damit den SCC Daemon):
 
 ```bash
 systemctl enable scc
 systemctl start scc
 ```
 
-Nun wird das Programm die Blockchain-Daten im Hintergrund herunterladen. Dies kann einige Stunden in Anspruch nehmen. Kontrollieren Sie mit folgenden CLI Befehlen die Anzahl der Verbindungen zum Netzwerk, die aktuelle Blockhöhe und den Blockhash:
+Nun wird das Programm die Blockchain-Daten im Hintergrund herunterladen. Dies kann einige Stunden in Anspruch nehmen. 
+
+Kontrollieren Sie mit folgenden CLI Befehlen die Anzahl der Verbindungen zum Netzwerk, die aktuelle Blockhöhe und den Blockhash:
 
 ```bash
 scc getconnectioncount
@@ -142,13 +140,7 @@ Sie finden mögliche Fehlerbehebungen am Ende dieses Dokuments.
 
 Die folgenden Schritte beschreiben, wie Sie SCP herunterladen und starten.
 
-*Optional:* Installieren Sie die Git-CLI, wenn nicht standardmäßig verfügbar:
-
-```bash
-sudo apt install git
-```
-
-Installieren Sie als nächstes NodeJS (Version 16.x + NPM) und pm2:
+Installieren Sie NodeJS (Version 16.x + NPM) und pm2:
 
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
@@ -163,7 +155,7 @@ cd /home
 git clone https://github.com/stakecube/StakeCubeProtocol.git scp
 ```
 
-Sie können die Dateien auch herunterladen und manuell auf Ihren Server ablegen, jedoch macht Git zukünftige Updates und Wartung einfacher.
+Sie können die Dateien auch manuell herunterladen und auf Ihren Server ablegen, jedoch macht Git zukünftige Updates und Wartung einfacher.
 
 Navigieren Sie als Nächstes in den StakeCubeProtocol-Ordner und initialisieren Sie benötigten Abhängigkeiten:
 
@@ -173,7 +165,7 @@ npm i
 ```
 
 *Optional*:  
-Erstellen Sie die SCP Konfigurations-Datei, wenn Sie Ihren SCC Daemon nutzen:
+Erstellen Sie die SCP Konfigurations-Datei, wenn Sie den SCC Daemon (vollständige Integration) nutzen:
 
 ```bash    
 cd ~
@@ -214,6 +206,25 @@ Eine erfolgreiche Installation und Verbindung zur Ihrer SCC Core wallet zeigt ä
 
 Damit ist SCP installiert, als Prozess eingerichtet und bereit zur Nutzung per Schnittstelle. 
 
+### Zugriff sicherer machen
+
+**Firewall einrichten:**
+
+Installieren und konfigurieren Sie eine Firewall, sodass nur Ihr (Web-)Server Zugriff auf entsprechende APIs hat:
+
+```bash
+sudo apt install ufw
+sudo ufw allow ssh
+sudo ufw allow http
+sudo ufw allow https
+sudo ufw allow 40000 comment "SCC p2p"
+sudo ufw allow from 1.1.1.1 to any port 39999 comment "SCC RPC"
+sudo ufw allow from 1.1.1.1 to any port 3000 comment "SCP"
+sudo ufw enable
+```
+
+Ersetzen Sie 1.1.1.1 durch Ihre IP.
+
 ### Fehlersuche und -behebung
 
 *Problem:*
@@ -236,22 +247,3 @@ mv * ..
 cd ..
 rm -r .scc
 ```
-
-### Zugriff sicherer machen
-
-**Firewall einrichten:**
-
-Installieren und konfigurieren Sie eine Firewall, sodass nur Ihr (Web-)Server Zugriff auf entsprechende APIs hat:
-
-```bash
-sudo apt install ufw
-sudo ufw allow ssh
-sudo ufw allow http
-sudo ufw allow https
-sudo ufw allow 40000 comment "SCC p2p"
-sudo ufw allow from 1.1.1.1 to any port 39999 comment "SCC RPC"
-sudo ufw allow from 1.1.1.1 to any port 3000 comment "SCP"
-sudo ufw enable
-```
-
-Ersetzen Sie 1.1.1.1 durch Ihre IP.
