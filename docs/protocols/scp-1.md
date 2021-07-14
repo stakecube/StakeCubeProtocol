@@ -7,8 +7,10 @@ mint command on the console. The mint command allows the creator to mint new tok
 SCP-1 tokens may also be burnt, which reduces the circulating supply without affecting the maximum.
 
 ## Deploying Fee
-Deploying a SCP-1 token requires a static **10 SCC**, with transactions fees (~0.00002 SCC) additionally.  
-This fee is irrecoverable 'burned'.
+Deploying a SCP-1 token requires a static **10 SCC**, with transactions fees (~0.00002 SCC) additionally.
+
+This fee is irrecoverable 'burned'.  
+Address: sccburnaddressXXXXXXXXXXXXXXSfqakF
 
 ## Parameter
 
@@ -34,4 +36,10 @@ deploySCP(1, ["NAME", "TICKER", MAXSUPPLY * COIN])
 
 ```bash
 mintSCP("contract-id", amount * COIN)
+```
+
+**Burn tokens**
+
+```bash
+burnSCP("contract-id", amount * COIN)
 ```

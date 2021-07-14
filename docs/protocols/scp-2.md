@@ -4,7 +4,9 @@ SCP-2 provides a greater degree of decentralization, allowing for more complex e
 
 ## Deploying Fee
 Deploying a SCP-2 token requires a static **10 SCC**, with transactions fees (~0.00002 SCC) additionally.  
-This fee is irrecoverable 'burned'.
+
+This fee is irrecoverable 'burned'.  
+Address: sccburnaddressXXXXXXXXXXXXXXSfqakF
 
 ## Parameter
 
@@ -32,4 +34,10 @@ deploySCP(2, ["NAME", "TICKER", MAXSUPPLY * COIN, INFLATION * COIN, MINAGE])
 
 ```bash
 mintSCP("contract-id", amount * COIN)
+```
+
+**Burn tokens**
+
+```bash
+burnSCP("contract-id", amount * COIN)
 ```
