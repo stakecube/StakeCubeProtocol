@@ -24,3 +24,9 @@ to use custom themes with light and dark available as default.
 |---------|---------|
 | Installation | en - [de](de/installation.md) |
 | API Docs | en - de |
+
+## Explorer
+
+| Link | Open Source
+|---------|---------|
+| [scpscan.net](https://scpscan.net) | yes - [repository](https://github.com/stakecube/SCPscan) |
