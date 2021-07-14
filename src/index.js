@@ -13,17 +13,19 @@ let isGUI = false;
 let isFullnode = false;
 let isScanningBlocks = false;
 
+// A getter-pointer function for the fullnode flag
+function isFullnodePtr() {
+    return isFullnode;
+}
+
 // Flag to specify if the client is outdated according to external sources (i.e; Github API)
 let isOutdated = false;
 
-let rpcMain;
-
 let npmPackage;
-let DB;
-let NET;
-let RPC;
-let TOKENS;
-let WALLET;
+// Main Modules
+let DB, NET, RPC, TOKENS, WALLET;
+// API Modules
+let apiACTIVITY, apiBLOCKCHAIN, apiTOKENS, apiWALLET;
 try {
 // GUI
     DB = require('../src/database/index.js');
@@ -31,6 +33,10 @@ try {
     RPC = require('../src/rpc.js');
     TOKENS = require('../src/token.js');
     WALLET = require('../src/wallet.js');
+    apiACTIVITY = require('../src/api/activity.js');
+    apiBLOCKCHAIN = require('../src/api/blockchain.js');
+    apiTOKENS = require('../src/api/tokens.js');
+    apiWALLET = require('../src/api/wallet.js');
     isGUI = true;
     // It's more tricky to fetch the package.json file when GUI-packed, so... here's the workaround!
     try {
@@ -65,6 +71,10 @@ try {
         RPC = require('./rpc.js');
         TOKENS = require('./token.js');
         WALLET = require('./wallet.js');
+        apiACTIVITY = require('./api/activity.js');
+        apiBLOCKCHAIN = require('./api/blockchain.js');
+        apiTOKENS = require('./api/tokens.js');
+        apiWALLET = require('./api/wallet.js');
         npmPackage = JSON.parse(DB.fs.readFileSync('../package.json', 'utf8'));
     } catch(ee) {
         // At this point, we have no idea what's causing the error, bail out!
@@ -75,6 +85,8 @@ try {
         console.error(ee);
     }
 }
+
+const rpcMain = RPC;
 
 if (npmPackage) {
     console.log('--- StakeCube Protocol (SCP) Wallet v' + npmPackage.version +
@@ -118,482 +130,27 @@ const COIN = 100000000;
 const nDeployFee = 10;
 const strDeployFeeDest = 'sccburnaddressXXXXXXXXXXXXXXSfqakF';
 
-// API import
+// Express Server
 const express = require('express');
 const app = express();
-// Get All Tokens
-app.get('/api/v1/getalltokens', function(req, res) {
-    res.json(TOKENS.getTokensPtr());
+// Setup and initialize API modules, providing mutable pointer contexts to all necessary states
+apiACTIVITY.init(app, {
+    'TOKENS': TOKENS,
+    'rpcMain': rpcMain
 });
-// Get a single Token
-app.get('/api/v1/gettoken/:contract', function(req, res) {
-    if (!req.params.contract || req.params.contract.length <= 1) {
-        return res.json({ 'error': "You must specify a 'contract' param!" });
-    }
-    const cToken = TOKENS.getToken(req.params.contract);
-    if (cToken.error) {
-        return res.json({ 'error': 'Token contract does not exist!' });
-    }
-    res.json(cToken);
+apiBLOCKCHAIN.init(app, {
+    'gfm': getFullMempool
 });
-// Get Tokens by Account
-app.get('/api/v1/gettokensbyaccount/:account', function(req, res) {
-    if (!req.params.account || req.params.account.length <= 1) {
-        return res.json({ 'error': "You must specify an 'account' param!" });
-    }
-    res.json(TOKENS.getTokensByAccount(req.params.account));
+apiTOKENS.init(app, {
+    'TOKENS': TOKENS
 });
-// Get a single account's activity/history for a single token
-app.get('/api/v1/getactivity/:contract/:account', function(req, res) {
-    if (!req.params.contract || req.params.contract.length <= 1) {
-        return res.json({ 'error': "You must specify a 'contract' param!" });
-    }
-    if (!req.params.account || req.params.account.length <= 1) {
-        return res.json({ 'error': "You must specify an 'account' param!" });
-    }
-    const cToken = TOKENS.getToken(req.params.contract);
-    if (cToken.error) {
-        return res.json({ 'error': 'Token contract does not exist!' });
-    }
-    const cAccount = cToken.getAccount(req.params.account);
-    if (!cAccount) {
-        return res.json({ 'error': 'Account does not exist for this token!' });
-    }
-    res.json(cAccount.activity);
-});
-// Get a single account's activity/history for all tokens
-app.get('/api/v1/getallactivity/:account', function(req, res) {
-    if (!req.params.account || req.params.account.length <= 1) {
-        return res.json({ 'error': "You must specify an 'account' param!" });
-    }
-    const cActivity = TOKENS.getActivityByAccount(req.params.account);
-    res.json(cActivity);
-});
-// Gets all activity/history for all tokens, in one block, in a linear (flat) format with no nesting
-app.get('/api/v1/getblockactivity/:block', function(req, res) {
-    if (!req.params.block || req.params.block.length <= 1) {
-        return res.json({ 'error': "You must specify a 'block' param!" });
-    }
-    const cLinearActivity = [];
-    const nBlock = Number(req.params.block);
-    if (!Number.isSafeInteger(nBlock)) {
-        return res.json({ 'error': "Param 'block' is not an integer!" });
-    }
-    // Loop every token
-    const cTknPtr = TOKENS.getTokensPtr();
-    for (const cToken of cTknPtr) {
-        // Loop every account
-        for (const cAccount of cToken.owners) {
-            // Loop every activity entry
-            for (const activity of cAccount.activity) {
-                // If the activity is in our needed block, save it
-                if (activity.block !== nBlock) continue;
-                cLinearActivity.push({
-                    'txid': activity.id,
-                    'contract': cToken.contract,
-                    'account': cAccount.address,
-                    'type': activity.type,
-                    'amount': activity.amount
-                });
-            }
-        }
-    }
-    res.json(cLinearActivity);
-});
-// Gets all activity/history for a specified TX-ID and a type
-app.get('/api/v1/getactivitybytxid/:txid/:type', function(req, res) {
-    if (!req.params.txid || req.params.txid.length !== 64) {
-        return res.json({ 'error': "You must specify a valid 'txid' param!" });
-    }
-    const allowedTypes = ['all', 'sent', 'received', 'staked'];
-    if (!req.params.type) {
-        return res.json({
-            'error': "You must specify a 'type' param!",
-            'options': allowedTypes.join(', ')
-        });
-    }
-    if (!allowedTypes.includes(req.params.type)) {
-        return res.json({
-            'error': "Bad 'type' (" + req.params.type + ')!',
-            'options': allowedTypes.join(', ')
-        });
-    }
-    const cLinearActivity = [];
-    const strTx = req.params.txid;
-    const strType = req.params.type;
-    // Loop every token
-    const cTknPtr = TOKENS.getTokensPtr();
-    for (const cToken of cTknPtr) {
-        // Loop every account
-        for (const cAccount of cToken.owners) {
-            // Loop every activity entry
-            for (const activity of cAccount.activity) {
-                // If the activity matches our type
-                if (strType !== 'all' && activity.type !== strType) continue;
-                // If the activity has our TX-ID
-                if (activity.id !== strTx) continue;
-                cLinearActivity.push({
-                    'txid': activity.id,
-                    'contract': cToken.contract,
-                    'account': cAccount.address,
-                    'type': activity.type,
-                    'amount': activity.amount
-                });
-            }
-        }
-    }
-    res.json(cLinearActivity);
-});
-// Gets a list of all changes related to the given address
-app.get('/api/v1/wallet/listdeltas/:address', async function(req, res) {
-    if (!req.params.address || req.params.address.length !== 34) {
-        return res.status(400).send('Missing "address" parameter!');
-    }
-    try {
-        const arrTxs = await rpcMain.call('getaddressdeltas', {
-            'addresses': [req.params.address]
-        });
-        return res.json(arrTxs);
-    } catch(e) {
-        console.error("Network error on API 'wallet/listdeltas'");
-        console.error(e);
-        return res.status(400).send('Internal API Error');
-    }
-});
-// Get an SCP-2 token's staking status for a single account
-app.get('/api/v1/getstakingstatus/:contract/:account', function(req, res) {
-    if (!req.params.contract || req.params.contract.length <= 1) {
-        return res.json({ 'error': "You must specify a 'contract' param!" });
-    }
-    if (!req.params.account || req.params.account.length <= 1) {
-        return res.json({ 'error': "You must specify an 'account' param!" });
-    }
-    const cToken = TOKENS.getToken(req.params.contract);
-    if (cToken.error) {
-        return res.json({ 'error': 'Token contract does not exist!' });
-    }
-    if (cToken.version !== 2) {
-        return res.json({ 'error': 'Token is not an SCP-2!' });
-    }
-    res.json(cToken.getStakingStatus(req.params.account));
-});
-// Get the current raw mempool
-app.get('/api/v1/getrawmempool', async function(req, res) {
-    res.json(await getFullMempool());
-});
-// Get the balances of all owned tokens by this account, including SCC
-app.get('/api/v1/wallet/getbalances/:address', async function(req, res) {
-    if (!req.params.address) {
-        return res.status(400).send('Missing "address" parameter!');
-    }
-    const strAddr = req.params.address;
-    try {
-        // Asynchronously sync UTXOs with the network
-        await WALLET.refreshUTXOs(strAddr);
-        const arrBalances = [];
-        const arrUTXOs = [];
-        for (const cUTXO of WALLET.getUTXOsPtr()) {
-            if (cUTXO.address === strAddr && !cUTXO.spent) {
-                arrUTXOs.push(cUTXO);
-            }
-        }
-        // Push SCC balance
-        arrBalances.push({
-            'name': 'StakeCubeCoin',
-            'ticker': 'SCC',
-            // Balance is the sum of all UTXOs, for standardization
-            'balance': arrUTXOs.reduce((a, b) => {
-                return a + b.sats;
-            }, 0),
-            'utxos': arrUTXOs
-        });
-        // Get SCP tokens and add these to the list too
-        const cTokens = isFullnode
-            ? TOKENS.getTokensByAccount(strAddr)
-            : JSON.parse(await NET.getLightTokensByAccount(strAddr));
-        for (const cToken of cTokens) {
-            arrBalances.push({
-                'name': cToken.token.name,
-                'contract': cToken.token.contract,
-                'ticker': cToken.token.ticker,
-                'version': cToken.token.version,
-                'balance': cToken.account.balance,
-                'unclaimed_balance': (cToken.account.unclaimed_balance
-                    ? cToken.account.unclaimed_balance
-                    : 0)
-            });
-        }
-        return res.json(arrBalances);
-    } catch(e) {
-        console.error("Network error on API 'wallet/getbalance/" + strAddr +
-                        "'");
-        console.error(e);
-        return res.status(400).send('Internal API Error');
-    }
-});
-// Gets a list of all addresses available to the wallet
-app.get('/api/v1/wallet/listaddresses', async function(req, res) {
-    try {
-        const arrAddresses = [];
-        const cWalletDB = WALLET.toDB();
-        for (const cAddr of cWalletDB.wallets) {
-            arrAddresses.push({
-                'address': cAddr.pubkey,
-                'unlocked': cAddr.privkeyDecrypted.length > 0
-            });
-        }
-        return res.json(arrAddresses);
-    } catch(e) {
-        console.error("Network error on API 'wallet/listaddresses'");
-        console.error(e);
-        return res.status(400).send('Internal API Error');
-    }
-});
-
-// Creates a new wallet address
-app.get('/api/v1/wallet/getnewaddress', async function(req, res) {
-    try {
-        // Create a new wallet address
-        const cWallet = await WALLET.createWallet();
-        // Save to the database
-        await DB.setWallet(WALLET.toDB());
-        return res.send(cWallet.getPubkey());
-    } catch(e) {
-        console.error("Network error on API 'wallet/getnewaddress'");
-        console.error(e);
-        return res.status(400).send('Internal API Error');
-    }
-});
-// Creates an SCC transaction with the given wallet address
-app.get('/api/v1/wallet/send/:address/:currency/:to/:amount',
-    async function(req, res) {
-        if (!req.params.address) {
-            return res.status(400).send('Missing "address" parameter!');
-        }
-        if (!req.params.currency) {
-            return res.status(400).send('Missing "currency" parameter!');
-        }
-        if (!req.params.to) {
-            return res.status(400).send('Missing "to" parameter!');
-        }
-        if (!req.params.amount) {
-            return res.status(400).send('Missing "amount" parameter!');
-        }
-        const strAddr = req.params.address;
-        const strCurrency = req.params.currency;
-        const strTo = req.params.to;
-        const nAmount = Number(req.params.amount);
-        try {
-        // Cache our tokens list, for if needed
-            let cTokens = false;
-            let cSelectedToken = false;
-
-            // Ensure the 'to' address looks correct
-            if (!strTo.startsWith('s') || strTo.length !== 34) {
-                return res.status(400)
-                    .send('Receiving address "' + strTo +
-                             '" is invalid!');
-            }
-
-            // Ensure the 'amount' is a valid number
-            if (Number.isNaN(nAmount) || !Number.isFinite(nAmount)) {
-                return res.status(400)
-                    .send('Sending amount "' + nAmount +
-                             '" is an invalid amount!');
-            }
-
-            // Ensure we have the address specified, and it's unlocked
-            const cWallet = WALLET.getWallet(strAddr);
-            const strPubkey = cWallet.getPubkey();
-            if (!cWallet) {
-                return res.status(400)
-                    .send('Address "' + strAddr +
-                             '" does not exist in this wallet!');
-            }
-            if (cWallet.getPrivkey() === null) {
-                return res.status(400)
-                    .send('This address is locked (encrypted)' +
-                             ' via passphrase! Please unlock via' +
-                             ' GUI before using the API.');
-            }
-
-            // Asynchronously sync UTXOs with the network
-            await WALLET.refreshUTXOs(strPubkey);
-
-            // Ensure we have the currency specified
-            if (strCurrency.toLowerCase() !== 'scc') {
-                cTokens = isFullnode
-                    ? TOKENS.getTokensByAccount(strAddr)
-                    : JSON.parse(await NET.getLightTokensByAccount(strAddr));
-                for (const cToken of cTokens) {
-                    if (cToken.token.contract === strCurrency) {
-                        cSelectedToken = cToken;
-                    }
-                }
-                // If no token was found, bail out!
-                if (!cSelectedToken) {
-                    return res.status(400).send('Invalid token contract ID, "' +
-                                            strCurrency + '"! Or this token' +
-                                            ' is not held within this ' +
-                                            'account.');
-                }
-            }
-
-            // Create the transaction!
-            if (!cSelectedToken) {
-            // --- SCC ---
-                const cTx = WALLET.sccjs.tx.transaction();
-                // Inputs
-                const usedUTXOs = WALLET.getCoinsToSpend(nAmount * COIN,
-                    false,
-                    strPubkey);
-                const nUTXOs = usedUTXOs.reduce((a, b) => {
-                    return a + b.sats;
-                }, 0);
-                for (const cUTXO of usedUTXOs) {
-                    cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
-                }
-                if (nAmount >= nUTXOs / COIN) {
-                    return res.status(400).send('Not enough funds! (Sending: ' +
-                                            nAmount + ', Have: ' +
-                                            (nUTXOs / COIN) + ')');
-                }
-                // Destination output
-                cTx.addoutput(strTo, nAmount);
-                // Fee & Change output
-                const nFee = WALLET.getFee(cTx.serialize().length);
-                const nSpent = (nFee + nAmount).toFixed(8);
-                const nChange = ((nUTXOs / COIN) - nSpent).toFixed(8);
-                cTx.addoutput(strPubkey, nChange);
-                // Broadcast
-                const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
-                const strTXID = await NET.broadcastTx(strSignedTx);
-                // Mark UTXOs as spent
-                for (const cUTXO of usedUTXOs) {
-                    cUTXO.spent = true;
-                }
-                return res.json({
-                    'txid': strTXID,
-                    'rawTx': strSignedTx
-                });
-            } else {
-            // --- SCP ---
-                const cTx = WALLET.sccjs.tx.transaction();
-                const nCoinsBal = (cSelectedToken.account.balance / COIN);
-                if (nAmount > nCoinsBal) {
-                    return res.status(400).send('Not enough funds! (Sending: ' +
-                                            nAmount + ', Have: ' +
-                                            nCoinsBal + ')');
-                }
-                // Add input
-                const cUTXO = WALLET.getCoinsToSpend(10000, true, strPubkey)[0];
-                if (!cUTXO) {
-                    return res.status(400).send('Not enough gas funds!');
-                }
-                cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
-                // SCP output
-                cTx.addoutputburn(0.00000001,
-                    cSelectedToken.token.contract + ' send ' +
-                                (nAmount * COIN).toFixed(0) + ' ' + strTo);
-                // Fee & Change output
-                const nFee = WALLET.getFee(cTx.serialize().length);
-                const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-                cTx.addoutput(strPubkey, nChange);
-                // Broadcast
-                const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
-                const strTXID = await NET.broadcastTx(strSignedTx);
-                // Mark UTXO as spent
-                cUTXO.spent = true;
-                return res.json({
-                    'txid': strTXID,
-                    'rawTx': strSignedTx
-                });
-            }
-        } catch(e) {
-            console.error("Network error on API 'wallet/send'");
-            console.error(e);
-            return res.status(400).send('Internal API Error');
-        }
-    });
-// Creates a stake transaction to claim the pending rewards of a given account
-app.get('/api/v1/wallet/stake/:address/:currency', async function(req, res) {
-    if (!req.params.address) {
-        return res.status(400).send('Missing "address" parameter!');
-    }
-    if (!req.params.currency) {
-        return res.status(400).send('Missing "currency" parameter!');
-    }
-    const strAddr = req.params.address;
-    const strCurrency = req.params.currency;
-    try {
-        // Ensure we have the address specified, and it's unlocked
-        const cWallet = WALLET.getWallet(strAddr);
-        const strPubkey = cWallet.getPubkey();
-        if (!cWallet) {
-            return res.status(400)
-                .send('Address "' + strAddr +
-                         '" does not exist in this wallet!');
-        }
-        if (cWallet.getPrivkey() === null) {
-            return res.status(400)
-                .send('This address is locked (encrypted)' +
-                         ' via passphrase! Please unlock via' +
-                         ' GUI before using the API.');
-        }
-
-        // Asynchronously sync UTXOs with the network
-        await WALLET.refreshUTXOs(strPubkey);
-
-        // Ensure we have the currency specified
-        const cTokens = isFullnode
-            ? TOKENS.getTokensByAccount(strAddr)
-            : JSON.parse(await NET.getLightTokensByAccount(strAddr));
-        let cSelectedToken = false;
-        for (const cToken of cTokens) {
-            if (cToken.token.contract === strCurrency) {
-                cSelectedToken = cToken;
-            }
-        }
-        // If no token was found, bail out!
-        if (!cSelectedToken) {
-            return res.status(400).send('Invalid token contract ID, "' +
-                                    strCurrency + '"! Or this token' +
-                                    ' is not held within this ' +
-                                    'account.');
-        }
-        // --- CLAIM STAKE ---
-        const cTx = WALLET.sccjs.tx.transaction();
-        const nCoinsBal = (cSelectedToken.account.unclaimed_balance / COIN);
-        if (nCoinsBal <= 0) {
-            return res.status(400).send('You have no pending rewards!');
-        }
-        // Add input
-        const cUTXO = WALLET.getCoinsToSpend(10000, true, strPubkey)[0];
-        if (!cUTXO) {
-            return res.status(400).send('Not enough gas funds!');
-        }
-        cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
-        // SCP output
-        cTx.addoutputburn(0.00000001,
-            cSelectedToken.token.contract + ' redeem');
-        // Fee & Change output
-        const nFee = WALLET.getFee(cTx.serialize().length);
-        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-        cTx.addoutput(strPubkey, nChange);
-        // Broadcast
-        const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
-        const strTXID = await NET.broadcastTx(strSignedTx);
-        // Mark UTXO as spent
-        cUTXO.spent = true;
-        return res.json({
-            'txid': strTXID,
-            'rawTx': strSignedTx
-        });
-    } catch(e) {
-        console.error("Network error on API 'wallet/stake'");
-        console.error(e);
-        return res.status(400).send('Internal API Error');
-    }
+apiWALLET.init(app, {
+    'TOKENS': TOKENS,
+    'WALLET': WALLET,
+    'NET': NET,
+    'DB': DB,
+    'isFullnode': isFullnodePtr,
+    'COIN': COIN
 });
 
 app.listen(3000);
@@ -669,7 +226,6 @@ async function init(forcedCorePath = false) {
                    'found)';
         }
 
-        rpcMain = RPC;
         rpcMain.auth(rpcUser, rpcPass, 'localhost', rpcPort);
 
         // Test the RPC connection
