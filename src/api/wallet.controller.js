@@ -51,9 +51,9 @@ async function getStakingStatus(req, res) {
         }
     }
     res.json(isFullnode
-            ? cToken.getStakingStatus(req.params.account)
-            : JSON.parse(await ptrNET.getLightStakingStatus(req.params.contract,
-                                                 req.params.account)));
+        ? cToken.getStakingStatus(req.params.account)
+        : JSON.parse(await ptrNET.getLightStakingStatus(req.params.contract,
+            req.params.account)));
 }
 
 async function getBalances(req, res) {

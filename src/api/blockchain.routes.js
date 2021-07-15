@@ -6,7 +6,7 @@
 
 'use strict';
 
-let cController = require('./blockchain.controller.js');
+const cController = require('./blockchain.controller.js');
 
 // The main 'route' for this API module
 const strRoute = '/api/v1/blockchain/';
@@ -16,12 +16,11 @@ function init(app, context) {
 
     // Get the current raw mempool
     app.get(strRoute + 'getrawmempool',
-            cController.getFullMempool);
-	
+        cController.getFullMempool);
 
-	//// BACKWARDS-COMPAT: Removal scheduled for v1.1.6
-	app.get('/api/v1/getrawmempool',
-			cController.getFullMempool);
+    /// / BACKWARDS-COMPAT: Removal scheduled for v1.1.6
+    app.get('/api/v1/getrawmempool',
+        cController.getFullMempool);
 }
 
 exports.init = init;

@@ -16,8 +16,9 @@ function init(context) {
 }
 
 async function getFullMempool(req, res) {
-    if (!ptrIsFullnode())
+    if (!ptrIsFullnode()) {
         return fullnodeError(res);
+    }
     res.json(await ptrGetFullMempool());
 }
 

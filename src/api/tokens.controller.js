@@ -16,14 +16,16 @@ function init(context) {
 }
 
 async function getAllTokens(req, res) {
-    if (!ptrIsFullnode())
+    if (!ptrIsFullnode()) {
         return fullnodeError(res);
+    }
     res.json(ptrTOKENS.getTokensPtr());
 }
 
 function getToken(req, res) {
-    if (!ptrIsFullnode())
+    if (!ptrIsFullnode()) {
         return fullnodeError(res);
+    }
     if (!req.params.contract || req.params.contract.length !== 64) {
         return res.json({
             'error': "You must specify a 'contract' param!"
@@ -39,8 +41,9 @@ function getToken(req, res) {
 }
 
 function getTokensByAccount(req, res) {
-    if (!ptrIsFullnode())
+    if (!ptrIsFullnode()) {
         return fullnodeError(res);
+    }
     if (!req.params.account || req.params.account.length <= 1) {
         return res.json({
             'error': "You must specify an 'account' param!"
