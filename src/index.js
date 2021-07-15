@@ -136,13 +136,16 @@ const app = express();
 // Setup and initialize API modules, providing mutable pointer contexts to all necessary states
 apiACTIVITY.init(app, {
     'TOKENS': TOKENS,
-    'rpcMain': rpcMain
+    'rpcMain': rpcMain,
+    'isFullnode': isFullnodePtr
 });
 apiBLOCKCHAIN.init(app, {
-    'gfm': getFullMempool
+    'gfm': getFullMempool,
+    'isFullnode': isFullnodePtr
 });
 apiTOKENS.init(app, {
-    'TOKENS': TOKENS
+    'TOKENS': TOKENS,
+    'isFullnode': isFullnodePtr
 });
 apiWALLET.init(app, {
     'TOKENS': TOKENS,
