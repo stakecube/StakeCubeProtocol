@@ -33,10 +33,10 @@ try {
     RPC = require('../src/rpc.js');
     TOKENS = require('../src/token.js');
     WALLET = require('../src/wallet.js');
-    apiACTIVITY = require('../src/api/activity.js');
-    apiBLOCKCHAIN = require('../src/api/blockchain.js');
-    apiTOKENS = require('../src/api/tokens.js');
-    apiWALLET = require('../src/api/wallet.js');
+    apiACTIVITY = require('./api/activity.routes.js');
+    apiBLOCKCHAIN = require('./api/blockchain.routes.js');
+    apiTOKENS = require('./api/tokens.routes.js');
+    apiWALLET = require('./api/wallet.routes.js');
     isGUI = true;
     // It's more tricky to fetch the package.json file when GUI-packed, so... here's the workaround!
     try {
@@ -71,10 +71,10 @@ try {
         RPC = require('./rpc.js');
         TOKENS = require('./token.js');
         WALLET = require('./wallet.js');
-        apiACTIVITY = require('./api/activity.js');
-        apiBLOCKCHAIN = require('./api/blockchain.js');
-        apiTOKENS = require('./api/tokens.js');
-        apiWALLET = require('./api/wallet.js');
+        apiACTIVITY = require('./api/activity.routes.js');
+        apiBLOCKCHAIN = require('./api/blockchain.routes.js');
+        apiTOKENS = require('./api/tokens.routes.js');
+        apiWALLET = require('./api/wallet.routes.js');
         npmPackage = JSON.parse(DB.fs.readFileSync('../package.json', 'utf8'));
     } catch(ee) {
         // At this point, we have no idea what's causing the error, bail out!

@@ -9,13 +9,13 @@
 // Contextual pointers provided by the index.js process
 let ptrGetFullMempool;
 
-function init(app, context) {
+function init(context) {
     ptrGetFullMempool = context.gfm;
+}
 
-    // Get the current raw mempool
-    app.get('/api/v1/getrawmempool', async function(req, res) {
-        res.json(await ptrGetFullMempool());
-    });
+async function getFullMempool(req, res) {
+    res.json(await ptrGetFullMempool());
 }
 
 exports.init = init;
+exports.getFullMempool = getFullMempool;
