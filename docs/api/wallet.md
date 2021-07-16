@@ -45,3 +45,11 @@
 ```bash
 /api/v1/wallet/stake/:address/:currency
 ```
+
+---
+
+**Get an SCP-2 token's staking status for a single account**
+
+```bash
+/api/v1/getstakingstatus/:contract/:account
+```

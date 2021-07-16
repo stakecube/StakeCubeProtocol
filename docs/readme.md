@@ -24,7 +24,7 @@ to use custom themes with light and dark available as default.
 | [Activity](api/activity.md) | Endpoints related to SCP, SCC and accounts history / transactions |
 | [Wallet](api/wallet.md) | Endpoints related to addresses, account transactions and balances |
 | [Tokens](api/tokens.md) | Endpoints related to Token Protocol Standards |
-| [Misc](api/misc.md) | Endpoints related to all miscellaneous functions |
+| [Blockchain](api/blockchain.md) | Endpoints related to SCC blockchain informations |
 
 ## Guides
 
