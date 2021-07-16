@@ -96,4 +96,4 @@ Thanks to everyone who directly contributed to this release:
 - @408796571 - UI improvements
 - @Liquid369 - MacOS compiles & testing
 
-As well as everyone the QA community that helped during Testing.
+as well as the QA community that helped during Testing.

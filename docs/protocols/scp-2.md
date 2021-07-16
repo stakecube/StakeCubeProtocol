@@ -5,7 +5,7 @@ SCP-2 provides a greater degree of decentralization, allowing for more complex e
 ## Deploying Fee
 Deploying a SCP-2 token requires a static **10 SCC**, with transactions fees (~0.00002 SCC) additionally.  
 
-This fee is irrecoverable 'burned'.  
+This fee is irrecoverably 'burned'.  
 Address: sccburnaddressXXXXXXXXXXXXXXSfqakF
 
 ## Parameter

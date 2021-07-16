@@ -199,9 +199,7 @@ pm2 logs 0
 
 Eine erfolgreiche Installation und Verbindung zur Ihrer SCC Core wallet zeigt ähnliche Meldung:
 
-
-    0|index    | --- StakeCube Protocol (SCP) Wallet v1.1.4 --- GUI Mode
-    0|index    | { error: false, message: 'Successfully connected to the RPC!', id: 6 }
+    Init: Finished - Running as Fullnode! (Syncing)
 
 
 Damit ist SCP installiert, als Prozess eingerichtet und bereit zur Nutzung per Schnittstelle. 

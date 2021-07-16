@@ -145,4 +145,4 @@ Thanks to everyone who directly contributed to this release:
 
 - @JSKitty - Lead-Development
 
-As well as everyone the QA community that helped during Testing.
+as well as the QA community that helped during Testing.

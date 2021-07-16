@@ -9,7 +9,7 @@ SCP-1 tokens may also be burnt, which reduces the circulating supply without aff
 ## Deploying Fee
 Deploying a SCP-1 token requires a static **10 SCC**, with transactions fees (~0.00002 SCC) additionally.
 
-This fee is irrecoverable 'burned'.  
+This fee is irrecoverably 'burned'.  
 Address: sccburnaddressXXXXXXXXXXXXXXSfqakF
 
 ## Parameter

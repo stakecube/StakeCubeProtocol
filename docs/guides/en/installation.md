@@ -69,7 +69,7 @@ nano .stakecubecoin/stakecubecoin.conf
 Content of the configuration file:
 ```bash
 rpcuser=username
-rpcpassword=passwort
+rpcpassword=password
 server=1
 listen=1
 txindex=1
@@ -200,9 +200,7 @@ pm2 logs 0
 
 A successful installation and connection to your SCC Core wallet will show a message like this one:
 
-
-    0|index    | --- StakeCube Protocol (SCP) Wallet v1.1.4 --- GUI Mode
-    0|index    | { error: false, message: 'Successfully connected to the RPC!', id: 6 }
+    Init: Finished - Running as Fullnode! (Syncing)
 
 
 SCP is now installed, set up as a process and ready to use via the interface.
