@@ -6,7 +6,7 @@
 
 'use strict';
 
-let cController = require('./tokens.controller.js');
+const cController = require('./tokens.controller.js');
 
 // The main 'route' for this API module
 const strRoute = '/api/v1/tokens/';
@@ -16,24 +16,23 @@ function init(app, context) {
 
     // Get All Tokens
     app.get(strRoute + 'getalltokens',
-            cController.getAllTokens);
+        cController.getAllTokens);
 
     // Get a single Token
     app.get(strRoute + 'gettoken/:contract',
-            cController.getToken);
+        cController.getToken);
 
     // Get Tokens by Account
     app.get(strRoute + 'gettokensbyaccount/:account',
-            cController.getTokensByAccount);
+        cController.getTokensByAccount);
 
-
-    //// BACKWARDS-COMPAT: Removal scheduled for v1.1.6
+    /// / BACKWARDS-COMPAT: Removal scheduled for v1.1.6
     app.get('/api/v1/getalltokens',
-            cController.getAllTokens);
+        cController.getAllTokens);
     app.get('/api/v1/gettoken/:contract',
-            cController.getToken);
+        cController.getToken);
     app.get('/api/v1/gettokensbyaccount/:account',
-            cController.getTokensByAccount);
+        cController.getTokensByAccount);
 }
 
 exports.init = init;

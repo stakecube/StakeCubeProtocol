@@ -35,18 +35,25 @@ async function getStakingStatus(req, res) {
             'error': "You must specify an 'account' param!"
         });
     }
-    const cToken = ptrTOKENS.getToken(req.params.contract);
-    if (cToken.error) {
-        return res.json({
-            'error': 'Token contract does not exist!'
-        });
+    const isFullnode = ptrIsFullnode();
+    let cToken;
+    if (isFullnode) {
+        cToken = ptrTOKENS.getToken(req.params.contract);
+        if (cToken.error) {
+            return res.json({
+                'error': 'Token contract does not exist!'
+            });
+        }
+        if (cToken.version !== 2) {
+            return res.json({
+                'error': 'Token is not an SCP-2!'
+            });
+        }
     }
-    if (cToken.version !== 2) {
-        return res.json({
-            'error': 'Token is not an SCP-2!'
-        });
-    }
-    res.json(cToken.getStakingStatus(req.params.account));
+    res.json(isFullnode
+        ? cToken.getStakingStatus(req.params.account)
+        : JSON.parse(await ptrNET.getLightStakingStatus(req.params.contract,
+            req.params.account)));
 }
 
 async function getBalances(req, res) {

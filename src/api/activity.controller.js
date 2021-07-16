@@ -9,13 +9,18 @@
 // Contextual pointers provided by the index.js process
 let ptrTOKENS;
 let ptrRpcMain;
+let ptrIsFullnode;
 
 function init(context) {
     ptrTOKENS = context.TOKENS;
     ptrRpcMain = context.rpcMain;
+    ptrIsFullnode = context.isFullnode;
 }
 
 function getActivity(req, res) {
+    if (!ptrIsFullnode()) {
+        return fullnodeError(res);
+    }
     if (!req.params.contract || req.params.contract.length <= 1) {
         return res.json({
             'error': "You must specify a 'contract' param!"
@@ -42,6 +47,9 @@ function getActivity(req, res) {
 }
 
 function getAllActivity(req, res) {
+    if (!ptrIsFullnode()) {
+        return fullnodeError(res);
+    }
     if (!req.params.account || req.params.account.length <= 1) {
         return res.json({
             'error': "You must specify an 'account' param!"
@@ -52,6 +60,9 @@ function getAllActivity(req, res) {
 }
 
 function getBlockActivity(req, res) {
+    if (!ptrIsFullnode()) {
+        return fullnodeError(res);
+    }
     if (!req.params.block || req.params.block.length <= 1) {
         return res.json({
             'error': "You must specify a 'block' param!"
@@ -87,6 +98,9 @@ function getBlockActivity(req, res) {
 }
 
 function getActivityByTxid(req, res) {
+    if (!ptrIsFullnode()) {
+        return fullnodeError(res);
+    }
     if (!req.params.txid || req.params.txid.length !== 64) {
         return res.json({
             'error': "You must specify a valid 'txid' param!"
@@ -137,6 +151,9 @@ function getActivityByTxid(req, res) {
 }
 
 async function listDeltas(req, res) {
+    if (!ptrIsFullnode()) {
+        return fullnodeError(res);
+    }
     if (!req.params.address || req.params.address.length !== 34) {
         return res.status(400).send('Missing "address" parameter!');
     }
@@ -150,6 +167,13 @@ async function listDeltas(req, res) {
         console.error(e);
         return res.status(400).send('Internal API Error');
     }
+}
+
+function fullnodeError(res) {
+    return res.status(403).json({
+        'error': 'This endpoint is only available to Full-nodes, please ' +
+                 'connect an SCC Core RPC server to enable as a Full-node!'
+    });
 }
 
 exports.init = init;

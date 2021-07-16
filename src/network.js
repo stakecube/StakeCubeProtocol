@@ -85,6 +85,10 @@ async function getLightUTXOs(address) {
     return await get(rootSCCNet + 'getutxos?addr=' + address);
 }
 
+async function getLightStakingStatus(contract, address) {
+    return await get(rootSCCNet + 'scp/getstakingstatus/' + contract + '/' + address);
+}
+
 async function getMempoolLight() {
     return await get(rootSCCNet + 'scp/getrawmempool');
 }
@@ -106,6 +110,7 @@ exports.post = post;
 exports.getActivityLight = getActivityLight;
 exports.getDeltasLight = getDeltasLight;
 exports.getLightUTXOs = getLightUTXOs;
+exports.getLightStakingStatus = getLightStakingStatus;
 exports.getMempoolLight = getMempoolLight;
 exports.getLightTokensByAccount = getLightTokensByAccount;
 exports.broadcastTx = broadcastTx;
