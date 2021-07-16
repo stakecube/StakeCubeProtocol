@@ -170,7 +170,7 @@ Erstellen Sie die SCP Konfigurations-Datei, wenn Sie den SCC Daemon (vollständi
 ```bash    
 cd ~
 mkdir .config .config/SCPWallet
-cd .config
+cd .config/SCPWallet/
 nano scp.conf
 ```
 
