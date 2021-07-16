@@ -5,10 +5,10 @@
 Returns the current raw mempool information.
 
 ```bash
-GET /api/v1/getrawmempool
+GET /api/v1/blockchain/getrawmempool
 ```
 
-Example: `curl -X GET "https://stakecubecoin.net/web3/scp/getrawmempool"`
+Example: `curl -X GET "https://stakecubecoin.net/web3/scp/blockchain/getrawmempool"`
 
 **Fullnode required**: YES
 
