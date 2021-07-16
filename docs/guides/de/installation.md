@@ -170,6 +170,7 @@ Erstellen Sie die SCP Konfigurations-Datei, wenn Sie den SCC Daemon (vollständi
 ```bash    
 cd ~
 mkdir .config .config/SCPWallet
+cd .config
 nano scp.conf
 ```
 
@@ -181,8 +182,9 @@ coreconfname=stakecubecoin.conf
 
 Starten Sie SCP mit pm2:
 
-```bash    
-pm2 start lib/index.js
+```bash
+cd /home/scp/ 
+pm2 start src/index.js
 ```
 
 Speichern Sie den Prozess, um Ihre Prozessliste über erwartete oder unerwartete Neustarts des Servers hinweg intakt zu halten:
