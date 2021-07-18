@@ -186,7 +186,7 @@ async function listDeltas(req, res) {
         });
         return res.json(arrTxs);
     } catch(e) {
-        console.error("Network error on API 'wallet/listdeltas'");
+        console.error("Network error on API '" + strModule + "/listdeltas'");
         console.error(e);
         return res.status(400).send('Internal API Error');
     }
