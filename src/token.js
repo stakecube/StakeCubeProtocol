@@ -443,7 +443,9 @@ function getTokensByAccount(address) {
         const cAcc = token.getAccount(address);
         if (cAcc) {
             // Found account!
-            arrFoundAccounts.push({ 'token': token, 'account': cAcc });
+            const clonedToken = JSON.parse(JSON.stringify(token));
+            delete clonedToken.owners;
+            arrFoundAccounts.push({ 'token': clonedToken, 'account': cAcc });
         }
     }
     return arrFoundAccounts;
@@ -456,7 +458,11 @@ function getActivityByAccount(address) {
     for (const cToken of cTokens) {
         for (const cActivity of cToken.account.activity) {
             const deepClonedActivity = JSON.parse(JSON.stringify(cActivity));
-            deepClonedActivity.token = cToken.token;
+            deepClonedActivity.token = {
+                'contract': cToken.token.contract,
+                'ticker': cToken.token.ticker,
+                'name': cToken.token.name
+            };
             blocktimeSortedActivity.push(deepClonedActivity);
         }
     }
