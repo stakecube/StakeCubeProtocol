@@ -112,8 +112,8 @@ async function getBalances(req, res) {
         }
         return res.json(arrBalances);
     } catch(e) {
-        console.error("Network error on API 'wallet/getbalances/" + strAddr +
-                        "'");
+        console.error("Network error on API '" + strModule + '/getbalances/' +
+                      strAddr + "'");
         console.error(e);
         return res.status(400).send('Internal API Error');
     }
@@ -134,7 +134,7 @@ async function listAddresses(req, res) {
         }
         return res.json(arrAddresses);
     } catch(e) {
-        console.error("Network error on API 'wallet/listaddresses'");
+        console.error("Network error on API '" + strModule + "/listaddresses'");
         console.error(e);
         return res.status(400).send('Internal API Error');
     }
@@ -151,7 +151,7 @@ async function getNewAddress(req, res) {
         await ptrDB.setWallet(ptrWALLET.toDB());
         return res.send(cWallet.getPubkey());
     } catch(e) {
-        console.error("Network error on API 'wallet/getnewaddress'");
+        console.error("Network error on API '" + strModule + "/getnewaddress'");
         console.error(e);
         return res.status(400).send('Internal API Error');
     }
@@ -311,7 +311,7 @@ async function send(req, res) {
             });
         }
     } catch(e) {
-        console.error("Network error on API 'wallet/send'");
+        console.error("Network error on API '" + strModule + "/send'");
         console.error(e);
         return res.status(400).send('Internal API Error');
     }
@@ -394,7 +394,7 @@ async function stake(req, res) {
             'rawTx': strSignedTx
         });
     } catch(e) {
-        console.error("Network error on API 'wallet/stake'");
+        console.error("Network error on API '" + strModule + "/stake'");
         console.error(e);
         return res.status(400).send('Internal API Error');
     }
