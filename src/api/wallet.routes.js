@@ -20,7 +20,7 @@ function init(app, context) {
     app.get(strRoute + 'getstakingstatus/:contract/:account',
         cController.getStakingStatus);
     // Get the balances of all owned tokens by this account, including SCC
-    app.get(strRoute + 'getbalances/:address',
+    app.get(strRoute + 'getbalances/:account',
         cController.getBalances);
     // Gets a list of all addresses available to the wallet
     app.get(strRoute + 'listaddresses',
@@ -32,7 +32,7 @@ function init(app, context) {
     app.get(strRoute + 'send/:address/:currency/:to/:amount',
         cController.send);
     // Creates a stake transaction to claim the pending rewards of a given account
-    app.get(strRoute + 'stake/:address/:currency',
+    app.get(strRoute + 'stake/:address/:contract',
         cController.stake);
 
     /// / BACKWARDS-COMPAT: Removal scheduled for v1.1.6

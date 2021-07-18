@@ -70,10 +70,10 @@ async function getBalances(req, res) {
     if (!cPerms.isModuleAllowed(strModule)) {
         return disabledError(res);
     }
-    if (!req.params.address || req.params.address.length !== 34) {
-        return res.status(400).send('Missing "address" parameter!');
+    if (!req.params.account || req.params.account.length !== 34) {
+        return res.status(400).send('Missing "account" parameter!');
     }
-    const strAddr = req.params.address;
+    const strAddr = req.params.account;
     try {
         // Asynchronously sync UTXOs with the network
         await ptrWALLET.refreshUTXOs(strAddr);
@@ -324,11 +324,11 @@ async function stake(req, res) {
     if (!req.params.address || req.params.address.length !== 34) {
         return res.status(400).send('Missing "address" parameter!');
     }
-    if (!req.params.currency) {
-        return res.status(400).send('Missing "currency" parameter!');
+    if (!req.params.contract) {
+        return res.status(400).send('Missing "contract" parameter!');
     }
     const strAddr = req.params.address;
-    const strCurrency = req.params.currency;
+    const strContract = req.params.contract;
     try {
         // Ensure we have the address specified, and it's unlocked
         const cWallet = ptrWALLET.getWallet(strAddr);
@@ -354,14 +354,14 @@ async function stake(req, res) {
             : JSON.parse(await ptrNET.getLightTokensByAccount(strAddr));
         let cSelectedToken = false;
         for (const cToken of cTokens) {
-            if (cToken.token.contract === strCurrency) {
+            if (cToken.token.contract === strContract) {
                 cSelectedToken = cToken;
             }
         }
         // If no token was found, bail out!
         if (!cSelectedToken) {
             return res.status(400).send('Invalid token contract ID, "' +
-                                    strCurrency + '"! Or this token' +
+                                    strContract + '"! Or this token' +
                                     ' is not held within this ' +
                                     'account.');
         }
