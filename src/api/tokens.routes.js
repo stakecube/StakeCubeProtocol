@@ -9,10 +9,12 @@
 const cController = require('./tokens.controller.js');
 
 // The main 'route' for this API module
-const strRoute = '/api/v1/tokens/';
+const strModule = 'tokens';
+const strRoute = '/api/v1/' + strModule + '/';
 
 function init(app, context) {
-    cController.init(context);
+    context.strModule = strModule;
+    const cbackRes = cController.init(context);
 
     // Get All Tokens
     app.get(strRoute + 'getalltokens',
@@ -33,6 +35,9 @@ function init(app, context) {
         cController.getToken);
     app.get('/api/v1/gettokensbyaccount/:account',
         cController.getTokensByAccount);
+
+    // Return if this module is enabled via config
+    return cbackRes;
 }
 
 exports.init = init;
