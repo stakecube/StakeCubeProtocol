@@ -6,16 +6,27 @@
 
 'use strict';
 
+// The permissions controller, allows/disallows usage of the module
+let cPerms = require('./permissions.js');
+
 // Contextual pointers provided by the index.js process
 let ptrTOKENS;
 let ptrIsFullnode;
+let strModule;
 
 function init(context) {
     ptrTOKENS = context.TOKENS;
     ptrIsFullnode = context.isFullnode;
+    // Static Non-Pointer (native value)
+    strModule = context.strModule;
+    // Initialize permissions controller
+    cPerms.init({ DB: context.DB });
 }
 
 async function getAllTokens(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
     if (!ptrIsFullnode()) {
         return fullnodeError(res);
     }
@@ -23,6 +34,9 @@ async function getAllTokens(req, res) {
 }
 
 function getToken(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
     if (!ptrIsFullnode()) {
         return fullnodeError(res);
     }
@@ -41,6 +55,9 @@ function getToken(req, res) {
 }
 
 function getTokensByAccount(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
     if (!ptrIsFullnode()) {
         return fullnodeError(res);
     }
@@ -56,6 +73,12 @@ function fullnodeError(res) {
     return res.status(403).json({
         'error': 'This endpoint is only available to Full-nodes, please ' +
                  'connect an SCC Core RPC server to enable as a Full-node!'
+    });
+}
+
+function disabledError(res) {
+    return res.status(403).json({
+        'error': 'This module (' + strModule + ') is disabled!'
     });
 }
 

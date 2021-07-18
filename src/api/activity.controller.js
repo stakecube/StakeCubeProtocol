@@ -6,18 +6,29 @@
 
 'use strict';
 
+// The permissions controller, allows/disallows usage of the module
+let cPerms = require('./permissions.js');
+
 // Contextual pointers provided by the index.js process
 let ptrTOKENS;
 let ptrRpcMain;
 let ptrIsFullnode;
+let strModule;
 
 function init(context) {
     ptrTOKENS = context.TOKENS;
     ptrRpcMain = context.rpcMain;
     ptrIsFullnode = context.isFullnode;
+    // Static Non-Pointer (native value)
+    strModule = context.strModule;
+    // Initialize permissions controller
+    cPerms.init({ DB: context.DB });
 }
 
 function getActivity(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
     if (!ptrIsFullnode()) {
         return fullnodeError(res);
     }
@@ -47,6 +58,9 @@ function getActivity(req, res) {
 }
 
 function getAllActivity(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
     if (!ptrIsFullnode()) {
         return fullnodeError(res);
     }
@@ -60,6 +74,9 @@ function getAllActivity(req, res) {
 }
 
 function getBlockActivity(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
     if (!ptrIsFullnode()) {
         return fullnodeError(res);
     }
@@ -98,6 +115,9 @@ function getBlockActivity(req, res) {
 }
 
 function getActivityByTxid(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
     if (!ptrIsFullnode()) {
         return fullnodeError(res);
     }
@@ -151,6 +171,9 @@ function getActivityByTxid(req, res) {
 }
 
 async function listDeltas(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
     if (!ptrIsFullnode()) {
         return fullnodeError(res);
     }
@@ -173,6 +196,12 @@ function fullnodeError(res) {
     return res.status(403).json({
         'error': 'This endpoint is only available to Full-nodes, please ' +
                  'connect an SCC Core RPC server to enable as a Full-node!'
+    });
+}
+
+function disabledError(res) {
+    return res.status(403).json({
+        'error': 'This module (' + strModule + ') is disabled!'
     });
 }
 

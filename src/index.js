@@ -126,6 +126,9 @@ const nFirstBlock = 155084;
 // The amount of satoshis that make a full coin
 const COIN = 100000000;
 
+// The default REST API port
+const nDefaultApiPort = 3000;
+
 // The SCP deployment fee, in SCC
 const nDeployFee = 10;
 const strDeployFeeDest = 'sccburnaddressXXXXXXXXXXXXXXSfqakF';
@@ -133,34 +136,42 @@ const strDeployFeeDest = 'sccburnaddressXXXXXXXXXXXXXXSfqakF';
 // Express Server
 const express = require('express');
 const app = express();
-// Setup and initialize API modules, providing mutable pointer contexts to all necessary states
-apiACTIVITY.init(app, {
-    'TOKENS': TOKENS,
-    'rpcMain': rpcMain,
-    'isFullnode': isFullnodePtr
-});
-apiBLOCKCHAIN.init(app, {
-    'gfm': getFullMempool,
-    'isFullnode': isFullnodePtr
-});
-apiTOKENS.init(app, {
-    'TOKENS': TOKENS,
-    'isFullnode': isFullnodePtr
-});
-apiWALLET.init(app, {
-    'TOKENS': TOKENS,
-    'WALLET': WALLET,
-    'NET': NET,
-    'DB': DB,
-    'isFullnode': isFullnodePtr,
-    'COIN': COIN
-});
-
-app.listen(3000);
 
 async function init(forcedCorePath = false) {
     // Initialize the DB, load configs into memory
     await DB.init(forcedCorePath);
+    // Initialize API modules, providing mutable pointer contexts to all necessary states
+    apiACTIVITY.init(app, {
+        'TOKENS': TOKENS,
+        'DB': DB,
+        'rpcMain': rpcMain,
+        'isFullnode': isFullnodePtr
+    });
+    apiBLOCKCHAIN.init(app, {
+        'gfm': getFullMempool,
+        'DB': DB,
+        'isFullnode': isFullnodePtr
+    });
+    apiTOKENS.init(app, {
+        'TOKENS': TOKENS,
+        'DB': DB,
+        'isFullnode': isFullnodePtr
+    });
+    apiWALLET.init(app, {
+        'TOKENS': TOKENS,
+        'WALLET': WALLET,
+        'NET': NET,
+        'DB': DB,
+        'isFullnode': isFullnodePtr,
+        'COIN': COIN
+    });
+    
+    // Load API port from config, use default if none exists, or fallback to default if the port is a non-int
+    let nApiPort = Number(DB.getConfigValue("apiport", nDefaultApiPort, false));
+    if (!Number.isSafeInteger(nApiPort)) nApiPort = nDefaultApiPort;
+    app.listen(nApiPort);
+    const strPortType = (nDefaultApiPort === nApiPort ? 'default' : 'custom');
+    console.log("API: Listening on " + strPortType + ' port! (' + nApiPort + ')');
     // Loop the StakeCubeCoin.conf file for RPC username and password params, if any
     try {
         // Load the wallet DB

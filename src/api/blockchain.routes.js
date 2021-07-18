@@ -9,9 +9,11 @@
 const cController = require('./blockchain.controller.js');
 
 // The main 'route' for this API module
-const strRoute = '/api/v1/blockchain/';
+const strModule = 'blockchain';
+const strRoute = '/api/v1/' + strModule + '/';
 
 function init(app, context) {
+    context.strModule = strModule;
     cController.init(context);
 
     // Get the current raw mempool

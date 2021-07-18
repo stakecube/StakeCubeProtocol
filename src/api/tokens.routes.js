@@ -9,9 +9,11 @@
 const cController = require('./tokens.controller.js');
 
 // The main 'route' for this API module
-const strRoute = '/api/v1/tokens/';
+const strModule = 'tokens';
+const strRoute = '/api/v1/' + strModule + '/';
 
 function init(app, context) {
+    context.strModule = strModule;
     cController.init(context);
 
     // Get All Tokens

@@ -9,9 +9,11 @@
 const cController = require('./wallet.controller.js');
 
 // The main 'route' for this API module
-const strRoute = '/api/v1/wallet/';
+const strModule = 'wallet';
+const strRoute = '/api/v1/' + strModule + '/';
 
 function init(app, context) {
+    context.strModule = strModule;
     cController.init(context);
 
     // Get an SCP-2 token's staking status for a single account

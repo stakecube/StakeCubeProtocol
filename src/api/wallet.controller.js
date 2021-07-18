@@ -6,12 +6,16 @@
 
 'use strict';
 
+// The permissions controller, allows/disallows usage of the module
+let cPerms = require('./permissions.js');
+
 // Contextual pointers provided by the index.js process
 let ptrWALLET;
 let ptrTOKENS;
 let ptrNET;
 let ptrDB;
 let ptrIsFullnode;
+let strModule;
 let COIN;
 
 function init(context) {
@@ -21,10 +25,16 @@ function init(context) {
     ptrDB = context.DB;
     ptrIsFullnode = context.isFullnode;
     // Static Non-Pointer (native value)
+    strModule = context.strModule;
     COIN = context.COIN;
+    // Initialize permissions controller
+    cPerms.init({ DB: context.DB });
 }
 
 async function getStakingStatus(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
     if (!req.params.contract || req.params.contract.length !== 64) {
         return res.json({
             'error': "You must specify a 'contract' param!"
@@ -57,6 +67,9 @@ async function getStakingStatus(req, res) {
 }
 
 async function getBalances(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
     if (!req.params.address || req.params.address.length !== 34) {
         return res.status(400).send('Missing "address" parameter!');
     }
@@ -107,6 +120,9 @@ async function getBalances(req, res) {
 }
 
 async function listAddresses(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
     try {
         const arrAddresses = [];
         const cWalletDB = ptrWALLET.toDB();
@@ -125,6 +141,9 @@ async function listAddresses(req, res) {
 }
 
 async function getNewAddress(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
     try {
         // Create a new wallet address
         const cWallet = await ptrWALLET.createWallet();
@@ -139,6 +158,9 @@ async function getNewAddress(req, res) {
 }
 
 async function send(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
     if (!req.params.address || req.params.address.length !== 34) {
         return res.status(400).send('Missing "address" parameter!');
     }
@@ -296,6 +318,9 @@ async function send(req, res) {
 }
 
 async function stake(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
     if (!req.params.address || req.params.address.length !== 34) {
         return res.status(400).send('Missing "address" parameter!');
     }
@@ -373,6 +398,12 @@ async function stake(req, res) {
         console.error(e);
         return res.status(400).send('Internal API Error');
     }
+}
+
+function disabledError(res) {
+    return res.status(403).json({
+        'error': 'This module (' + strModule + ') is disabled!'
+    });
 }
 
 exports.init = init;
