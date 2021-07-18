@@ -22,6 +22,8 @@ function init(context) {
             return a.trim();
         });
     }
+    // Return if this module is enabled/disabled
+    return isModuleAllowed(context.strModule);
 }
 
 // Return if an API module is enabled or disabled in the REST interface, via config cache

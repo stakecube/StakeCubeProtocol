@@ -22,7 +22,7 @@ function init(context) {
     // Static Non-Pointer (native value)
     strModule = context.strModule;
     // Initialize permissions controller
-    cPerms.init({ 'DB': context.DB });
+    return cPerms.init({ 'DB': context.DB, 'strModule': strModule });
 }
 
 function getActivity(req, res) {

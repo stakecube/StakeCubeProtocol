@@ -28,7 +28,7 @@ function init(context) {
     strModule = context.strModule;
     COIN = context.COIN;
     // Initialize permissions controller
-    cPerms.init({ 'DB': context.DB });
+    return cPerms.init({ 'DB': context.DB, 'strModule': strModule });
 }
 
 async function getStakingStatus(req, res) {

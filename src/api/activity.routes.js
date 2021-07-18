@@ -14,7 +14,7 @@ const strRoute = '/api/v1/' + strModule + '/';
 
 function init(app, context) {
     context.strModule = strModule;
-    cController.init(context);
+    const cbackRes = cController.init(context);
 
     // Get a single account's activity/history for a single token
     app.get(strRoute + 'getactivity/:contract/:account',
@@ -47,6 +47,9 @@ function init(app, context) {
         cController.getActivityByTxid);
     app.get('/api/v1/wallet/listdeltas/:address',
         cController.listDeltas);
+
+    // Return if this module is enabled via config
+    return cbackRes;
 }
 
 exports.init = init;

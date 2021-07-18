@@ -14,7 +14,7 @@ const strRoute = '/api/v1/' + strModule + '/';
 
 function init(app, context) {
     context.strModule = strModule;
-    cController.init(context);
+    const cbackRes = cController.init(context);
 
     // Get an SCP-2 token's staking status for a single account
     app.get(strRoute + 'getstakingstatus/:contract/:account',
@@ -38,6 +38,9 @@ function init(app, context) {
     /// / BACKWARDS-COMPAT: Removal scheduled for v1.1.6
     app.get('/api/v1/getstakingstatus/:contract/:account',
         cController.getStakingStatus);
+
+    // Return if this module is enabled via config
+    return cbackRes;
 }
 
 exports.init = init;

@@ -143,23 +143,24 @@ async function init(forcedCorePath = false) {
     await DB.init(forcedCorePath);
     // Initialize API modules, providing mutable pointer contexts to all necessary states
     if (!fApiInitialized) {
-        apiACTIVITY.init(app, {
+        const arrEnabledModules = [];
+        const fApiActivity = apiACTIVITY.init(app, {
             'TOKENS': TOKENS,
             'DB': DB,
             'rpcMain': rpcMain,
             'isFullnode': isFullnodePtr
         });
-        apiBLOCKCHAIN.init(app, {
+        const fApiBlockchain = apiBLOCKCHAIN.init(app, {
             'gfm': getFullMempool,
             'DB': DB,
             'isFullnode': isFullnodePtr
         });
-        apiTOKENS.init(app, {
+        const fApiTokens = apiTOKENS.init(app, {
             'TOKENS': TOKENS,
             'DB': DB,
             'isFullnode': isFullnodePtr
         });
-        apiWALLET.init(app, {
+        const fApiWallet = apiWALLET.init(app, {
             'TOKENS': TOKENS,
             'WALLET': WALLET,
             'NET': NET,
@@ -167,6 +168,10 @@ async function init(forcedCorePath = false) {
             'isFullnode': isFullnodePtr,
             'COIN': COIN
         });
+        if (fApiActivity) arrEnabledModules.push('activity');
+        if (fApiBlockchain) arrEnabledModules.push('blockchain');
+        if (fApiTokens) arrEnabledModules.push('tokens');
+        if (fApiWallet) arrEnabledModules.push('wallet');
 
         // Load API port from config, use default if none exists, or fallback to default if the port is a non-int
         let nApiPort = Number(DB.getConfigValue('apiport', nDefaultApiPort,
@@ -178,6 +183,14 @@ async function init(forcedCorePath = false) {
             : 'custom');
         console.log('API: Listening on ' + strPortType + ' port!' +
                     ' (' + nApiPort + ')');
+        // Log our module statuses
+        if (arrEnabledModules.length) {
+            console.log('API: ' + arrEnabledModules.length + ' modules ' +
+                        'enabled! (' + arrEnabledModules.join(', ') + ')');
+        } else {
+            console.log('API: Disabled! You can enable individual modules' +
+                        ' using "apimodules=mod1,mod2,..."');
+        }
         fApiInitialized = true;
     }
     // Loop the StakeCubeCoin.conf file for RPC username and password params, if any
