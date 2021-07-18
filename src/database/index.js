@@ -66,8 +66,6 @@ async function init(forceCorePath = false) {
     // Set SCP Wallet datadir path
     const pathSCP = appdata.getAppDataPath('SCPWallet') + path.sep;
     disk.setPath(pathSCP, false);
-    // Set SCC Core datadir path
-    disk.setPath(pathSCC, true);
 
     // Ensure the SCPWallet Datadir exists
     disk.fs.mkdirSync(disk.getPath(), { 'recursive': true });
@@ -81,7 +79,7 @@ async function init(forceCorePath = false) {
         // Check for core options and assign them
         // Config Directory
         let strCoreDir = conf.getConfigValue('coredatadir', false, false);
-        if (!forceCorePath && strCoreDir.length) {
+        if (strCoreDir) {
             strCoreDir += path.sep;
             pathSCC = path.normalize(strCoreDir);
             console.log('Init: Using custom SCC Core datadir:\n' + pathSCC);
@@ -96,6 +94,9 @@ async function init(forceCorePath = false) {
                         conf.getConfigName());
         }
     }
+
+    // Set SCC Core datadir path
+    disk.setPath(pathSCC, true);
 
     // Load the core config
     const strConfSCC = await disk.readSCC(conf.getConfigName());
