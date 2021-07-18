@@ -443,7 +443,7 @@ function getTokensByAccount(address) {
         const cAcc = token.getAccount(address);
         if (cAcc) {
             // Found account!
-            let clonedToken = JSON.parse(JSON.stringify(token));
+            const clonedToken = JSON.parse(JSON.stringify(token));
             delete clonedToken.owners;
             arrFoundAccounts.push({ 'token': clonedToken, 'account': cAcc });
         }
@@ -462,7 +462,7 @@ function getActivityByAccount(address) {
                 'contract': cToken.token.contract,
                 'ticker': cToken.token.ticker,
                 'name': cToken.token.name
-            }
+            };
             blocktimeSortedActivity.push(deepClonedActivity);
         }
     }
