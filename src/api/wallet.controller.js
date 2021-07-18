@@ -7,7 +7,7 @@
 'use strict';
 
 // The permissions controller, allows/disallows usage of the module
-let cPerms = require('./permissions.js');
+const cPerms = require('./permissions.js');
 
 // Contextual pointers provided by the index.js process
 let ptrWALLET;
@@ -28,7 +28,7 @@ function init(context) {
     strModule = context.strModule;
     COIN = context.COIN;
     // Initialize permissions controller
-    cPerms.init({ DB: context.DB });
+    cPerms.init({ 'DB': context.DB });
 }
 
 async function getStakingStatus(req, res) {

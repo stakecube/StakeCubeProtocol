@@ -86,7 +86,8 @@ async function getLightUTXOs(address) {
 }
 
 async function getLightStakingStatus(contract, address) {
-    return await get(rootSCCNet + 'scp/getstakingstatus/' + contract + '/' + address);
+    return await get(rootSCCNet + 'scp/getstakingstatus/' + contract +
+                                                      '/' + address);
 }
 
 async function getMempoolLight() {

@@ -14,11 +14,13 @@ let arrConfModules = [];
 function init(context) {
     ptrDB = context.DB;
     // Load, parse and cache the API modules
-    let strConfModules = ptrDB.getConfigValue("apimodules", false, false);
+    const strConfModules = ptrDB.getConfigValue('apimodules', false, false);
     if (strConfModules && strConfModules.length) {
         // Convert to lowercase, splice into an array using commas as seperators, then trim all input
-        arrConfModules = strConfModules.toLowerCase().split(",");
-        arrConfModules = arrConfModules.map((a)=> { return a.trim() });
+        arrConfModules = strConfModules.toLowerCase().split(',');
+        arrConfModules = arrConfModules.map((a) => {
+            return a.trim();
+        });
     }
 }
 

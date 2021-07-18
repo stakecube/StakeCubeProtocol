@@ -33,10 +33,10 @@ try {
     RPC = require('../src/rpc.js');
     TOKENS = require('../src/token.js');
     WALLET = require('../src/wallet.js');
-    apiACTIVITY = require('./api/activity.routes.js');
-    apiBLOCKCHAIN = require('./api/blockchain.routes.js');
-    apiTOKENS = require('./api/tokens.routes.js');
-    apiWALLET = require('./api/wallet.routes.js');
+    apiACTIVITY = require('../src/api/activity.routes.js');
+    apiBLOCKCHAIN = require('../src/api/blockchain.routes.js');
+    apiTOKENS = require('../src/api/tokens.routes.js');
+    apiWALLET = require('../src/api/wallet.routes.js');
     isGUI = true;
     // It's more tricky to fetch the package.json file when GUI-packed, so... here's the workaround!
     try {
@@ -136,42 +136,50 @@ const strDeployFeeDest = 'sccburnaddressXXXXXXXXXXXXXXSfqakF';
 // Express Server
 const express = require('express');
 const app = express();
+let fApiInitialized = false;
 
 async function init(forcedCorePath = false) {
     // Initialize the DB, load configs into memory
     await DB.init(forcedCorePath);
     // Initialize API modules, providing mutable pointer contexts to all necessary states
-    apiACTIVITY.init(app, {
-        'TOKENS': TOKENS,
-        'DB': DB,
-        'rpcMain': rpcMain,
-        'isFullnode': isFullnodePtr
-    });
-    apiBLOCKCHAIN.init(app, {
-        'gfm': getFullMempool,
-        'DB': DB,
-        'isFullnode': isFullnodePtr
-    });
-    apiTOKENS.init(app, {
-        'TOKENS': TOKENS,
-        'DB': DB,
-        'isFullnode': isFullnodePtr
-    });
-    apiWALLET.init(app, {
-        'TOKENS': TOKENS,
-        'WALLET': WALLET,
-        'NET': NET,
-        'DB': DB,
-        'isFullnode': isFullnodePtr,
-        'COIN': COIN
-    });
-    
-    // Load API port from config, use default if none exists, or fallback to default if the port is a non-int
-    let nApiPort = Number(DB.getConfigValue("apiport", nDefaultApiPort, false));
-    if (!Number.isSafeInteger(nApiPort)) nApiPort = nDefaultApiPort;
-    app.listen(nApiPort);
-    const strPortType = (nDefaultApiPort === nApiPort ? 'default' : 'custom');
-    console.log("API: Listening on " + strPortType + ' port! (' + nApiPort + ')');
+    if (!fApiInitialized) {
+        apiACTIVITY.init(app, {
+            'TOKENS': TOKENS,
+            'DB': DB,
+            'rpcMain': rpcMain,
+            'isFullnode': isFullnodePtr
+        });
+        apiBLOCKCHAIN.init(app, {
+            'gfm': getFullMempool,
+            'DB': DB,
+            'isFullnode': isFullnodePtr
+        });
+        apiTOKENS.init(app, {
+            'TOKENS': TOKENS,
+            'DB': DB,
+            'isFullnode': isFullnodePtr
+        });
+        apiWALLET.init(app, {
+            'TOKENS': TOKENS,
+            'WALLET': WALLET,
+            'NET': NET,
+            'DB': DB,
+            'isFullnode': isFullnodePtr,
+            'COIN': COIN
+        });
+
+        // Load API port from config, use default if none exists, or fallback to default if the port is a non-int
+        let nApiPort = Number(DB.getConfigValue('apiport', nDefaultApiPort,
+            false));
+        if (!Number.isSafeInteger(nApiPort)) nApiPort = nDefaultApiPort;
+        app.listen(nApiPort);
+        const strPortType = (nDefaultApiPort === nApiPort
+            ? 'default'
+            : 'custom');
+        console.log('API: Listening on ' + strPortType + ' port!' +
+                    ' (' + nApiPort + ')');
+        fApiInitialized = true;
+    }
     // Loop the StakeCubeCoin.conf file for RPC username and password params, if any
     try {
         // Load the wallet DB

@@ -7,7 +7,7 @@
 'use strict';
 
 // The permissions controller, allows/disallows usage of the module
-let cPerms = require('./permissions.js');
+const cPerms = require('./permissions.js');
 
 // Contextual pointers provided by the index.js process
 let ptrGetFullMempool;
@@ -20,7 +20,7 @@ function init(context) {
     // Static Non-Pointer (native value)
     strModule = context.strModule;
     // Initialize permissions controller
-    cPerms.init({ DB: context.DB });
+    cPerms.init({ 'DB': context.DB });
 }
 
 async function getFullMempool(req, res) {
