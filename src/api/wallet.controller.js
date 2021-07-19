@@ -12,7 +12,6 @@ const cPerms = require('./permissions.js');
 // Contextual pointers provided by the index.js process
 let ptrWALLET;
 let ptrTOKENS;
-let ptrNET;
 let ptrDB;
 let ptrIsFullnode;
 let strModule;
@@ -21,7 +20,6 @@ let COIN;
 function init(context) {
     ptrWALLET = context.WALLET;
     ptrTOKENS = context.TOKENS;
-    ptrNET = context.NET;
     ptrDB = context.DB;
     ptrIsFullnode = context.isFullnode;
     // Static Non-Pointer (native value)
@@ -48,7 +46,7 @@ async function getStakingStatus(req, res) {
             'error': "You must specify an 'account' param!"
         });
     }
-    let cToken = ptrTOKENS.getToken(req.params.contract);
+    const cToken = ptrTOKENS.getToken(req.params.contract);
     if (cToken.error) {
         return res.json({
             'error': 'Token contract does not exist!'
@@ -268,7 +266,7 @@ async function send(req, res) {
             cTx.addoutput(strPubkey, nChange);
             // Broadcast
             const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
-            const strTXID = await ptrNET.broadcastTx(strSignedTx);
+            const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
             // Mark UTXOs as spent
             for (const cUTXO of usedUTXOs) {
                 cUTXO.spent = true;
@@ -305,7 +303,7 @@ async function send(req, res) {
             cTx.addoutput(strPubkey, nChange);
             // Broadcast
             const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
-            const strTXID = await ptrNET.broadcastTx(strSignedTx);
+            const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
             // Mark UTXO as spent
             cUTXO.spent = true;
             return res.json({
@@ -390,7 +388,7 @@ async function stake(req, res) {
         cTx.addoutput(strPubkey, nChange);
         // Broadcast
         const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
-        const strTXID = await ptrNET.broadcastTx(strSignedTx);
+        const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
         // Mark UTXO as spent
         cUTXO.spent = true;
         return res.json({

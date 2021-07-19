@@ -528,7 +528,7 @@
           cTx.addoutput(cWallet.getPubkey(), nChange);
           // Sign & Broadcast
           const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
-          await NET.broadcastTx(strSignedTx);
+          await WALLET.broadcastTx(strSignedTx);
           nClaims++;
           // Mark UTXO as spent
           cUTXO.spent = true;

@@ -16,8 +16,17 @@
 const sccjs = require('scc-js');
 const NET = require('./network.js');
 
-// The amount of satoshis that make a full coin
-const COIN = 100000000;
+let ptrIsHeadless;
+let ptrRpcMain;
+let ptrGetFullMempool;
+let ptrCOIN;
+
+function init(context) {
+    ptrIsHeadless = context.isHeadless;
+    ptrGetFullMempool = context.gfm;
+    ptrRpcMain = context.rpcMain;
+    ptrCOIN = context.COIN;
+}
 
 let opt2FA = '';
 
@@ -149,14 +158,14 @@ function getBalance() {
     let nBal = 0;
     for (const cUTXO of getAvailableUTXOs()) {
         // Calculate the balance from our UTXO cache
-        nBal += Number((cUTXO.sats / COIN).toFixed(8));
+        nBal += Number((cUTXO.sats / ptrCOIN).toFixed(8));
     }
     return nBal;
 }
 
 // Returns the fee for the given bytes
 function getFee(bytes) {
-    return Number(((bytes * 2) / COIN).toFixed(8));
+    return Number(((bytes * 2) / ptrCOIN).toFixed(8));
 }
 
 // Deep-clones a UTXO
@@ -238,8 +247,11 @@ function mergeUTXOs(arrNewUTXOs) {
 // Fetches, parses and merges UTXOs for a given address from our data source(s)
 async function refreshUTXOs(address = String()) {
     // Step 1 --- Blockchain Sync
-    // Default source: Use scc.net web3 server
-    const res = JSON.parse(await NET.getLightUTXOs(address));
+    // Headless Default source: Core RPC
+    // GUI Fallback Source: Use scc.net web3 server
+    const res = ptrIsHeadless()
+        ? await ptrRpcMain.call('getaddressutxos', address)
+        : JSON.parse(await NET.getLightUTXOs(address));
     // Convert explorer dataset into UTXO classes and merge with the current set
     const arrUTXOList = [];
     for (const rawUTXO of res) {
@@ -260,7 +272,9 @@ async function refreshUTXOs(address = String()) {
 // Fetches, parses and merges mempool UTXOs for all local addresses from our data source(s)
 async function refreshMempoolUTXOs(arrUTXOList) {
     try {
-        const rawMempool = JSON.parse(await NET.getMempoolLight());
+        const rawMempool = ptrIsHeadless()
+            ? await ptrGetFullMempool()
+            : JSON.parse(await NET.getMempoolLight());
         // Fetch all mempool UTXOs (vouts) belonging to our pubkey
         for (const rawTX of rawMempool) {
             // Search all VOUTs belonging to us, add them to our wallet
@@ -300,6 +314,13 @@ async function refreshMempoolUTXOs(arrUTXOList) {
     }
 }
 
+// Broadcast a signed transaction
+async function broadcastTx(strTx) {
+    return ptrIsHeadless()
+        ? await ptrRpcMain.call('sendrawtransaction', strTx)
+        : await NET.broadcastTx(strTx);
+}
+
 // Returns a list of all incoming mempool UTXOs
 function getIncomingUTXOs() {
     const arrMempoolUTXOs = [];
@@ -333,7 +354,7 @@ function getCoinsToSpend(sats = 0, min = false, chosenAddress = false) {
         if (chosenAddress && cUTXO.address !== chosenAddress) continue;
         if (spent >= (sats + 1000)) {
             console.log('Coin Control: Selected ' + chosenUTXOs.length +
-                        ' input(s) (' + (spent / COIN) + ' SCC)');
+                        ' input(s) (' + (spent / ptrCOIN) + ' SCC)');
             return chosenUTXOs;
         }
         spent += cUTXO.sats;
@@ -372,6 +393,7 @@ exports.sccjs = sccjs;
 exports.Wallet = Wallet;
 exports.UTXO = UTXO;
 // Funcs
+exports.init = init;
 exports.deepCloneWallet = deepCloneWallet;
 exports.getWallet = getWallet;
 exports.getActiveWallet = getActiveWallet;
@@ -387,6 +409,7 @@ exports.addUTXO = addUTXO;
 exports.removeUTXO = removeUTXO;
 exports.mergeUTXOs = mergeUTXOs;
 exports.refreshUTXOs = refreshUTXOs;
+exports.broadcastTx = broadcastTx;
 exports.getIncomingUTXOs = getIncomingUTXOs;
 exports.getAvailableUTXOs = getAvailableUTXOs;
 exports.getCoinsToSpend = getCoinsToSpend;
