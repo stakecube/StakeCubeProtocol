@@ -172,7 +172,6 @@ Example: `curl -X GET "https://stakecubecoin.net/web3/scp/tokens/gettokensbyacco
             "maxSupply": 5000000000000000,
             "supply": 52652787702025,
             "creator": "sY2NPdY7TSpmH3Es1Ao4cB8mB9odbT1S2g",
-            "owners": [...],
             "inflation": 500000000,
             "minAge": 2
         },
