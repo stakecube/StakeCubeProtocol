@@ -138,128 +138,125 @@ const strDeployFeeDest = 'sccburnaddressXXXXXXXXXXXXXXSfqakF';
 // Express Server
 const express = require('express');
 const app = express();
-let fApiInitialized = false;
+let fInitialized = false;
 
-async function init(forcedCorePath = false) {
-    // Initialize the DB, load configs into memory
-    await DB.init(forcedCorePath);
-    // Initialize API modules, providing mutable pointer contexts to all necessary states
-    if (!fApiInitialized) {
-        const arrEnabledModules = [];
-        const fApiActivity = apiACTIVITY.init(app, {
-            'TOKENS': TOKENS,
-            'DB': DB,
-            'rpcMain': rpcMain,
-            'isFullnode': isFullnodePtr
-        });
-        const fApiBlockchain = apiBLOCKCHAIN.init(app, {
-            'gfm': getFullMempool,
-            'DB': DB,
-            'isFullnode': isFullnodePtr
-        });
-        const fApiTokens = apiTOKENS.init(app, {
-            'TOKENS': TOKENS,
-            'DB': DB,
-            'isFullnode': isFullnodePtr
-        });
-        const fApiWallet = apiWALLET.init(app, {
-            'TOKENS': TOKENS,
-            'WALLET': WALLET,
-            'DB': DB,
-            'isFullnode': isFullnodePtr,
-            'COIN': COIN
-        });
-        if (fApiActivity) arrEnabledModules.push('activity');
-        if (fApiBlockchain) arrEnabledModules.push('blockchain');
-        if (fApiTokens) arrEnabledModules.push('tokens');
-        if (fApiWallet) arrEnabledModules.push('wallet');
-
-        // Load API port from config, use default if none exists, or fallback to default if the port is a non-int
-        let nApiPort = Number(DB.getConfigValue('apiport', nDefaultApiPort,
-            false));
-        if (!Number.isSafeInteger(nApiPort)) nApiPort = nDefaultApiPort;
-        app.listen(nApiPort);
-        const strPortType = (nDefaultApiPort === nApiPort
-            ? 'default'
-            : 'custom');
-        console.log('API: Listening on ' + strPortType + ' port!' +
-                    ' (' + nApiPort + ')');
-        // Log our module statuses
-        if (arrEnabledModules.length) {
-            console.log('API: ' + arrEnabledModules.length + ' modules ' +
-                        'enabled! (' + arrEnabledModules.join(', ') + ')');
-        } else {
-            console.log('API: Disabled! You can enable individual modules' +
-                        ' using "apimodules=mod1,mod2,..."');
-        }
-        fApiInitialized = true;
-    }
-    // Loop the StakeCubeCoin.conf file for RPC username and password params, if any
+async function init(forcedCorePath = false, retry = false) {
     try {
-        // Load the wallet DB
-        const rawDBWallet = await DB.getWallet();
-        if (rawDBWallet) {
-            // Check which format we're using (pre-v1.1.4, or above)
-            if (rawDBWallet.wallets && rawDBWallet.wallets.length > 0) {
-                // New format
-                for (const rawWallet of rawDBWallet.wallets) {
-                    const cWallet = new WALLET.Wallet(rawWallet.pubkey,
-                        rawWallet.privkeyDecrypted,
-                        rawWallet.privkeyEncrypted);
+        // Initialize the DB, load configs into memory
+        await DB.init(forcedCorePath, retry);
+        // Initialize API modules, providing mutable pointer contexts to all necessary states
+        if (!fInitialized) {
+            fInitialized = true;
+            const arrEnabledModules = [];
+            const fApiActivity = apiACTIVITY.init(app, {
+                'TOKENS': TOKENS,
+                'DB': DB,
+                'rpcMain': rpcMain,
+                'isFullnode': isFullnodePtr
+            });
+            const fApiBlockchain = apiBLOCKCHAIN.init(app, {
+                'gfm': getFullMempool,
+                'DB': DB,
+                'isFullnode': isFullnodePtr
+            });
+            const fApiTokens = apiTOKENS.init(app, {
+                'TOKENS': TOKENS,
+                'DB': DB,
+                'isFullnode': isFullnodePtr
+            });
+            const fApiWallet = apiWALLET.init(app, {
+                'TOKENS': TOKENS,
+                'WALLET': WALLET,
+                'DB': DB,
+                'isFullnode': isFullnodePtr,
+                'COIN': COIN
+            });
+            if (fApiActivity) arrEnabledModules.push('activity');
+            if (fApiBlockchain) arrEnabledModules.push('blockchain');
+            if (fApiTokens) arrEnabledModules.push('tokens');
+            if (fApiWallet) arrEnabledModules.push('wallet');
+
+            // Load API port from config, use default if none exists, or fallback to default if the port is a non-int
+            let nApiPort = Number(DB.getConfigValue('apiport', nDefaultApiPort,
+                false));
+            if (!Number.isSafeInteger(nApiPort)) nApiPort = nDefaultApiPort;
+            app.listen(nApiPort);
+            const strPortType = (nDefaultApiPort === nApiPort
+                ? 'default'
+                : 'custom');
+            console.log('API: Listening on ' + strPortType + ' port!' +
+                        ' (' + nApiPort + ')');
+            // Log our module statuses
+            if (arrEnabledModules.length) {
+                console.log('API: ' + arrEnabledModules.length + ' modules ' +
+                            'enabled! (' + arrEnabledModules.join(', ') + ')');
+            } else {
+                console.log('API: Disabled! You can enable individual ' +
+                            'modules using "apimodules=mod1,mod2,..."');
+            }
+
+            // Load the wallet DB
+            const rawDBWallet = await DB.getWallet();
+            if (rawDBWallet) {
+                // Check which format we're using (pre-v1.1.4, or above)
+                if (rawDBWallet.wallets && rawDBWallet.wallets.length > 0) {
+                    // New format
+                    for (const rawWallet of rawDBWallet.wallets) {
+                        const cWallet = new WALLET.Wallet(rawWallet.pubkey,
+                            rawWallet.privkeyDecrypted,
+                            rawWallet.privkeyEncrypted);
+                        WALLET.addWallet(cWallet);
+                    }
+                } else {
+                    // Old format
+                    const cWallet = new WALLET.Wallet(rawDBWallet.pubkey,
+                        rawDBWallet.privkeyDecrypted,
+                        rawDBWallet.privkeyEncrypted);
                     WALLET.addWallet(cWallet);
                 }
-            } else {
-                // Old format
-                const cWallet = new WALLET.Wallet(rawDBWallet.pubkey,
-                    rawDBWallet.privkeyDecrypted,
-                    rawDBWallet.privkeyEncrypted);
-                WALLET.addWallet(cWallet);
+                // Set 2FA (resides in the root object, regardless of wallet format)
+                WALLET.set2FAkey(rawDBWallet.opt2FA);
+                // Log the amount of wallets we've loaded
+                const nWalletCount = WALLET.countWallets();
+                console.log('Init: Loaded ' + nWalletCount + ' wallet' +
+                            (nWalletCount !== 1 ? 's' : '') + '!');
             }
-            // Set 2FA (resides in the root object, regardless of wallet format)
-            WALLET.set2FAkey(rawDBWallet.opt2FA);
-            // Log the amount of wallets we've loaded
-            const nWalletCount = WALLET.countWallets();
-            console.log('Init: Loaded ' + nWalletCount + ' wallet' +
-                        (nWalletCount !== 1 ? 's' : '') + '!');
         }
 
         // Prepare RPC connection
+        const arrErr = [];
+        const arrWarn = [];
+
         // A TX Index is required to retrieve raw transaction information from the chain, this is required to use SC-Protocol
         const txindex = DB.getConfigValue('txindex', false);
         if (!txindex || Number(txindex) !== 1) {
-            return 'Init: Finished - Running as Lightwallet! (No txindex ' +
-                   'enabled: txindex=0)';
+            arrErr.push('Config: No txindex enabled: txindex=0');
         }
 
         const addrIndex = DB.getConfigValue('addressindex', false);
         if (!addrIndex || Number(addrIndex) !== 1) {
-            console.warn('Init: No address index (addressindex=1) detected!' +
-                         '\nPlease enable address indexing if you with to ' +
-                         'use a Wallet or provide SCC Balance APIs!');
+            arrWarn.push('Config: No address index: addressindex=0,' +
+                      ' enable to use SCC-related modules.');
         }
 
         const server = DB.getConfigValue('server', false);
         if (!server || Number(server) !== 1) {
-            return 'Init: Finished - Running as Lightwallet! (No RPC server ' +
-                   'enabled: server=0)';
+            arrErr.push('Config: No RPC server enabled: server=0');
         }
 
         const rpcUser = DB.getConfigValue('rpcuser', false);
         if (!rpcUser) {
-            return 'Init: Finished - Running as Lightwallet! (No rpcuser ' +
-                   'found)';
+            arrErr.push('Config: No rpcuser found: rpcuser=xyz');
         }
 
         const rpcPass = DB.getConfigValue('rpcpassword', false);
         if (!rpcPass) {
-            return 'Init: Finished - Running as Lightwallet! (No rpcpassword ' +
-                   'found)';
+            arrErr.push('Config: No rpcpassword found: rpcpassword=zyx');
         }
 
         const rpcPort = DB.getConfigValue('rpcport', 39999);
         if (!rpcPort) {
-            return 'Init: Finished - Running as Lightwallet! (No rpcport ' +
-                   'found)';
+            arrErr.push('Config: No rpcport found: rpcport=39999');
         }
 
         rpcMain.auth(rpcUser, rpcPass, 'localhost', rpcPort);
@@ -272,18 +269,47 @@ async function init(forcedCorePath = false) {
         });
 
         // Test the RPC connection
+        let uptime;
         try {
-            const uptime = await rpcMain.call('uptime');
-            if (!Number.isFinite(Number(uptime))) {
-                return 'Init: Finished - Running as Lightwallet! (Good ' +
-                       'configs, but no RPC response)';
-            }
-            // RPC Connection successful!
-            isFullnode = true;
-            return 'Init: Finished - Running as Fullnode! (Syncing)';
+            uptime = await rpcMain.call('uptime');
         } catch(e) {
-            return 'Init: Finished - Running as Lightwallet! (Good configs, ' +
-                   'but no RPC response)';
+            // Silently ignore
+        } finally {
+            if (!Number.isFinite(Number(uptime))) {
+                const strConnType = arrErr.length > 1 ? 'Config' : 'RPC';
+                arrErr.push('RPC: Unable to connect to SCC Core.');
+                if (arrErr[0] && !retry) {
+                    console.log('--- ERRORS ---');
+                    arrErr.map((a) => console.log(a));
+                }
+                if (arrWarn[0] && !retry) {
+                    console.log('--- WARNINGS ---');
+                    arrWarn.map((a) => console.log(a));
+                }
+
+                if (arrErr[0] && !retry) {
+                    console.log('--- NOTICE ---');
+                    if (isHeadless()) {
+                        console.log('Critical ' +
+                                    strConnType + ' errors found. ' +
+                                    'Once these errors are fixed, SCP Wallet' +
+                                    ' will automatically reconnect.');
+                    } else {
+                        console.log('SCP Wallet will use Fallback servers to' +
+                        ' preserve a smooth GUI experience, if you are happy' +
+                        ' using the Lightwallet, don\'t worry, everything is' +
+                        ' fine!');
+                    }
+                }
+
+                setTimeout(() => {
+                    init(forcedCorePath, true);
+                }, 5000);
+            } else {
+                // RPC Connection successful!
+                isFullnode = true;
+                console.log('Init: Finished - Running as Fullnode! (Syncing)');
+            }
         }
     } catch(e) {
         console.error('Init: FATAL ERROR!');
@@ -299,7 +325,7 @@ if (process.platform === 'win32') {
         if (err || !result[regPath] || !result[regPath].values) {
             if (err) console.warn(err);
             console.warn('Registry: Unable to read SCC-Qt registry!');
-            init().then(console.log);
+            init();
         } else {
             const res = result[regPath].values;
             // No errors; ensure the registries and paths are available
@@ -312,17 +338,17 @@ if (process.platform === 'win32') {
                     regCorePath += DB.path.sep;
                 }
                 console.log('Registry: Detected data directory from registry!');
-                init(regCorePath).then(console.log);
+                init(regCorePath);
             } else {
                 // Failed to find the registry datadir, initializing with defaults...
                 console.warn('Registry: Unable to read SCC-Qt registry!');
-                init().then(console.log);
+                init();
             }
         }
     });
 } else {
 // Otherwise, just initialize straight away!
-    init().then(console.log);
+    init();
 }
 
 const chainMessages = [];

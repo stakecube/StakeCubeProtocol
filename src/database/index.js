@@ -55,7 +55,7 @@ async function setWallet(data) {
 }
 
 // Initialize the DB, config, and paths for SCC & SCP
-async function init(forceCorePath = false) {
+async function init(forceCorePath = false, retry = false) {
     // If a 'forceCorePath' is present, force this path for SCC Core's config.
     // This was likely passed by the Windows Regex client, which is fine.
     if (forceCorePath) {
@@ -73,7 +73,9 @@ async function init(forceCorePath = false) {
     // Load the SCP config
     const strConfSCP = await disk.readSCP('scp.conf');
     if (!conf.setConfig(strConfSCP, false)) {
-        console.warn('Init: No SCP config file detected!');
+        if (!retry) {
+            console.warn('Init: No SCP config file detected!');
+        }
         await disk.writeSCP('scp.conf', '', false);
     } else {
         // Check for core options and assign them
@@ -82,16 +84,24 @@ async function init(forceCorePath = false) {
         if (strCoreDir) {
             strCoreDir += path.sep;
             pathSCC = path.normalize(strCoreDir);
-            console.log('Init: Using custom SCC Core datadir:\n' + pathSCC);
+            if (!retry) {
+                console.log('Init: Using custom SCC Core datadir:\n' +
+                            pathSCC);
+            }
         } else {
-            console.log('Init: Using default SCC Core datadir:\n' + pathSCC);
+            if (!retry) {
+                console.log('Init: Using default SCC Core datadir:\n' +
+                            pathSCC);
+            }
         }
         // Config Filename
         const strCoreName = conf.getConfigValue('coreconfname', false, false);
         if (strCoreName && strCoreName.length) {
             conf.setConfigName(strCoreName);
-            console.log('Init: Using custom SCC Core config filename:\n' +
-                        conf.getConfigName());
+            if (!retry) {
+                console.log('Init: Using custom SCC Core config filename:\n' +
+                            conf.getConfigName());
+            }
         }
     }
 
@@ -107,8 +117,10 @@ async function init(forceCorePath = false) {
                      'Another note: If you changed your conf file name, ' +
                      'use "coreconfname=xxx.conf" additionally to specify it.');
     } else {
-        console.log('Init: Successfully loaded SCC Core config with ' +
-                    conf.getConfig(true).length + ' values!');
+        if (!retry) {
+            console.log('Init: Successfully loaded SCC Core config with ' +
+                        conf.getConfig(true).length + ' values!');
+        }
     }
 }
 
