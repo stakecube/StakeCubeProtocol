@@ -9,13 +9,17 @@
 // NPM
 const regedit = require('regedit');
 
-let isGUI = false;
 let isFullnode = false;
 let isScanningBlocks = false;
 
 // A getter-pointer function for the fullnode flag
 function isFullnodePtr() {
     return isFullnode;
+}
+
+// A getter-pointer function for the fullnode flag
+function isHeadless() {
+    return typeof Window === 'undefined';
 }
 
 // Flag to specify if the client is outdated according to external sources (i.e; Github API)
@@ -37,7 +41,6 @@ try {
     apiBLOCKCHAIN = require('../src/api/blockchain.routes.js');
     apiTOKENS = require('../src/api/tokens.routes.js');
     apiWALLET = require('../src/api/wallet.routes.js');
-    isGUI = true;
     // It's more tricky to fetch the package.json file when GUI-packed, so... here's the workaround!
     try {
         // Unpacked
@@ -45,7 +48,6 @@ try {
         try {
             // starting index.js from /src/..
             strFile = DB.fs.readFileSync('../package.json', 'utf8');
-            isGUI = false;
         } catch(e) {
             // starting index.js from root directory
             strFile = DB.fs.readFileSync('package.json', 'utf8');
@@ -90,7 +92,7 @@ const rpcMain = RPC;
 
 if (npmPackage) {
     console.log('--- StakeCube Protocol (SCP) Wallet v' + npmPackage.version +
-                ' --- ' + (isGUI ? 'GUI Mode' : ''));
+                ' --- ' + (!isHeadless() ? 'GUI Mode' : ''));
     // Check if we're running the latest version
     NET.getLatestRelease().then(res => {
         res = JSON.parse(res);
@@ -163,7 +165,6 @@ async function init(forcedCorePath = false) {
         const fApiWallet = apiWALLET.init(app, {
             'TOKENS': TOKENS,
             'WALLET': WALLET,
-            'NET': NET,
             'DB': DB,
             'isFullnode': isFullnodePtr,
             'COIN': COIN
@@ -262,6 +263,13 @@ async function init(forcedCorePath = false) {
         }
 
         rpcMain.auth(rpcUser, rpcPass, 'localhost', rpcPort);
+        // Initialize the wallet with the new RPC class and system contexts
+        WALLET.init({
+            'isHeadless': isHeadless,
+            'gfm': getFullMempool,
+            'rpcMain': rpcMain,
+            'COIN': COIN
+        });
 
         // Test the RPC connection
         try {

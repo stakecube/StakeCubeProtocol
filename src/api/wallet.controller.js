@@ -12,7 +12,6 @@ const cPerms = require('./permissions.js');
 // Contextual pointers provided by the index.js process
 let ptrWALLET;
 let ptrTOKENS;
-let ptrNET;
 let ptrDB;
 let ptrIsFullnode;
 let strModule;
@@ -21,7 +20,6 @@ let COIN;
 function init(context) {
     ptrWALLET = context.WALLET;
     ptrTOKENS = context.TOKENS;
-    ptrNET = context.NET;
     ptrDB = context.DB;
     ptrIsFullnode = context.isFullnode;
     // Static Non-Pointer (native value)
@@ -35,6 +33,9 @@ async function getStakingStatus(req, res) {
     if (!cPerms.isModuleAllowed(strModule)) {
         return disabledError(res);
     }
+    if (!ptrIsFullnode()) {
+        return fullnodeError(res);
+    }
     if (!req.params.contract || req.params.contract.length !== 64) {
         return res.json({
             'error': "You must specify a 'contract' param!"
@@ -45,30 +46,26 @@ async function getStakingStatus(req, res) {
             'error': "You must specify an 'account' param!"
         });
     }
-    const isFullnode = ptrIsFullnode();
-    let cToken;
-    if (isFullnode) {
-        cToken = ptrTOKENS.getToken(req.params.contract);
-        if (cToken.error) {
-            return res.json({
-                'error': 'Token contract does not exist!'
-            });
-        }
-        if (cToken.version !== 2) {
-            return res.json({
-                'error': 'Token is not an SCP-2!'
-            });
-        }
+    const cToken = ptrTOKENS.getToken(req.params.contract);
+    if (cToken.error) {
+        return res.json({
+            'error': 'Token contract does not exist!'
+        });
     }
-    res.json(isFullnode
-        ? cToken.getStakingStatus(req.params.account)
-        : JSON.parse(await ptrNET.getLightStakingStatus(req.params.contract,
-            req.params.account)));
+    if (cToken.version !== 2) {
+        return res.json({
+            'error': 'Token is not an SCP-2!'
+        });
+    }
+    res.json(cToken.getStakingStatus(req.params.account));
 }
 
 async function getBalances(req, res) {
     if (!cPerms.isModuleAllowed(strModule)) {
         return disabledError(res);
+    }
+    if (!ptrIsFullnode()) {
+        return fullnodeError(res);
     }
     if (!req.params.account || req.params.account.length !== 34) {
         return res.status(400).send('Missing "account" parameter!');
@@ -95,9 +92,7 @@ async function getBalances(req, res) {
             'utxos': arrUTXOs
         });
         // Get SCP tokens and add these to the list too
-        const cTokens = ptrIsFullnode()
-            ? ptrTOKENS.getTokensByAccount(strAddr)
-            : JSON.parse(await ptrNET.getLightTokensByAccount(strAddr));
+        const cTokens = ptrTOKENS.getTokensByAccount(strAddr);
         for (const cToken of cTokens) {
             arrBalances.push({
                 'name': cToken.token.name,
@@ -123,6 +118,9 @@ async function listAddresses(req, res) {
     if (!cPerms.isModuleAllowed(strModule)) {
         return disabledError(res);
     }
+    if (!ptrIsFullnode()) {
+        return fullnodeError(res);
+    }
     try {
         const arrAddresses = [];
         const cWalletDB = ptrWALLET.toDB();
@@ -144,6 +142,9 @@ async function getNewAddress(req, res) {
     if (!cPerms.isModuleAllowed(strModule)) {
         return disabledError(res);
     }
+    if (!ptrIsFullnode()) {
+        return fullnodeError(res);
+    }
     try {
         // Create a new wallet address
         const cWallet = await ptrWALLET.createWallet();
@@ -160,6 +161,9 @@ async function getNewAddress(req, res) {
 async function send(req, res) {
     if (!cPerms.isModuleAllowed(strModule)) {
         return disabledError(res);
+    }
+    if (!ptrIsFullnode()) {
+        return fullnodeError(res);
     }
     if (!req.params.address || req.params.address.length !== 34) {
         return res.status(400).send('Missing "address" parameter!');
@@ -216,10 +220,7 @@ async function send(req, res) {
 
         // Ensure we have the currency specified
         if (strCurrency.toLowerCase() !== 'scc') {
-            cTokens = ptrIsFullnode()
-                ? ptrTOKENS.getTokensByAccount(strAddr)
-                : JSON.parse(await ptrNET
-                    .getLightTokensByAccount(strAddr));
+            cTokens = ptrTOKENS.getTokensByAccount(strAddr);
             for (const cToken of cTokens) {
                 if (cToken.token.contract === strCurrency) {
                     cSelectedToken = cToken;
@@ -265,7 +266,7 @@ async function send(req, res) {
             cTx.addoutput(strPubkey, nChange);
             // Broadcast
             const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
-            const strTXID = await ptrNET.broadcastTx(strSignedTx);
+            const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
             // Mark UTXOs as spent
             for (const cUTXO of usedUTXOs) {
                 cUTXO.spent = true;
@@ -302,7 +303,7 @@ async function send(req, res) {
             cTx.addoutput(strPubkey, nChange);
             // Broadcast
             const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
-            const strTXID = await ptrNET.broadcastTx(strSignedTx);
+            const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
             // Mark UTXO as spent
             cUTXO.spent = true;
             return res.json({
@@ -320,6 +321,9 @@ async function send(req, res) {
 async function stake(req, res) {
     if (!cPerms.isModuleAllowed(strModule)) {
         return disabledError(res);
+    }
+    if (!ptrIsFullnode()) {
+        return fullnodeError(res);
     }
     if (!req.params.address || req.params.address.length !== 34) {
         return res.status(400).send('Missing "address" parameter!');
@@ -349,9 +353,7 @@ async function stake(req, res) {
         await ptrWALLET.refreshUTXOs(strPubkey);
 
         // Ensure we have the currency specified
-        const cTokens = ptrIsFullnode()
-            ? ptrTOKENS.getTokensByAccount(strAddr)
-            : JSON.parse(await ptrNET.getLightTokensByAccount(strAddr));
+        const cTokens = ptrTOKENS.getTokensByAccount(strAddr);
         let cSelectedToken = false;
         for (const cToken of cTokens) {
             if (cToken.token.contract === strContract) {
@@ -386,7 +388,7 @@ async function stake(req, res) {
         cTx.addoutput(strPubkey, nChange);
         // Broadcast
         const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
-        const strTXID = await ptrNET.broadcastTx(strSignedTx);
+        const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
         // Mark UTXO as spent
         cUTXO.spent = true;
         return res.json({
@@ -398,6 +400,13 @@ async function stake(req, res) {
         console.error(e);
         return res.status(400).send('Internal API Error');
     }
+}
+
+function fullnodeError(res) {
+    return res.status(403).json({
+        'error': 'This endpoint is only available to Full-nodes, please ' +
+                 'connect an SCC Core RPC server to enable as a Full-node!'
+    });
 }
 
 function disabledError(res) {
