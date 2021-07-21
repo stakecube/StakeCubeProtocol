@@ -29,7 +29,7 @@ let npmPackage;
 // Main Modules
 let DB, NET, RPC, TOKENS, WALLET;
 // API Modules
-let apiACTIVITY, apiBLOCKCHAIN, apiTOKENS, apiWALLET;
+let apiACTIVITY, apiBLOCKCHAIN, apiTOKENS, apiWALLET, apiIO;
 try {
 // GUI
     DB = require('../src/database/index.js');
@@ -41,6 +41,7 @@ try {
     apiBLOCKCHAIN = require('../src/api/blockchain.routes.js');
     apiTOKENS = require('../src/api/tokens.routes.js');
     apiWALLET = require('../src/api/wallet.routes.js');
+    apiIO = require('../src/api/io.routes.js');
     // It's more tricky to fetch the package.json file when GUI-packed, so... here's the workaround!
     try {
         // Unpacked
@@ -77,6 +78,7 @@ try {
         apiBLOCKCHAIN = require('./api/blockchain.routes.js');
         apiTOKENS = require('./api/tokens.routes.js');
         apiWALLET = require('./api/wallet.routes.js');
+        apiIO = require('./api/io.routes.js');
         npmPackage = JSON.parse(DB.fs.readFileSync('../package.json', 'utf8'));
     } catch(ee) {
         // At this point, we have no idea what's causing the error, bail out!
@@ -171,10 +173,18 @@ async function init(forcedCorePath = false, retry = false) {
                 'isFullnode': isFullnodePtr,
                 'COIN': COIN
             });
+            const fApiIO = apiIO.init(app, {
+                'WALLET': WALLET,
+                'DB': DB,
+                'getMsgFromTx': getMsgFromTx,
+                'isFullnode': isFullnodePtr,
+                'COIN': COIN
+            });
             if (fApiActivity) arrEnabledModules.push('activity');
             if (fApiBlockchain) arrEnabledModules.push('blockchain');
             if (fApiTokens) arrEnabledModules.push('tokens');
             if (fApiWallet) arrEnabledModules.push('wallet');
+            if (fApiIO) arrEnabledModules.push('io');
 
             // Load API port from config, use default if none exists, or fallback to default if the port is a non-int
             let nApiPort = Number(DB.getConfigValue('apiport', nDefaultApiPort,
@@ -419,7 +429,7 @@ async function getMsgsFromBlock(blk) {
     return true;
 }
 
-async function getMsgFromTx(rawTX) {
+async function getMsgFromTx(rawTX, strFormat = 'utf8') {
     let res;
     try {
         res = await rpcMain.call('getrawtransaction', rawTX, 1);
@@ -448,7 +458,7 @@ async function getMsgFromTx(rawTX) {
             const rawHex = cVout.scriptPubKey.asm.substr(10);
             const buf = Buffer.from(rawHex, 'hex');
             return {
-                'msg': buf.toString('utf8'),
+                'msg': buf.toString(strFormat),
                 'tx': res
             };
         }
