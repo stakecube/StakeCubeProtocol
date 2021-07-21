@@ -70,6 +70,14 @@ async function writeTx(req, res) {
     }
     const strAddr = req.params.address;
     const strData = req.params.data;
+    // Ensure the data doesn't exceed 500 bytes in HEX (the maximum SCC data relay)
+    const nByteLen = Buffer.from(strData).toString('hex').length;
+    if (nByteLen > 500) {
+        return res.status(400).json({
+            'error': 'The provided data (' + nByteLen + ' bytes in HEX) ' +
+                     'exceeds the maximum length of 500 bytes'
+        });
+    }
     try {
         // Ensure we have the address specified, and it's unlocked
         const cWallet = ptrWALLET.getWallet(strAddr);
