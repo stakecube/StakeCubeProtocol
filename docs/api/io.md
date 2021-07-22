@@ -2,13 +2,13 @@
 
 **Write**
 
-Write custom data to chain.
+Write custom data to chain. Files, text, binary, hex or any other encoded data is fully supported.
 
 ```bash
-GET /api/v1/io/write/:address/:data
+POST /api/v1/io/write/:address
 ```
 
-Example: `curl -X GET "localhost:3000/api/v1/io/write/sNrUeZJTQmXpi6uPMwBm1YNdw4VmrDPkg8/Hello SCP World"`
+Example: `curl -d "Hi SCP dApps" "localhost:3000/api/v1/io/write/sc49Bo2Y8NBy4ASB9Bb2Xh3kbqTtFfPrEw"`
 
 **Fullnode required**: YES
 
@@ -17,6 +17,11 @@ Example: `curl -X GET "localhost:3000/api/v1/io/write/sNrUeZJTQmXpi6uPMwBm1YNdw4
 | Name | Mandatory | Description |
 |---------|---------|---------|
 | address | YES | The account address |
+
+**POST Body**:
+
+| Name | Mandatory | Description |
+|---------|---------|---------|
 | data | YES | Data (up to 500 bytes) |
 
 <details>
@@ -25,8 +30,8 @@ Example: `curl -X GET "localhost:3000/api/v1/io/write/sNrUeZJTQmXpi6uPMwBm1YNdw4
 
 ```json
 {
-    "txid": "6d0d33529549181030344cac1efb5975734537003201ad7aec0e3386f40e98ed",
-    "rawTx": "02000000011669AD08167176F389F42ED393B215C99F792853853109E5686C739008F5E456000000006A47304402205E2CC6483C4CA751F68960E254B8B6C8A75C42AF5E1EE61ADA93B3E09250E94B02207B616873DB4794B7180BB9B50E23D97164DB311157D71950A161E5850F95B6BD01210253C7014D50D9335D82E63C1359CF54AFD7A80FBE6B0F2E66937926C284236507FFFFFFFF020100000000000000126A4C0F48656C6C6F2053435020576F726C64E4949800000000001976A9143282E0236A1F2408847183F2DBFE483F8247A24788AC00000000"
+    "txid": "acf7e9f8081c053dd16b4e4afc5ea5f2feb4c9d5b5b8ad3fbb5b4291342b81f2",
+    "rawTx": "020000000139EAF02107EAFD4DF7B1B57E4B4932631001B7AA9EFA85C063DEFD9BDFC635AF000000006B483045022100A2CAE4F4B961ECF23DEEB01B679DDCE3DC53CF418B591E42B724998E588BC61202202735D7C23B9E8BB5B9371F61547B38F73AD060FEAE31F9F8E206A4207AB09378012102649E331DBEE371E569E278189D15065F0C0C7C7E8A355DE64A02BF975882B32DFFFFFFFF0201000000000000000F6A4C0C48692053435020644170707370DFF505000000001976A914C35141B5DEF6FE8EDC8F806B7A3221DBC7C356BC88AC00000000"
 }
 ```
 
@@ -43,7 +48,7 @@ Returns on-chain transaction data in any common format type.
 GET /api/v1/io/read/:txid/:format
 ```
 
-Example: `curl -X GET "http://localhost:3000/api/v1/io/read/6d0d33529549181030344cac1efb5975734537003201ad7aec0e3386f40e98ed/utf8"`
+Example: `curl -X GET "http://localhost:3000/api/v1/io/read/acf7e9f8081c053dd16b4e4afc5ea5f2feb4c9d5b5b8ad3fbb5b4291342b81f2/utf8"`
 
 **Fullnode required**: YES
 
@@ -60,20 +65,20 @@ Example: `curl -X GET "http://localhost:3000/api/v1/io/read/6d0d3352954918103034
 
 ```json
 {
-    "msg": "Hello SCP World",
+    "msg": "Hi SCP dApps",
     "tx": {
-        "txid": "6d0d33529549181030344cac1efb5975734537003201ad7aec0e3386f40e98ed",
+        "txid": "acf7e9f8081c053dd16b4e4afc5ea5f2feb4c9d5b5b8ad3fbb5b4291342b81f2",
         "version": 2,
         "type": 0,
-        "size": 218,
+        "size": 216,
         "locktime": 0,
         "vin": [
             {
-                "txid": "56e4f50890736c68e50931855328799fc915b293d32ef489f376711608ad6916",
+                "txid": "af35c6df9bfdde63c085fa9eaab701106332494b7eb5b1f74dfdea0721f0ea39",
                 "vout": 0,
                 "scriptSig": {
-                    "asm": "304402205e2cc6483c4ca751f68960e254b8b6c8a75c42af5e1ee61ada93b3e09250e94b02207b616873db4794b7180bb9b50e23d97164db311157d71950a161e5850f95b6bd[ALL] 0253c7014d50d9335d82e63c1359cf54afd7a80fbe6b0f2e66937926c284236507",
-                    "hex": "47304402205e2cc6483c4ca751f68960e254b8b6c8a75c42af5e1ee61ada93b3e09250e94b02207b616873db4794b7180bb9b50e23d97164db311157d71950a161e5850f95b6bd01210253c7014d50d9335d82e63c1359cf54afd7a80fbe6b0f2e66937926c284236507"
+                    "asm": "3045022100a2cae4f4b961ecf23deeb01b679ddce3dc53cf418b591e42b724998e588bc61202202735d7c23b9e8bb5b9371f61547b38f73ad060feae31f9f8e206a4207ab09378[ALL] 02649e331dbee371e569e278189d15065f0c0c7c7e8a355de64a02bf975882b32d",
+                    "hex": "483045022100a2cae4f4b961ecf23deeb01b679ddce3dc53cf418b591e42b724998e588bc61202202735d7c23b9e8bb5b9371f61547b38f73ad060feae31f9f8e206a4207ab09378012102649e331dbee371e569e278189d15065f0c0c7c7e8a355de64a02bf975882b32d"
                 },
                 "sequence": 4294967295
             }
@@ -84,35 +89,30 @@ Example: `curl -X GET "http://localhost:3000/api/v1/io/read/6d0d3352954918103034
                 "valueSat": 1,
                 "n": 0,
                 "scriptPubKey": {
-                    "asm": "OP_RETURN 48656c6c6f2053435020576f726c64",
-                    "hex": "6a4c0f48656c6c6f2053435020576f726c64",
+                    "asm": "OP_RETURN 486920534350206441707073",
+                    "hex": "6a4c0c486920534350206441707073",
                     "type": "nulldata"
                 }
             },
             {
-                "value": 0.09999588,
-                "valueSat": 9999588,
+                "value": 0.999996,
+                "valueSat": 99999600,
                 "n": 1,
                 "scriptPubKey": {
-                    "asm": "OP_DUP OP_HASH160 3282e0236a1f2408847183f2dbfe483f8247a247 OP_EQUALVERIFY OP_CHECKSIG",
-                    "hex": "76a9143282e0236a1f2408847183f2dbfe483f8247a24788ac",
+                    "asm": "OP_DUP OP_HASH160 c35141b5def6fe8edc8f806b7a3221dbc7c356bc OP_EQUALVERIFY OP_CHECKSIG",
+                    "hex": "76a914c35141b5def6fe8edc8f806b7a3221dbc7c356bc88ac",
                     "reqSigs": 1,
                     "type": "pubkeyhash",
                     "addresses": [
-                        "sNrUeZJTQmXpi6uPMwBm1YNdw4VmrDPkg8"
+                        "sc49Bo2Y8NBy4ASB9Bb2Xh3kbqTtFfPrEw"
                     ]
                 }
             }
         ],
-        "hex": "02000000011669ad08167176f389f42ed393b215c99f792853853109e5686c739008f5e456000000006a47304402205e2cc6483c4ca751f68960e254b8b6c8a75c42af5e1ee61ada93b3e09250e94b02207b616873db4794b7180bb9b50e23d97164db311157d71950a161e5850f95b6bd01210253c7014d50d9335d82e63c1359cf54afd7a80fbe6b0f2e66937926c284236507ffffffff020100000000000000126a4c0f48656c6c6f2053435020576f726c64e4949800000000001976a9143282e0236a1f2408847183f2dbfe483f8247a24788ac00000000",
-        "blockhash": "00000000000005a9af4df63cb6d8a61ba45a3828d6c899da29a32e591d7173be",
-        "height": 188624,
-        "confirmations": 3,
-        "time": 1626940609,
-        "blocktime": 1626940609,
+        "hex": "020000000139eaf02107eafd4df7b1b57e4b4932631001b7aa9efa85c063defd9bdfc635af000000006b483045022100a2cae4f4b961ecf23deeb01b679ddce3dc53cf418b591e42b724998e588bc61202202735d7c23b9e8bb5b9371f61547b38f73ad060feae31f9f8e206a4207ab09378012102649e331dbee371e569e278189d15065f0c0c7c7e8a355de64a02bf975882b32dffffffff0201000000000000000f6a4c0c48692053435020644170707370dff505000000001976a914c35141b5def6fe8edc8f806b7a3221dbc7c356bc88ac00000000",
         "instantlock": true,
-        "instantlock_internal": false,
-        "chainlock": true
+        "instantlock_internal": true,
+        "chainlock": false
     }
 }
 ```
