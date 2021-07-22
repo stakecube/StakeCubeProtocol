@@ -6,11 +6,11 @@
 
 'use strict';
 
-const cController = require('./tokens.controller.js');
-
 // The main 'route' for this API module
 const strModule = 'tokens';
 const strRoute = '/api/v1/' + strModule + '/';
+
+const cController = require('./' + strModule + '.controller.js');
 
 function init(app, context) {
     context.strModule = strModule;
