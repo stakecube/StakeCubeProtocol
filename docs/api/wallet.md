@@ -10,7 +10,7 @@ GET /api/v1/wallet/getnewaddress
 
 Example: `curl -X GET "localhost:3000/api/v1/wallet/getnewaddress"`
 
-**Fullnode required**: NO
+**Fullnode required**: YES
 
 **Parameters**: NONE
 
@@ -37,7 +37,7 @@ GET /api/v1/wallet/listaddresses
 
 Example: `curl -X GET "localhost:3000/api/v1/wallet/listaddresses"`
 
-**Fullnode required**: NO
+**Fullnode required**: YES
 
 **Parameters**: NONE
 
@@ -73,7 +73,7 @@ GET /api/v1/wallet/getbalances/:account
 
 Example: `curl -X GET "localhost:3000/api/v1/wallet/getbalances/sgu2PRDZv9yeqco6ouVG5WvPegZ7iVHFod"`
 
-**Fullnode required**: NO
+**Fullnode required**: YES
 
 **Parameters**:
 
@@ -131,7 +131,7 @@ GET /api/v1/wallet/send/:address/:currency/:to/:amount
 
 Example: `curl -X GET "localhost:3000/api/v1/wallet/send/sgu2PRDZv9yeqco6ouVG5WvPegZ7iVHFod/69a3bd3c864b69390e02cc43a0f9725d2736f8129cea527e333af472bc92a05b/shMrmPKbCy2ZksH8B9odbnRWxQhdsSusDp/1"`
 
-**Fullnode required**: NO
+**Fullnode required**: YES
 
 **Parameters**:
 
@@ -168,7 +168,7 @@ GET /api/v1/wallet/stake/:address/:contract
 
 Example: `curl -X GET "localhost:3000/api/v1/wallet/stake/sgu2PRDZv9yeqco6ouVG5WvPegZ7iVHFod/69a3bd3c864b69390e02cc43a0f9725d2736f8129cea527e333af472bc92a05b"`
 
-**Fullnode required**: NO
+**Fullnode required**: YES
 
 **Parameters**:
 
@@ -203,7 +203,7 @@ GET /api/v1/wallet/getstakingstatus/:contract/:account
 
 Example: `curl -X GET "localhost:3000/api/v1/wallet/getstakingstatus/69a3bd3c864b69390e02cc43a0f9725d2736f8129cea527e333af472bc92a05b/sgu2PRDZv9yeqco6ouVG5WvPegZ7iVHFod"`
 
-**Fullnode required**: NO
+**Fullnode required**: YES
 
 **Parameters**:
 
