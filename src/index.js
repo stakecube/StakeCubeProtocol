@@ -140,6 +140,7 @@ const strDeployFeeDest = 'sccburnaddressXXXXXXXXXXXXXXSfqakF';
 // Express Server
 const express = require('express');
 const app = express();
+app.use(express.raw({ type: () => { return true } }));
 let fInitialized = false;
 
 async function init(forcedCorePath = false, retry = false) {

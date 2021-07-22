@@ -65,20 +65,20 @@ async function writeTx(req, res) {
     if (!req.params.address || req.params.address.length !== 34) {
         return res.status(400).send('Missing "address" parameter!');
     }
-    if (!req.params.data) {
-        return res.status(400).send('Missing "data" parameter!');
-    }
-    const strAddr = req.params.address;
-    const strData = req.params.data;
-    // Ensure the data doesn't exceed 500 bytes in HEX (the maximum SCC data relay)
-    const nByteLen = Buffer.from(strData).toString('hex').length;
-    if (nByteLen > 500) {
-        return res.status(400).json({
-            'error': 'The provided data (' + nByteLen + ' bytes in HEX) ' +
-                     'exceeds the maximum length of 500 bytes'
-        });
-    }
     try {
+        if (!req.body || !req.body.byteLength) {
+            return res.status(400).send('Missing "body" data!');
+        }
+        const strAddr = req.params.address;
+        const strData = req.body.toString();
+        // Ensure the data doesn't exceed 500 bytes in HEX (the maximum SCC data relay)
+        const nByteLen = req.body.byteLength * 2;
+        if (nByteLen > 500) {
+            return res.status(400).json({
+                'error': 'The provided data (' + nByteLen + ' bytes in HEX) ' +
+                         'exceeds the maximum length of 500 bytes'
+            });
+        }
         // Ensure we have the address specified, and it's unlocked
         const cWallet = ptrWALLET.getWallet(strAddr);
         if (!cWallet) {

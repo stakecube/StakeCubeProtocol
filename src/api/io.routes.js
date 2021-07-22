@@ -21,7 +21,7 @@ function init(app, context) {
         cController.readTx);
 
     // Write custom, retrievable data to the blockchain via an on-chain transaction
-    app.get(strRoute + 'write/:address/:data',
+    app.post(strRoute + 'write/:address',
         cController.writeTx);
 
     // Return if this module is enabled via config
