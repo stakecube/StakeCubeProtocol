@@ -239,11 +239,7 @@ Stellen Sie sicher, dass der SCC Daemon beendet ist.
 
 ```bash
 cd /home/scc/.stakecubecoin/
-rm -r -f blocks chainstate evodb llmq database
-wget https://github.com/stakecube/StakeCubeCoin/releases/download/v3.1.0/bootstrap.zip
-unzip bootstrap.zip
-cd .scc
-mv * ..
-cd ..
-rm -r .scc
+rm -r -f database evodb blocks chainstate llmq
+wget https://github.com/stakecube/StakeCubeProtocol/releases/latest/download/indexed-bootstrap.zip
+unzip -o indexed-bootstrap.zip
 ```
