@@ -25,6 +25,7 @@ to use custom themes with light and dark available as default.
 | [Wallet](api/wallet.md) | Endpoints related to addresses, account transactions and balances |
 | [Tokens](api/tokens.md) | Endpoints related to Token Protocol Standards |
 | [Blockchain](api/blockchain.md) | Endpoints related to SCC blockchain informations |
+| [IO](api/io.md) | Endpoints for on-chain read/write operations |
 
 ## Guides
 
