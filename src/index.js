@@ -456,9 +456,9 @@ async function getMsgFromTx(rawTX, strFormat = 'utf8') {
     }
     for (const cVout of res.vout) {
         if (!cVout.scriptPubKey) continue;
-        if (!cVout.scriptPubKey.asm) continue;
-        // Scan the scriptPubKey for OP_RETURN
-        if (cVout.scriptPubKey.asm.startsWith('OP_RETURN ')) {
+        if (!cVout.scriptPubKey.hex) continue;
+        // Scan the scriptPubKey for OP_RETURN (+ PUSHDATA)
+        if (cVout.scriptPubKey.hex.startsWith('6a4c')) {
             // Found an OP_RETURN! Parse the message from HEX to UTF-8
             const rawHex = cVout.scriptPubKey.asm.substr(10);
             const buf = Buffer.from(rawHex, 'hex');
@@ -775,7 +775,7 @@ function isNil(a) {
     if (a === undefined || a === null || !a) return true; return false;
 }
 function isEmpty(a) {
-    if (!a.length || isNil(a)) return true; return false;
+    if (isNil(a) || !a.length) return true; return false;
 }
 
 // CORE DAEMON
