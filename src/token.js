@@ -18,6 +18,12 @@ let lastBlockSCP = null;
 // The current chain state of SCP-1 tokens
 const stateTokens = [];
 
+// SCP-2 IMPROVEMENT UPGRADE 1
+// - Drops min stake-reward to 1 sat, from 0.001% of max supply.
+// ... allowing more users of smaller balances to participate in
+// ... staking SCP-2 tokens.
+const nUpgradeBlock1_minStake = 9999999; // TODO: Set upgrade block
+
 function setBlockHeight(newBlock) {
     if (newBlock !== lastBlockSCP) tokenTick();
     lastBlockSCP = newBlock;
@@ -214,8 +220,14 @@ class SCP2Token extends SCP1Token {
         const nOldReward = nReward;
         nReward = Math.round(nReward);
         if (nReward > nOldReward) nReward -= 1;
-        // If the weight is too low (>0.001%), or the reward is under 1 sat, we discard the reward for precision purposes
-        if (((nWeight * 100) < 0.001) || nReward < 1) return false;
+        // SCP IMPROVEMENT UPGRADE 1
+        if (lastBlockSCP >= nUpgradeBlock1_minStake) {
+            // If the reward is under 1 sat, we discard the reward for precision purposes
+            if (nReward < 1) return false;
+        } else {
+            // If the weight is too low (>0.001%), or the reward is under 1 sat, we discard the reward for precision purposes
+            if (((nWeight * 100) < 0.001) || nReward < 1) return false;
+        }
         // Prevent stakers from 'phantom staking' past the max supply, which would allow them to insta-mint upon any burn post-supply-cap
         if ((this.supply + cAcc.unclaimed_balance) >= this.maxSupply) {
             return false;
