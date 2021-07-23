@@ -239,13 +239,8 @@ SCC Node cannot find any connections to the network, does not synchronize or cra
 Make sure that the SCC daemon is stopped.
 
 ```bash
-cd /home/scc/
-cd .stakecubecoin/
-rm -r -f blocks chainstate evodb llmq
-wget https://github.com/stakecube/StakeCubeCoin/releases/download/v3.1.0/bootstrap.zip
-unzip bootstrap.zip
-cd .scc
-mv * ..
-cd ..
-rm -r .scc
+cd /home/scc/.stakecubecoin/
+rm -r -f database evodb blocks chainstate llmq
+wget https://github.com/stakecube/StakeCubeProtocol/releases/latest/download/indexed-bootstrap.zip
+unzip -o indexed-bootstrap.zip
 ```
