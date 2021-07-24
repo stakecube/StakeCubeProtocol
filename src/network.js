@@ -74,7 +74,7 @@ async function post(endpoint, body) {
 }
 
 async function getActivityLight(address) {
-    return await get(rootSCCNet + 'scp/getallactivity/' + address);
+    return await get(rootSCCNet + 'scp/activity/getallactivity/' + address);
 }
 
 async function getDeltasLight(address) {
@@ -86,16 +86,16 @@ async function getLightUTXOs(address) {
 }
 
 async function getLightStakingStatus(contract, address) {
-    return await get(rootSCCNet + 'scp/getstakingstatus/' + contract +
-                                                      '/' + address);
+    return await get(rootSCCNet + 'scp/tokens/getstakingstatus/' + contract +
+                                                             '/' + address);
 }
 
 async function getMempoolLight() {
-    return await get(rootSCCNet + 'scp/getrawmempool');
+    return await get(rootSCCNet + 'scp/blockchain/getrawmempool');
 }
 
 async function getLightTokensByAccount(address) {
-    return await get(rootSCCNet + 'scp/gettokensbyaccount/' + address);
+    return await get(rootSCCNet + 'scp/tokens/gettokensbyaccount/' + address);
 }
 
 async function broadcastTx(tx) {

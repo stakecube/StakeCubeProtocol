@@ -27,6 +27,10 @@ function init(app, context) {
     // Get Tokens by Account
     app.get(strRoute + 'gettokensbyaccount/:account',
         cController.getTokensByAccount);
+    
+    // Get an SCP-2 token's staking status for a single account
+    app.get(strRoute + 'getstakingstatus/:contract/:account',
+        cController.getStakingStatus);
 
     /// / BACKWARDS-COMPAT: Removal scheduled for v1.1.6
     app.get('/api/v1/getalltokens',
@@ -35,6 +39,8 @@ function init(app, context) {
         cController.getToken);
     app.get('/api/v1/gettokensbyaccount/:account',
         cController.getTokensByAccount);
+    app.get('/api/v1/getstakingstatus/:contract/:account',
+        cController.getStakingStatus);
 
     // Return if this module is enabled via config
     return cbackRes;

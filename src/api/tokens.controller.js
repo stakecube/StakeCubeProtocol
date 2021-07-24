@@ -69,6 +69,37 @@ function getTokensByAccount(req, res) {
     res.json(ptrTOKENS.getTokensByAccount(req.params.account));
 }
 
+async function getStakingStatus(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
+    if (!ptrIsFullnode()) {
+        return fullnodeError(res);
+    }
+    if (!req.params.contract || req.params.contract.length !== 64) {
+        return res.json({
+            'error': "You must specify a 'contract' param!"
+        });
+    }
+    if (!req.params.account || req.params.account.length !== 34) {
+        return res.json({
+            'error': "You must specify an 'account' param!"
+        });
+    }
+    const cToken = ptrTOKENS.getToken(req.params.contract);
+    if (cToken.error) {
+        return res.json({
+            'error': 'Token contract does not exist!'
+        });
+    }
+    if (cToken.version !== 2) {
+        return res.json({
+            'error': 'Token is not an SCP-2!'
+        });
+    }
+    res.json(cToken.getStakingStatus(req.params.account));
+}
+
 function fullnodeError(res) {
     return res.status(403).json({
         'error': 'This endpoint is only available to Full-nodes, please ' +
@@ -86,3 +117,4 @@ exports.init = init;
 exports.getAllTokens = getAllTokens;
 exports.getToken = getToken;
 exports.getTokensByAccount = getTokensByAccount;
+exports.getStakingStatus = getStakingStatus;
