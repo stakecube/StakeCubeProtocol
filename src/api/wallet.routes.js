@@ -16,9 +16,6 @@ function init(app, context) {
     context.strModule = strModule;
     const cbackRes = cController.init(context);
 
-    // Get an SCP-2 token's staking status for a single account
-    app.get(strRoute + 'getstakingstatus/:contract/:account',
-        cController.getStakingStatus);
     // Get the balances of all owned tokens by this account, including SCC
     app.get(strRoute + 'getbalances/:account',
         cController.getBalances);
@@ -34,10 +31,6 @@ function init(app, context) {
     // Creates a stake transaction to claim the pending rewards of a given account
     app.get(strRoute + 'stake/:address/:contract',
         cController.stake);
-
-    /// / BACKWARDS-COMPAT: Removal scheduled for v1.1.6
-    app.get('/api/v1/getstakingstatus/:contract/:account',
-        cController.getStakingStatus);
 
     // Return if this module is enabled via config
     return cbackRes;

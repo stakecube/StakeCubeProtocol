@@ -64,7 +64,7 @@ const getUnspentTransactions = function() {
 const getTokensByAccountLight = function(address) {
     const request = new XMLHttpRequest();
     request.open('GET', 'https://stakecubecoin.net/web3/scp/' +
-                        'gettokensbyaccount/' + address, true);
+                        'tokens/gettokensbyaccount/' + address, true);
     request.onload = function() {
         cachedTokens = JSON.parse(this.response);
     };
@@ -72,7 +72,7 @@ const getTokensByAccountLight = function(address) {
 };
 const getActivityByAccountLight = function(address) {
     const request = new XMLHttpRequest();
-    request.open('GET', 'https://stakecubecoin.net/web3/scp/getallactivity/' +
+    request.open('GET', 'https://stakecubecoin.net/web3/scp/activity/getallactivity/' +
                         address, true);
     request.onload = function() {
         cachedActivity = JSON.parse(this.response).reverse();
@@ -86,7 +86,7 @@ const getDeltasByAccountLight = function(address) {
 };
 const getStakingStatusLight = function(contract, address) {
     const request = new XMLHttpRequest();
-    request.open('GET', 'https://stakecubecoin.net/web3/scp/getstakingstatus/' +
+    request.open('GET', 'https://stakecubecoin.net/web3/scp/tokens/getstakingstatus/' +
                          contract + '/' + address, true);
     request.onload = function() {
         guiStakingStatus = JSON.parse(this.response);

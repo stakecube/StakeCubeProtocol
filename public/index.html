@@ -407,8 +407,8 @@
     }
 
     function getCachedAccount(ctoken, address) {
-      for (const account of ctoken.owners) {
-        if (account.address === address) return account;
+      for (const cToken of cachedTokens) {
+        if (cToken.token.contract === ctoken.contract) return cToken.account;
       }
       return false;
     }
