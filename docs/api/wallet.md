@@ -8,7 +8,7 @@ Creates a new wallet address.
 GET /api/v1/wallet/getnewaddress
 ```
 
-Example: `curl -X GET "localhost:3000/api/v1/wallet/getnewaddress"`
+Example: `curl -X GET "https://stakecubecoin.net/web3/scp/wallet/getnewaddress"`
 
 **Fullnode required**: YES
 
@@ -35,7 +35,7 @@ Gets a list of all addresses available in the wallet.
 GET /api/v1/wallet/listaddresses
 ```
 
-Example: `curl -X GET "localhost:3000/api/v1/wallet/listaddresses"`
+Example: `curl -X GET "https://stakecubecoin.net/web3/scp/wallet/listaddresses"`
 
 **Fullnode required**: YES
 
@@ -71,7 +71,7 @@ Get the balances of all owned tokens for the given account address, including SC
 GET /api/v1/wallet/getbalances/:account
 ```
 
-Example: `curl -X GET "localhost:3000/api/v1/wallet/getbalances/sgu2PRDZv9yeqco6ouVG5WvPegZ7iVHFod"`
+Example: `curl -X GET "https://stakecubecoin.net/web3/scp/wallet/getbalances/sgu2PRDZv9yeqco6ouVG5WvPegZ7iVHFod"`
 
 **Fullnode required**: YES
 
@@ -129,7 +129,7 @@ The transaction fee/gas is paid from the given accounts SCC balance.
 GET /api/v1/wallet/send/:address/:currency/:to/:amount
 ```
 
-Example: `curl -X GET "localhost:3000/api/v1/wallet/send/sgu2PRDZv9yeqco6ouVG5WvPegZ7iVHFod/69a3bd3c864b69390e02cc43a0f9725d2736f8129cea527e333af472bc92a05b/shMrmPKbCy2ZksH8B9odbnRWxQhdsSusDp/1"`
+Example: `curl -X GET "https://stakecubecoin.net/web3/scp/wallet/send/sgu2PRDZv9yeqco6ouVG5WvPegZ7iVHFod/69a3bd3c864b69390e02cc43a0f9725d2736f8129cea527e333af472bc92a05b/shMrmPKbCy2ZksH8B9odbnRWxQhdsSusDp/1"`
 
 **Fullnode required**: YES
 
@@ -166,7 +166,7 @@ Creates a stake transaction to claim the pending rewards of a given account and 
 GET /api/v1/wallet/stake/:address/:contract
 ```
 
-Example: `curl -X GET "localhost:3000/api/v1/wallet/stake/sgu2PRDZv9yeqco6ouVG5WvPegZ7iVHFod/69a3bd3c864b69390e02cc43a0f9725d2736f8129cea527e333af472bc92a05b"`
+Example: `curl -X GET "https://stakecubecoin.net/web3/scp/wallet/stake/sgu2PRDZv9yeqco6ouVG5WvPegZ7iVHFod/69a3bd3c864b69390e02cc43a0f9725d2736f8129cea527e333af472bc92a05b"`
 
 **Fullnode required**: YES
 

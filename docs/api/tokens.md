@@ -225,7 +225,7 @@ Get the SCP-2 staking status of a given account and token.
 GET /api/v1/tokens/getstakingstatus/:contract/:account
 ```
 
-Example: `curl -X GET "localhost:3000/api/v1/tokens/getstakingstatus/69a3bd3c864b69390e02cc43a0f9725d2736f8129cea527e333af472bc92a05b/sgu2PRDZv9yeqco6ouVG5WvPegZ7iVHFod"`
+Example: `curl -X GET "https://stakecubecoin.net/web3/scp/tokens/getstakingstatus/69a3bd3c864b69390e02cc43a0f9725d2736f8129cea527e333af472bc92a05b/sgu2PRDZv9yeqco6ouVG5WvPegZ7iVHFod"`
 
 **Fullnode required**: YES
 

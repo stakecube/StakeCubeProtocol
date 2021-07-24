@@ -8,7 +8,7 @@ Write custom data to chain. Files, text, binary, hex or any other encoded data i
 POST /api/v1/io/write/:address
 ```
 
-Example: `curl -d "Hi SCP dApps" "localhost:3000/api/v1/io/write/sc49Bo2Y8NBy4ASB9Bb2Xh3kbqTtFfPrEw"`
+Example: `curl -d "Hi SCP dApps" "https://stakecubecoin.net/web3/scp/io/write/sc49Bo2Y8NBy4ASB9Bb2Xh3kbqTtFfPrEw"`
 
 **Fullnode required**: YES
 
@@ -48,7 +48,7 @@ Returns on-chain transaction data in any common format type.
 GET /api/v1/io/read/:txid/:format
 ```
 
-Example: `curl -X GET "http://localhost:3000/api/v1/io/read/acf7e9f8081c053dd16b4e4afc5ea5f2feb4c9d5b5b8ad3fbb5b4291342b81f2/utf8"`
+Example: `curl -X GET "http://https://stakecubecoin.net/web3/scp/io/read/acf7e9f8081c053dd16b4e4afc5ea5f2feb4c9d5b5b8ad3fbb5b4291342b81f2/utf8"`
 
 **Fullnode required**: YES
 
