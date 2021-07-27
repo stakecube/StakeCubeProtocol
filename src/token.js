@@ -434,7 +434,7 @@ function getTokensPtr() {
 
 function getToken(query) {
     // (Indexed ID only!) Fetch a Token by it's Index ID
-    if (typeof query === "number") return stateTokens[query];
+    if (typeof query === 'number') return stateTokens[query];
     // Find a token by it's contract TX-ID
     for (const token of stateTokens) {
         if (token.contract === query) return token;

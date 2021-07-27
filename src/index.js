@@ -501,7 +501,7 @@ async function isCallAuthorized(cTx, strAuthAddr) {
 
 // Chain State Processing
 async function processState(newMsg, tx) {
-    let isLongData = newMsg.length > 64;
+    const isLongData = newMsg.length > 64;
     let isUsingIndex = false;
     if (UPGRADES.isTokenIndexingActive(nCacheHeight)) {
         isUsingIndex = newMsg.startsWith('id');

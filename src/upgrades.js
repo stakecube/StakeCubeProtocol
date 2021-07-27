@@ -12,6 +12,9 @@
     upgrades will take place, this contains all of the smooth-switchover logic.
 */
 
+/* eslint-disable camelcase */
+// Ignore camelcase style warnings
+
 // SCP-2 IMPROVEMENT UPGRADE 1
 // - Drops min stake-reward to 1 sat, from 0.001% of max supply.
 // ... allowing more users of smaller balances to participate in
@@ -33,6 +36,8 @@ function isMinStakeActive(height = Number) {
 function isTokenIndexingActive(height = Number) {
     return height >= nUpgradeBlock2_tokenIndexing;
 }
+
+/* eslint-enable camelcase */
 
 exports.isMinStakeActive = isMinStakeActive;
 exports.isTokenIndexingActive = isTokenIndexingActive;
