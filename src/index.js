@@ -27,7 +27,7 @@ let isOutdated = false;
 
 let npmPackage;
 // Main Modules
-let DB, NET, RPC, TOKENS, WALLET;
+let DB, NET, RPC, TOKENS, WALLET, UPGRADES;
 // API Modules
 let apiACTIVITY, apiBLOCKCHAIN, apiTOKENS, apiWALLET, apiIO;
 try {
@@ -37,6 +37,7 @@ try {
     RPC = require('../src/rpc.js');
     TOKENS = require('../src/token.js');
     WALLET = require('../src/wallet.js');
+    UPGRADES = require('../src/upgrades.js');
     apiACTIVITY = require('../src/api/activity.routes.js');
     apiBLOCKCHAIN = require('../src/api/blockchain.routes.js');
     apiTOKENS = require('../src/api/tokens.routes.js');
@@ -74,6 +75,7 @@ try {
         RPC = require('./rpc.js');
         TOKENS = require('./token.js');
         WALLET = require('./wallet.js');
+        UPGRADES = require('./upgrades.js');
         apiACTIVITY = require('./api/activity.routes.js');
         apiBLOCKCHAIN = require('./api/blockchain.routes.js');
         apiTOKENS = require('./api/tokens.routes.js');
@@ -369,6 +371,7 @@ if (process.platform === 'win32') {
 const chainMessages = [];
 const chainHashesCache = [];
 let nCacheScannedBlks = 0;
+let nCacheHeight = 0;
 let currentScanBlock = null;
 async function getMsgsFromChain(nBlocksTotal, rescanPossible = false) {
     isScanningBlocks = true;
@@ -397,6 +400,7 @@ async function getMsgsFromChain(nBlocksTotal, rescanPossible = false) {
         }
         // Grab the block from RPC, cache it to save on future requests
         currentScanBlock = await rpcMain.call('getblock', currentScanHash);
+        nCacheHeight = currentScanBlock.height;
         await getMsgsFromBlock(currentScanBlock);
     }
     console.log('Scan done!');
@@ -497,9 +501,14 @@ async function isCallAuthorized(cTx, strAuthAddr) {
 
 // Chain State Processing
 async function processState(newMsg, tx) {
+    let isLongData = newMsg.length > 64;
+    let isUsingIndex = false;
+    if (UPGRADES.isTokenIndexingActive(nCacheHeight)) {
+        isUsingIndex = newMsg.startsWith('id');
+    }
     // SCP Token: CREATE
     // Create a new SCP-predefined token, with name, ticker and max supply
-    if (newMsg.startsWith('SCPCREATE')) {
+    if (!isUsingIndex && newMsg.startsWith('SCPCREATE')) {
         /*
             param 0 = SCPCREATE
             version = "SCPCREATE<version>"
@@ -602,20 +611,30 @@ async function processState(newMsg, tx) {
                          arrParams.length + ', expected ' + nExpectedParams +
                          ')\nTX: ' + tx.txid);
         }
-    } else if (newMsg.length > 64) {
+    } else if (isLongData || isUsingIndex) {
         // Contract write operation
         /*
-            param 0 = TXID (txid str)
+            param 0 = TXID || Index (txid str || index int)
             param 1 = METHOD (contract method)
         */
         const arrParams = newMsg.split(' ');
+        let idContract = arrParams[0];
         // Sanity check
-        const check1 = arrParams[0].length === 64;
+        let check1 = idContract.length === 64;
+        if (isUsingIndex) {
+            // If we're using an index, ensure our ID is a safe, parsed integer
+            idContract = Number(arrParams[0].substr(2));
+            if (idContract >= 0 && Number.isSafeInteger(idContract)) {
+                check1 = true;
+            } else {
+                check1 = false;
+            }
+        }
         const check2 = !isEmpty(arrParams[1]);
         if (check1 && check2) {
             // Fetch the contract being called
             // SCP Token Contracts
-            const cToken = TOKENS.getToken(arrParams[0]);
+            const cToken = TOKENS.getToken(idContract);
             if (!cToken.error) {
                 // SCP MINTING (Create new tokens on-demand, issuer-only, cannot mint above predefined max supply)
                 if (arrParams[1] === 'mint') {
