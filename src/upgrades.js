@@ -19,7 +19,7 @@
 // - Drops min stake-reward to 1 sat, from 0.001% of max supply.
 // ... allowing more users of smaller balances to participate in
 // ... staking SCP-2 tokens.
-const nUpgradeBlock1_minStake = 9999999; // TODO: Set upgrade block
+const nUpgradeBlock1_minStake = 196000;
 
 // SCP IMPROVEMENT UPGRADE 2
 // - Indexes all SCP Token contracts by their State Index, this
