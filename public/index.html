@@ -462,7 +462,9 @@
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
         cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         // SCP output
-        cTx.addoutputburn(0.00000001, cToken.contract + " send " + (sendAmount * COIN).toFixed(0) + " " + sendAddress);
+        let fIndexed = UPGRADES.isTokenIndexingActive(isFullnodePtr() ? nCacheHeight : cachedBlockCount);
+        let idContract = fIndexed ? "id" + cToken.index : cToken.contract;
+        cTx.addoutputburn(0.00000001, idContract + " send " + (sendAmount * COIN).toFixed(0) + " " + sendAddress);
         // Fee & Change output
         let nFee = WALLET.getFee(cTx.serialize().length);
         let nChange = (parseFloat(cUTXO.sats / COIN) - parseFloat(nFee)).toFixed(8);
@@ -484,7 +486,9 @@
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
         cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         // SCP output
-        cTx.addoutputburn(0.00000001, cToken.contract + " redeem");
+        let fIndexed = UPGRADES.isTokenIndexingActive(isFullnodePtr() ? nCacheHeight : cachedBlockCount);
+        let idContract = fIndexed ? "id" + cToken.index : cToken.contract;
+        cTx.addoutputburn(0.00000001, idContract + " redeem");
         // Fee & Change output
         let nFee = WALLET.getFee(cTx.serialize().length);
         let nChange = (parseFloat(cUTXO.sats / COIN) - parseFloat(nFee)).toFixed(8);
@@ -521,7 +525,9 @@
           if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
           cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
           // SCP output
-          cTx.addoutputburn(0.00000001, cToken.token.contract + " redeem");
+          let fIndexed = UPGRADES.isTokenIndexingActive(isFullnodePtr() ? nCacheHeight : cachedBlockCount);
+          let idContract = fIndexed ? "id" + cToken.token.index : cToken.token.contract;
+          cTx.addoutputburn(0.00000001, idContract + " redeem");
           // Fee & Change output
           let nFee = WALLET.getFee(cTx.serialize().length);
           let nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
@@ -796,7 +802,7 @@
       }
 
       // Also use this to update the Claim All button's visibility
-      if (cachedTokens.length) {
+      if (cachedTokens.length && getSyncPercentage() >= 99.99) {
         let nPendingStakes = 0;
         for (const cToken of cachedTokens) {
           if (cToken.token.version !== 2) continue;

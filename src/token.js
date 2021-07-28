@@ -11,6 +11,8 @@
     This file hosts the interpreter functionality, classes and logic handling of SCP-1 tokens.
 */
 
+const cUpgrades = require('./upgrades.js');
+
 const COIN = 100000000;
 
 let lastBlockSCP = null;
@@ -26,7 +28,7 @@ function setBlockHeight(newBlock) {
 function tokenTick() {
     // Loop all tokens
     for (const cToken of stateTokens) {
-        if (cToken.version === 2) {
+        if (cToken.version === 2 && cToken.supply > 0) {
             // Loop all stakers
             stakeTick(cToken);
         }
@@ -47,6 +49,7 @@ function stakeTick(cToken) {
 // SCP-1: (SCP-1 represents a 'barebones' token, with an issuer-only minting process, with: mint, burn and transfer functionality)
 class SCP1Token {
     constructor(contract, name, ticker, maxSupply, creator, owners) {
+        this.index = -1;
         this.version = 1;
         this.contract = contract;
         this.name = name;
@@ -214,8 +217,14 @@ class SCP2Token extends SCP1Token {
         const nOldReward = nReward;
         nReward = Math.round(nReward);
         if (nReward > nOldReward) nReward -= 1;
-        // If the weight is too low (>0.001%), or the reward is under 1 sat, we discard the reward for precision purposes
-        if (((nWeight * 100) < 0.001) || nReward < 1) return false;
+        // SCP IMPROVEMENT UPGRADE 1
+        if (cUpgrades.isMinStakeActive(lastBlockSCP)) {
+            // If the reward is under 1 sat, we discard the reward for precision purposes
+            if (nReward < 1) return false;
+        } else {
+            // If the weight is too low (>0.001%), or the reward is under 1 sat, we discard the reward for precision purposes
+            if (((nWeight * 100) < 0.001) || nReward < 1) return false;
+        }
         // Prevent stakers from 'phantom staking' past the max supply, which would allow them to insta-mint upon any burn post-supply-cap
         if ((this.supply + cAcc.unclaimed_balance) >= this.maxSupply) {
             return false;
@@ -411,6 +420,8 @@ function addToken(cToken = SCP1Token) {
             };
         }
     }
+    // Calculate the index
+    cToken.index = stateTokens.length;
     // Push the token into the SCP token state tracker.
     stateTokens.push(cToken);
     return true;
@@ -421,10 +432,12 @@ function getTokensPtr() {
     return stateTokens;
 }
 
-function getToken(txid = String) {
+function getToken(query) {
+    // (Indexed ID only!) Fetch a Token by it's Index ID
+    if (typeof query === 'number') return stateTokens[query];
     // Find a token by it's contract TX-ID
     for (const token of stateTokens) {
-        if (token.contract === txid) return token;
+        if (token.contract === query) return token;
     }
     // If we reach here, no token contract found!
     return {
