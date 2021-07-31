@@ -719,6 +719,7 @@
           cTx.addoutput(cWallet.getPubkey(), nChange);
           // Sign & Broadcast
           const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
+          addMockActivity("staked", cToken.account.unclaimed_balance, cToken.token);
           await WALLET.broadcastTx(strSignedTx);
           nClaims++;
           // Mark UTXO as spent
