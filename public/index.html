@@ -194,6 +194,7 @@
     let cachedTokens = [];
     let cachedBlockCount = 0;
     let cachedActivity = [];
+    let cachedActivityIS = [];
     let cachedCoinDeltas = [];
 
     // Statistical / Informational data
@@ -222,7 +223,6 @@
     let domBalance;
     let domBalanceUSD;
     let domSendingBalance;
-    let domActivitySubtitle;
     let domActivityList;
     let domActivitySCC;
     let domActivitySCP;
@@ -245,6 +245,168 @@
     let domStakingRewards;
     let domStakingRedeem;
     let domStakingRoi;
+
+    function getMempoolDeltas(strCurrency) {
+      let nDelta = 0;
+      if (strCurrency === 'scc') {
+        // TODO: Add SCC InstantSend mempool-deltas
+      } else {
+        const cToken = TOKENS.getToken(strCurrency);
+        if (!cToken.error) {
+          for (const cActivity of cachedActivityIS) {
+            if (cActivity.token.contract !== cToken.contract) continue;
+            if (cActivity.type === 'received' || cActivity.type === 'staked') {
+              nDelta += cActivity.amount;
+            } else if (cActivity.type === 'sent') {
+              nDelta -= cActivity.amount;
+            }
+          }
+        }
+      }
+      return nDelta;
+    }
+
+    function hasMempoolStakes(contract) {
+      let fStaked = false;
+      const cToken = TOKENS.getToken(contract);
+      if (!cToken.error) {
+        for (const cActivity of cachedActivityIS) {
+          if (cActivity.token.contract !== cToken.contract) continue;
+          if (cActivity.type === 'staked') {
+            fStaked = true;
+          }
+        }
+      }
+      return fStaked;
+    }
+
+    function addMockActivity(strType = "unknown", nAmount = 0, cToken) {
+      let cActivity = {
+          'id': null,
+          'token': {
+              'contract': cToken.contract,
+              'ticker': cToken.ticker,
+              'name': cToken.name
+          },
+          'block': 'Unconfirmed',
+          'contract': cToken.contract,
+          'account': WALLET.getActiveWallet().getPubkey(),
+          'type': strType,
+          'amount': nAmount,
+      }
+      cachedActivityIS.push(cActivity);
+    }
+
+    function updateMempoolActivity(arrNewActivity) {
+      cachedActivityIS = cachedActivityIS.concat(arrNewActivity).filter(function(item, pos) {
+        return cachedActivityIS.indexOf(item) == pos;
+      });
+    }
+
+    async function getMempoolActivity(account = false) {
+      const arrFullMempool = await getFullMempool();
+      const arrActivity = [];
+      // Loop all mempool TXs
+      for (const cTX of arrFullMempool) {
+          // Loop all TX vouts
+          for (const cVout of cTX.vout) {
+              if (!cVout.scriptPubKey) continue;
+              if (!cVout.scriptPubKey.hex) continue;
+              // Scan the scriptPubKey for OP_RETURN (+ PUSHDATA)
+              if (cVout.scriptPubKey.hex.startsWith('6a4c')) {
+                  // Found an OP_RETURN! Parse the message from HEX to UTF-8
+                  const rawHex = cVout.scriptPubKey.asm.substr(10);
+                  const buf = Buffer.from(rawHex, 'hex');
+                  const strOp = buf.toString('utf8');
+                  if (!strOp.includes(' ')) continue;
+                  const arrOp = strOp.split(' ');
+                  const isLongData = strOp.length > 64;
+                  let isUsingIndex = false;
+                  if (UPGRADES.isTokenIndexingActive(nCacheHeight)) {
+                      isUsingIndex = strOp.startsWith('id');
+                      arrOp[0] = Number(arrOp[0].substr(2));
+                  }
+                  // If one of these flags are enabled, this is highly likely a normal token event
+                  if (isLongData || isUsingIndex) {
+                      // Ensure the token is valid and exists
+                      const cToken = TOKENS.getToken(arrOp[0]);
+                      if (!cToken || cToken.supply <= 0) continue;
+                      // Construct the caller's Activity object
+                      const cActivity = {
+                          'id': cTX.txid,
+                          'token': {
+                              'contract': cToken.contract,
+                              'ticker': cToken.ticker,
+                              'name': cToken.name
+                          },
+                          'block': (cTX.instantlock ? '⚡ ' : '') + 'Unconfirmed',
+                          'contract': cToken.contract,
+                          'account': cTX.vout[1].scriptPubKey.addresses[0],
+                          'type': 'unknown',
+                          'amount': 0
+                      };
+                      const cAccount = cActivity.account;
+                      // Identify the transaction type
+                      const operation = arrOp[1];
+                      switch (operation) {
+                      case 'mint':
+                          cActivity.type = 'received';
+                          cActivity.amount = Number(arrOp[2]);
+                          if (!account ||
+                                  (account && cAccount === account)) {
+                              arrActivity.push(cActivity);
+                          }
+                          break;
+
+                      case 'burn':
+                          cActivity.type = 'sent';
+                          cActivity.amount = Number(arrOp[2]);
+                          if (!account ||
+                                  (account && cAccount === account)) {
+                              arrActivity.push(cActivity);
+                          }
+                          break;
+
+                      case 'send':
+                          // Sender activity
+                          cActivity.type = 'sent';
+                          cActivity.amount = Number(arrOp[2]);
+                          if (!account ||
+                                  (account && cAccount === account)) {
+                              arrActivity.push(cActivity);
+                          }
+                          // Receiver activity
+                          const cRecvActivity = JSON.parse(
+                              JSON.stringify(cActivity));
+                          cRecvActivity.type = 'received';
+                          cRecvActivity.account = arrOp[3];
+                          if (!account ||
+                                  (account && arrOp[3] === account)) {
+                              arrActivity.push(cRecvActivity);
+                          }
+                          break;
+
+                      case 'redeem':
+                          cActivity.type = 'staked';
+                          const cStatus = cToken.getStakingStatus(cAccount);
+                          cActivity.amount = cStatus.unclaimed_rewards;
+                          if (!account ||
+                                  (account && cAccount === account)) {
+                              arrActivity.push(cActivity);
+                          }
+                          break;
+
+                      default:
+                          break;
+                      }
+                      // End the vout loop
+                      break;
+                  }
+              }
+          }
+      }
+      return arrActivity;
+    }
 
     function getSyncPercentage() {
       // We measure based on our total SCP hash-cache, and our blocks since the start of SCP
@@ -279,14 +441,14 @@
         sendTokensSelector.innerHTML = '<option value="scc" data-thumbnail="imgs/circular-logo.png">StakeCubeCoin (SCC)</option>';
         dashboardTokens.innerHTML = '';
         if (chainHashesCache.length === 0 && isFullnode) {
-          dashboardTokens.innerHTML += '<center><p>Loading SCP</p></center>';
+          dashboardTokens.innerHTML += '<center style=\'margin-top:30px;\'><p>Loading SCP</p></center>';
         } else if (getSyncPercentage() < 99.99 && isFullnode) {
-          dashboardTokens.innerHTML += '<center><p id="scpSyncing">SCP is still syncing (' + getSyncPercentage().toFixed(2) + '%)</p></center>';
+          dashboardTokens.innerHTML += '<center style=\'margin-top:30px;\'><p id="scpSyncing">SCP is still syncing (' + getSyncPercentage().toFixed(2) + '%)</p></center>';
         } else if (cachedTokens.length > 0) {
           let strDashTokens = "";
           let strSendTokens = "";
           for (const cToken of cachedTokens) {
-            let nBal = cToken.account.balance / COIN;
+            let nBal = (getMempoolDeltas(cToken.token.contract) + cToken.account.balance) / COIN;
             if (hideZeroBalance && nBal <= 0) continue;
             let stakingButton = 'onclick="switchToStaking(\'' + cToken.token.contract + '\')"';
             let stakingStyle = 'cursor:pointer;';
@@ -295,10 +457,16 @@
               stakingButton = '';
               stakingStyle = '';
             } else {
-              let nRewards = (cToken.account.unclaimed_balance / COIN);
-              // Ensure we have unclaimed stakes, and the token has not hit max supply yet
-              if (cToken.account.unclaimed_balance > 0 && (cToken.token.supply + cToken.account.unclaimed_balance) < cToken.token.maxSupply)
-                stakingText = ' <i style="opacity:0.5;">(+' + nRewards.toLocaleString('en-GB', { maximumFractionDigits: (nRewards > 0.1 ? 2 : 8 ) }) + ')</i>';
+              let fStaked = hasMempoolStakes(cToken.token.contract);
+              if (!fStaked) {
+                let nRewards = (cToken.account.unclaimed_balance / COIN);
+                // Ensure we have unclaimed stakes, and the token has not hit max supply yet
+                if (cToken.account.unclaimed_balance > 0 && (cToken.token.supply + cToken.account.unclaimed_balance) < cToken.token.maxSupply)
+                  stakingText = ' <i style="opacity:0.5;">(+' + nRewards.toLocaleString('en-GB', { maximumFractionDigits: (nRewards > 0.1 ? 2 : 8 ) }) + ')</i>';
+              } else {
+                stakingButton = '';
+                stakingStyle = '';
+              }
             }
             strDashTokens += '<div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px; max-height: 32px;' + stakingStyle + '" ' + stakingButton + '><img src="imgs/circular-logo.png" style="width:32px; height:32px; margin-right: 10px"><div class="d-inline-flex flex-column lh-sm" style="position: relative; top: -7px"><span>'+ formatName(cToken.token.ticker, 8) +'</span><span style="opacity: 0.75;font-size:0.75em;">SCP-' + cToken.token.version + '</span></div><span class="float-end theme-color-secondary">' + nBal.toLocaleString('en-GB', { maximumFractionDigits: (nBal > 1 ? 2 : 8) }) + stakingText + '</span></div>';
             strSendTokens += '<option value="scptoken-' + cToken.token.contract + '" data-thumbnail="imgs/circular-logo.png">' + formatName(cToken.token.name, 10) + ' (' + cToken.token.ticker + ')</option>';
@@ -311,21 +479,24 @@
 
         // Update activity widget
         if (isFullnode) {
-          cachedActivity = TOKENS.getActivityByAccount(strPubkey).reverse();
-          rpcMain.call('getaddressdeltas', {
-            'addresses': [strPubkey]
-          }).then(res => {
-            cachedCoinDeltas = res.reverse();
-          }).catch(e => {
-            // Fallback incase this node doesn't support address indexing
-            getDeltasByAccountLight(strPubkey);
-          });
+          if (getSyncPercentage() >= 99.99) {
+            cachedActivity = TOKENS.getActivityByAccount(strPubkey).reverse();
+            rpcMain.call('getaddressdeltas', {
+              'addresses': [strPubkey]
+            }).then(res => {
+              cachedCoinDeltas = res.reverse();
+            }).catch(e => {
+              // Fallback incase this node doesn't support address indexing
+              getDeltasByAccountLight(strPubkey);
+            });
+          }
         } else {
           getActivityByAccountLight(strPubkey);
           getDeltasByAccountLight(strPubkey);
         }
         // Fetch SCC Deltas (a list of changes on this address)
-        renderActivity();
+        if (!isFullnode || isFullnode && getSyncPercentage() >= 99.99)
+          renderActivity();
       }
 
       return Number(nBalance.toFixed(8));
@@ -333,14 +504,10 @@
 
     function renderActivity() {
       // Our 'view' is either SCP or SCC, depending on the user's Activity settings
-      const arrView = activityViewSCP ? cachedActivity : cachedCoinDeltas;
+      const arrView = JSON.parse(JSON.stringify(activityViewSCP ? cachedActivity : cachedCoinDeltas));
       let strActivityList = "";
       if (arrView.length > 0) {
         domActivityList.innerHTML = "";
-        domActivitySubtitle.innerHTML = "";
-        if (WALLET.getIncomingUTXOs().length > 0) {
-          domActivitySubtitle.innerHTML = '<center style="margin-top: 25px; margin-bottom: 25px;"><p>You have pending transactions!</p></center>';
-        }
         let arrTxView = [];
         // (SCC view ONLY) Sort the individual output deltas into per-transaction deltas
         if (!activityViewSCP) {
@@ -359,7 +526,7 @@
             }
           }
         } else {
-          arrTxView = arrView;
+          arrTxView = cachedActivityIS.concat(arrView);
         }
         // View SCP or SCC depending on the user's settings
         let i = 0;
@@ -370,6 +537,7 @@
           const nValue = (cActivity.amount || cActivity.satoshis) / COIN;
           const strTx  = (cActivity.id || cActivity.txid);
           const strBlk = (cActivity.block || cActivity.height).toLocaleString('en-GB');
+          const fIsNumBlk = Number.isSafeInteger(cActivity.block || cActivity.height);
           let strType;
           if (activityViewSCP) {
             strType = cActivity.type;
@@ -382,7 +550,8 @@
           const strTypeColour = ((strType === 'received' || strType === 'staked') ? "plus" : "minus");
           const strTypeSymbol = ((strType === 'received' || strType === 'staked') ? "+" : "-");
           const strCoinTicker = cActivity.token ? cActivity.token.ticker : 'SCC';
-          strActivityList += '<div class="mt-4" style="cursor: pointer;" onclick="openExternalURL(\'https://scc.ccore.online/transaction/' + strTx + '\')"><div class="float-start text-center">Block ' + strBlk + '</div><span class="float-end ' + strTypeColour + '-balance-color font-weight-bold" style="position:relative; top:11px;"><i style="text-transform: capitalize;padding-right:5px;">' + strType + '</i> ' + strTypeSymbol + Math.abs(nValue).toLocaleString('en-GB', { maximumFractionDigits: nValue > 1 ? 2 : 8, minimumFractionDigits: 2 }) + ' ' + strCoinTicker + '</span></div><br><br><hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">';
+          const strExplorerID = strTx ? 'style="cursor: pointer;" onclick="openExternalURL(\'https://scc.ccore.online/transaction/' + strTx + '\')"' : '';
+          strActivityList += '<div class="mt-4" ' + strExplorerID + '><div class="float-start text-center">' + (fIsNumBlk ? 'Block ' : '') + ' ' + strBlk + '</div><span class="float-end ' + strTypeColour + '-balance-color font-weight-bold" style="position:relative; top:11px;"><i style="text-transform: capitalize;padding-right:5px;">' + strType + '</i> ' + strTypeSymbol + Math.abs(nValue).toLocaleString('en-GB', { maximumFractionDigits: nValue > 1 ? 2 : 8, minimumFractionDigits: 2 }) + ' ' + strCoinTicker + '</span></div><br><br><hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">';
         }
         domActivityList.innerHTML += strActivityList;
       } else {
@@ -454,7 +623,8 @@
         let strToken = coinSelection.split('scptoken-')[1];
         let cToken = isFullnode ? TOKENS.getToken(strToken) : getCachedToken(strToken);
         let cAccount = isFullnode ? cToken.getAccount(WALLET.getActiveWallet().getPubkey()) : getCachedAccount(cToken, WALLET.getActiveWallet().getPubkey());
-        if ((cAccount.balance / COIN) < sendAmount) return M.toast({html: 'You don\'t have enough ' + cToken.ticker + '!', displayLength: 3000});
+        const nBal = getMempoolDeltas(cToken.contract) + cAccount.balance;
+        if ((nBal / COIN) < sendAmount) return M.toast({html: 'You don\'t have enough ' + cToken.ticker + '!', displayLength: 3000});
         console.log("Constructing SCP-" + cToken.version + " Transfer TX for: " + sendAmount + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
         let cTx = WALLET.sccjs.tx.transaction();
         // Add input
@@ -471,7 +641,14 @@
         cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
-          sendTransaction(strSignedTx, [cUTXO]);
+          addMockActivity("sent", sendAmount * COIN, cToken);
+          WALLET.broadcastTx(strSignedTx).then(strTXID => {
+            cUTXO.spent = true;
+            M.toast({html: 'Transaction Sent!', displayLength: 1250});
+            if (isFullnodePtr()) {
+              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+            }
+          });
         });
       }
     }
@@ -480,6 +657,11 @@
         let cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
         let cAccount = isFullnode ? cToken.getAccount(WALLET.getActiveWallet().getPubkey()) : getCachedAccount(cToken, WALLET.getActiveWallet().getPubkey());
         console.log("Constructing SCP-" + cToken.version + " stake claim TX for " + (cAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
+        // Disable claim button
+        domStakingRedeem.setAttribute('onclick', '');
+        domStakingRedeem.classList.add('disabled');
+        domStakingRedeem.innerText = 'Redeeming...';
+        // Contruct SCP transaction
         let cTx = WALLET.sccjs.tx.transaction();
         // Add input
         let cUTXO = WALLET.getCoinsToSpend(2000, true, WALLET.getActiveWallet().getPubkey())[0];
@@ -495,11 +677,13 @@
         cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
-          sendTransaction(strSignedTx, [cUTXO], 'Redeeming, please wait for your claim to confirm on the network!');
-          domStakingRedeem.setAttribute('onclick', '');
-          domStakingRedeem.classList.add('disabled');
-          domStakingRedeem.innerText = 'Redeeming...';
-          //domStakingSubtitle.innerText = 'Your stake is being redeemed! Please wait until the next block to see your balance update.';
+          addMockActivity("staked", cAccount.unclaimed_balance, cToken);
+          WALLET.broadcastTx(strSignedTx).then(strTXID => {
+            cUTXO.spent = true;
+            if (isFullnodePtr()) {
+              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+            }
+          });
         });
     }
 
@@ -512,6 +696,7 @@
       for (const cToken of cachedTokens) {
           if (cToken.token.version !== 2) continue;
           if (cToken.account.unclaimed_balance <= 0) continue;
+          if (hasMempoolStakes(cToken.token.contract)) continue;
           // Let's claim the rewards!
           domClaimAllBtn.style.opacity = 0.4;
           domClaimAllBtn.style.cursor = "default";
@@ -534,6 +719,7 @@
           cTx.addoutput(cWallet.getPubkey(), nChange);
           // Sign & Broadcast
           const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
+          addMockActivity("staked", cToken.account.unclaimed_balance, cToken.token);
           await WALLET.broadcastTx(strSignedTx);
           nClaims++;
           // Mark UTXO as spent
@@ -548,11 +734,15 @@
         // Reset Claim All button
         domClaimAllBtn.innerText = "Claim All";
         domClaimAllBtn.style.cursor = "pointer";
-        //domClaimAllBtn.style.display = "none";
+        domClaimAllBtn.style.display = "none";
         domClaimAllBtn.style.opacity = 1;
-        // Notify the user, finished!
         isClaiming = false;
-        return M.toast({html: 'Redeemed ' + nClaims + ' rewards! Please wait for confirmations.', displayLength: 5000});
+        // Pull mempool transactions
+        if (isFullnodePtr()) {
+          updateMempoolActivity(await getMempoolActivity(WALLET.getActiveWallet().getPubkey()));
+        }
+        // Notify the user, finished!
+        return M.toast({html: 'Redeemed ' + nClaims + ' rewards!', displayLength: 5000});
     }
 
     function deploySCP(version = 1, params = []) {
@@ -613,7 +803,16 @@
         cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
-          sendTransaction(strSignedTx, [cUTXO], 'Minting, please wait for your mint to confirm on the network!');
+          if (cToken && !cToken.error)
+            addMockActivity("received", amount, cToken);
+          WALLET.broadcastTx(strSignedTx).then(strTXID => {
+            cUTXO.spent = true;
+            const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
+            if (isFullnodePtr()) {
+              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+            }
+            M.toast({html: 'Minting ' + (amount / COIN).toLocaleString('en-GB') + ' tokens!', displayLength: 3000});
+          });
         });
     }
 
@@ -633,7 +832,16 @@
         cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
-          sendTransaction(strSignedTx, [cUTXO], 'Burning, please wait for your mint to confirm on the network!');
+          if (cToken && !cToken.error)
+            addMockActivity("sent", amount, cToken);
+          WALLET.broadcastTx(strSignedTx).then(strTXID => {
+            cUTXO.spent = true;
+            const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
+            if (isFullnodePtr()) {
+              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+            }
+            M.toast({html: 'Burning ' + (amount / COIN).toLocaleString('en-GB') + ' tokens!', displayLength: 3000});
+          });
         });
     }
 
@@ -652,7 +860,8 @@
         let strToken = strCurrency.split('scptoken-')[1];
         let cToken = isFullnode ? TOKENS.getToken(strToken) : getCachedToken(strToken);
         let cAccount = isFullnode ? cToken.getAccount(strPubkey) : getCachedAccount(cToken, strPubkey);
-        nSendBalanceDisplay = Number((cAccount.balance / COIN).toFixed(8));
+        const nBal = getMempoolDeltas(cToken.contract) + cAccount.balance;
+        nSendBalanceDisplay = Number((nBal / COIN).toFixed(8));
       }
       domSendingBalance.innerText = nSendBalanceDisplay.toLocaleString('en-GB', { maximumFractionDigits: 8 });
     }
@@ -706,6 +915,7 @@
             domStakingRedeem.classList.add('disabled');
           domStakingRedeem.innerText = 'No Stakes to Claim';
         } else {
+          const fStaked = hasMempoolStakes(guiStakingToken.contract);
           let nAPY = percentOf((nReward * 720) * 365, guiStakingAccount.balance);
           if (nAPY > 0.01 && nReward > 1) {
             domStakingApy.innerText = nAPY.toLocaleString('en-GB', { maximumFractionDigits: (nAPY > 100 ? 0 : 2) }) + "%";
@@ -715,12 +925,19 @@
             domStakingRoi.innerText = "";
           }
           domStakingSubtitle.innerHTML = "You've been staking for " + (guiStakingStatus.age - guiStakingToken.minAge).toLocaleString('en-GB') + " blocks and earned...";
-          domStakingRewards.innerText = nTotalRewards.toLocaleString('en-GB', { maximumFractionDigits: nTotalRewards > 1 ? 4 : 8}) + " " + formatName(guiStakingToken.ticker, 6);
-          if (guiStakingAccount.unclaimed_balance > 0) {
+          if (fStaked) {
+            domStakingRewards.innerText = '0 ' + formatName(guiStakingToken.ticker, 6);
+            domStakingRedeem.setAttribute('onclick', '');
+            if (!domStakingRedeem.classList.contains('disabled'))
+              domStakingRedeem.classList.add('disabled');
+            domStakingRedeem.innerText = 'No Stakes to Claim';
+          } else if (guiStakingAccount.unclaimed_balance > 0) {
+            domStakingRewards.innerText = nTotalRewards.toLocaleString('en-GB', { maximumFractionDigits: nTotalRewards > 1 ? 4 : 8}) + " " + formatName(guiStakingToken.ticker, 6);
             domStakingRedeem.setAttribute('onclick', 'claimStakingRewards("' + contract + '")');
             domStakingRedeem.classList.remove('disabled');
             domStakingRedeem.innerText = 'Claim Rewards';
           } else {
+            domStakingRewards.innerText = '0 ' + formatName(guiStakingToken.ticker, 6);
             domStakingRedeem.setAttribute('onclick', '');
             if (!domStakingRedeem.classList.contains('disabled'))
               domStakingRedeem.classList.add('disabled');
@@ -807,6 +1024,7 @@
         for (const cToken of cachedTokens) {
           if (cToken.token.version !== 2) continue;
           if (cToken.account.unclaimed_balance <= 0) continue;
+          if (hasMempoolStakes(cToken.token.contract)) continue;
           nPendingStakes++;
         }
         if (nPendingStakes > 1) {
@@ -849,8 +1067,12 @@
     setInterval(() => {
       // Check block count + UTXO sync every 10 seconds
       getBlockCount();
-      if (WALLET.getActiveWallet().getPubkey())
+      if (WALLET.getActiveWallet().getPubkey()) {
         getUnspentTransactions();
+        if (isFullnodePtr()) {
+          getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+        }
+      }
       // Update Dashboard stats
       if (valueUSD > 0) {
         domBalanceUSD.innerText = (getBalance() * valueUSD).toFixed(2);
@@ -900,7 +1122,6 @@
       domMarketcap = document.getElementById("dashboardMarketcap");
       domBlock = document.getElementById("dashboardBlock");
       domDashboardBtn = document.getElementById("dashboardBtn");
-      domActivitySubtitle = document.getElementById("activitySubtitle");
       domActivityList = document.getElementById("activityList");
       domActivitySCC = document.getElementById("domActivitySCC");
       domActivitySCP = document.getElementById("domActivitySCP");
@@ -1019,9 +1240,8 @@
               <div class="card-title font-gray font-weight-bold">Activity</div>
               <span id="domActivitySCC" onclick="setActivityView(false);" style="cursor: pointer; opacity: 0.4;" class="badge badge-theme">SCC</span>
               <span id="domActivitySCP" onclick="setActivityView(true);" style="cursor: default;" class="badge badge-theme">SCP</span>
-              <div id="activitySubtitle"></div> 
               <div id="activityList" style="overflow-y: auto; max-height: 320px; padding-right: 10px;">
-                <center><p>Loading Activity</p></center>
+                <center style='margin-top:30px;'><p>You have no activity!</p></center>
               </div>
             </div>
           </div>

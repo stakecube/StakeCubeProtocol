@@ -53,6 +53,11 @@ const getCoinSupply = function() {
     request.send();
 };
 const getUnspentTransactions = function() {
+    if (isFullnodePtr()) {
+        getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(arrActivity => {
+            cachedActivityIS = arrActivity;
+        });
+    }
     WALLET.refreshUTXOs(WALLET.getActiveWallet().getPubkey()).then(res => {
         const reloader = document.getElementById('balanceRefresh');
         reloader.className = reloader.className.replace(/ playAnim/g, '');
