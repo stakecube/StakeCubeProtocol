@@ -32,6 +32,10 @@ function init(app, context) {
     app.get(strRoute + 'getactivitybytxid/:txid/:type',
         cController.getActivityByTxid);
 
+    // Gets a list of all mempool SCP activity
+    app.get(strRoute + 'getmempoolactivity/:account',
+        cController.getMempoolActivity);
+
     // Gets a list of all changes related to the given address
     app.get(strRoute + 'listdeltas/:address',
         cController.listDeltas);

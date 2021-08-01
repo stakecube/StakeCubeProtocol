@@ -160,6 +160,7 @@ async function init(forcedCorePath = false, retry = false) {
             const fApiActivity = apiACTIVITY.init(app, {
                 'TOKENS': TOKENS,
                 'DB': DB,
+                'gfm': getFullMempool,
                 'rpcMain': rpcMain,
                 'isFullnode': isFullnodePtr
             });

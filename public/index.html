@@ -246,6 +246,169 @@
     let domStakingRedeem;
     let domStakingRoi;
 
+    function getMempoolDeltas(strCurrency) {
+      let nDelta = 0;
+      if (strCurrency === 'scc') {
+        // TODO: Add SCC InstantSend mempool-deltas
+      } else {
+        const cToken = isFullnode ? TOKENS.getToken(strCurrency) : getCachedToken(strCurrency);
+        if (cToken && !cToken.error) {
+          for (const cActivity of cachedActivityIS) {
+            if (cActivity.token.contract !== cToken.contract) continue;
+            if (cActivity.type === 'received' || cActivity.type === 'staked') {
+              nDelta += cActivity.amount;
+            } else if (cActivity.type === 'sent') {
+              nDelta -= cActivity.amount;
+            }
+          }
+        }
+      }
+      return nDelta;
+    }
+
+    function hasMempoolStakes(contract) {
+      let fStaked = false;
+      const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
+      if (cToken && !cToken.error) {
+        for (const cActivity of cachedActivityIS) {
+          if (cActivity.token.contract !== cToken.contract) continue;
+          if (cActivity.type === 'staked') {
+            fStaked = true;
+          }
+        }
+      }
+      return fStaked;
+    }
+
+    function addMockActivity(strType = "unknown", nAmount = 0, cToken) {
+      let cActivity = {
+          'id': null,
+          'token': {
+              'contract': cToken.contract,
+              'ticker': cToken.ticker,
+              'name': cToken.name
+          },
+          'block': 'Unconfirmed',
+          'contract': cToken.contract,
+          'account': WALLET.getActiveWallet().getPubkey(),
+          'type': strType,
+          'amount': nAmount,
+      }
+      cachedActivityIS.push(cActivity);
+    }
+
+    function updateMempoolActivity(arrNewActivity) {
+      cachedActivityIS = cachedActivityIS.concat(arrNewActivity).filter(function(item, pos) {
+        return cachedActivityIS.indexOf(item) == pos;
+      });
+    }
+
+    async function getMempoolActivity(account = false) {
+      const arrFullMempool = await getFullMempool();
+      const arrActivity = [];
+      // Loop all mempool TXs
+      for (const cTX of arrFullMempool) {
+          // Loop all TX vouts
+          for (const cVout of cTX.vout) {
+              if (!cVout.scriptPubKey) continue;
+              if (!cVout.scriptPubKey.hex) continue;
+              // Scan the scriptPubKey for OP_RETURN (+ PUSHDATA)
+              if (cVout.scriptPubKey.hex.startsWith('6a4c')) {
+                  // Found an OP_RETURN! Parse the message from HEX to UTF-8
+                  const rawHex = cVout.scriptPubKey.asm.substr(10);
+                  const buf = Buffer.from(rawHex, 'hex');
+                  const strOp = buf.toString('utf8');
+                  if (!strOp.includes(' ')) continue;
+                  const arrOp = strOp.split(' ');
+                  const isLongData = strOp.length > 64;
+                  let isUsingIndex = false;
+                  if (UPGRADES.isTokenIndexingActive(isFullnodePtr() ? nCacheHeight : cachedBlockCount)) {
+                      isUsingIndex = strOp.startsWith('id');
+                      arrOp[0] = Number(arrOp[0].substr(2));
+                  }
+                  // If one of these flags are enabled, this is highly likely a normal token event
+                  if (isLongData || isUsingIndex) {
+                      // Ensure the token is valid and exists
+                      const cToken = isFullnode ? TOKENS.getToken(arrOp[0]) : getCachedToken(arrOp[0]);
+                      if (!cToken || cToken.supply <= 0) continue;
+                      // Construct the caller's Activity object
+                      const cActivity = {
+                          'id': cTX.txid,
+                          'token': {
+                              'contract': cToken.contract,
+                              'ticker': cToken.ticker,
+                              'name': cToken.name
+                          },
+                          'block': (cTX.instantlock ? '⚡ C' : 'Unc') + 'onfirmed',
+                          'contract': cToken.contract,
+                          'account': cTX.vout[1].scriptPubKey.addresses[0],
+                          'type': 'unknown',
+                          'amount': 0
+                      };
+                      const cAccount = cActivity.account;
+                      // Identify the transaction type
+                      const operation = arrOp[1];
+                      switch (operation) {
+                      case 'mint':
+                          cActivity.type = 'received';
+                          cActivity.amount = Number(arrOp[2]);
+                          if (!account ||
+                                  (account && cAccount === account)) {
+                              arrActivity.push(cActivity);
+                          }
+                          break;
+
+                      case 'burn':
+                          cActivity.type = 'sent';
+                          cActivity.amount = Number(arrOp[2]);
+                          if (!account ||
+                                  (account && cAccount === account)) {
+                              arrActivity.push(cActivity);
+                          }
+                          break;
+
+                      case 'send':
+                          // Sender activity
+                          cActivity.type = 'sent';
+                          cActivity.amount = Number(arrOp[2]);
+                          if (!account ||
+                                  (account && cAccount === account)) {
+                              arrActivity.push(cActivity);
+                          }
+                          // Receiver activity
+                          const cRecvActivity = JSON.parse(
+                              JSON.stringify(cActivity));
+                          cRecvActivity.type = 'received';
+                          cRecvActivity.account = arrOp[3];
+                          if (!account ||
+                                  (account && arrOp[3] === account)) {
+                              arrActivity.push(cRecvActivity);
+                          }
+                          break;
+
+                      case 'redeem':
+                          cActivity.type = 'staked';
+                          const cStatus = isFullnode ? cToken.getStakingStatus(cAccount) :
+                                                       JSON.parse(await NET.getLightStakingStatus(cToken.contract, cAccount));
+                          cActivity.amount = cStatus.unclaimed_rewards;
+                          if (!account ||
+                                  (account && cAccount === account)) {
+                              arrActivity.push(cActivity);
+                          }
+                          break;
+
+                      default:
+                          break;
+                      }
+                      // End the vout loop
+                      break;
+                  }
+              }
+          }
+      }
+      return arrActivity;
+    }
+
     function getSyncPercentage() {
       // We measure based on our total SCP hash-cache, and our blocks since the start of SCP
       if (cachedBlockCount === 0 || chainHashesCache.length === 0) return 0;
@@ -399,9 +562,9 @@
       renderActivity();
     }
 
-    function getCachedToken(contract) {
+    function getCachedToken(query) {
       for (const cToken of cachedTokens) {
-        if (cToken.token.contract === contract) return cToken.token;
+        if (cToken.token.contract === query || cToken.token.index === Number(query)) return cToken.token;
       }
       return false;
     }
@@ -471,7 +634,18 @@
         cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
-          sendTransaction(strSignedTx, [cUTXO]);
+          addMockActivity("sent", sendAmount * COIN, cToken);
+          WALLET.broadcastTx(strSignedTx).then(strTXID => {
+            cUTXO.spent = true;
+            M.toast({html: 'Transaction Sent!', displayLength: 1250});
+            if (isFullnodePtr()) {
+              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+            } else {
+              NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
+                updateMempoolActivity(JSON.parse(strRes));
+              });
+            }
+          });
         });
       }
     }
@@ -495,11 +669,17 @@
         cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
-          sendTransaction(strSignedTx, [cUTXO], 'Redeeming, please wait for your claim to confirm on the network!');
-          domStakingRedeem.setAttribute('onclick', '');
-          domStakingRedeem.classList.add('disabled');
-          domStakingRedeem.innerText = 'Redeeming...';
-          //domStakingSubtitle.innerText = 'Your stake is being redeemed! Please wait until the next block to see your balance update.';
+          addMockActivity("staked", cAccount.unclaimed_balance, cToken);
+          WALLET.broadcastTx(strSignedTx).then(strTXID => {
+            cUTXO.spent = true;
+            if (isFullnodePtr()) {
+              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+            } else {
+              NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
+                updateMempoolActivity(JSON.parse(strRes));
+              });
+            }
+          });
         });
     }
 
@@ -550,6 +730,15 @@
         domClaimAllBtn.style.cursor = "pointer";
         //domClaimAllBtn.style.display = "none";
         domClaimAllBtn.style.opacity = 1;
+        isClaiming = false;
+        // Pull mempool transactions
+        if (isFullnodePtr()) {
+          updateMempoolActivity(await getMempoolActivity(WALLET.getActiveWallet().getPubkey()));
+        } else {
+          NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
+            updateMempoolActivity(JSON.parse(strRes));
+          });
+        }
         // Notify the user, finished!
         isClaiming = false;
         return M.toast({html: 'Redeemed ' + nClaims + ' rewards! Please wait for confirmations.', displayLength: 5000});
@@ -613,7 +802,20 @@
         cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
-          sendTransaction(strSignedTx, [cUTXO], 'Minting, please wait for your mint to confirm on the network!');
+          if (cToken && !cToken.error)
+            addMockActivity("received", amount, cToken);
+          WALLET.broadcastTx(strSignedTx).then(strTXID => {
+            cUTXO.spent = true;
+            const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
+            if (isFullnodePtr()) {
+              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+            } else {
+              NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
+                updateMempoolActivity(JSON.parse(strRes));
+              });
+            }
+            M.toast({html: 'Minting ' + (amount / COIN).toLocaleString('en-GB') + ' tokens!', displayLength: 3000});
+          });
         });
     }
 
@@ -633,7 +835,20 @@
         cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
-          sendTransaction(strSignedTx, [cUTXO], 'Burning, please wait for your mint to confirm on the network!');
+          if (cToken && !cToken.error)
+            addMockActivity("sent", amount, cToken);
+          WALLET.broadcastTx(strSignedTx).then(strTXID => {
+            cUTXO.spent = true;
+            const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
+            if (isFullnodePtr()) {
+              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+            } else {
+              NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
+                updateMempoolActivity(JSON.parse(strRes));
+              });
+            }
+            M.toast({html: 'Burning ' + (amount / COIN).toLocaleString('en-GB') + ' tokens!', displayLength: 3000});
+          });
         });
     }
 
@@ -851,6 +1066,13 @@
       getBlockCount();
       if (WALLET.getActiveWallet().getPubkey())
         getUnspentTransactions();
+      if (isFullnodePtr()) {
+        getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+      } else {
+        NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
+          updateMempoolActivity(JSON.parse(strRes));
+        });
+      }
       // Update Dashboard stats
       if (valueUSD > 0) {
         domBalanceUSD.innerText = (getBalance() * valueUSD).toFixed(2);
