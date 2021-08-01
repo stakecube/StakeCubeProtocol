@@ -27,7 +27,7 @@ function init(app, context) {
     // Get Tokens by Account
     app.get(strRoute + 'gettokensbyaccount/:account',
         cController.getTokensByAccount);
-    
+
     // Get an SCP-2 token's staking status for a single account
     app.get(strRoute + 'getstakingstatus/:contract/:account',
         cController.getStakingStatus);

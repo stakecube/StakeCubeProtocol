@@ -57,10 +57,6 @@ const getUnspentTransactions = function() {
         getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(arrActivity => {
             cachedActivityIS = arrActivity;
         });
-    } else {
-        NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
-          updateMempoolActivity(JSON.parse(strRes));
-        });
     }
     WALLET.refreshUTXOs(WALLET.getActiveWallet().getPubkey()).then(res => {
         const reloader = document.getElementById('balanceRefresh');
