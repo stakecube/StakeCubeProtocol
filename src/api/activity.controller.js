@@ -240,7 +240,7 @@ async function getMempoolActivity(req, res) {
                     if (isLongData || isUsingIndex) {
                         // Ensure the token is valid and exists
                         const cToken = TOKENS.getToken(arrOp[0]);
-                        if (!cToken || cToken.supply <= 0) continue;
+                        if (!cToken || cToken.error || cToken.supply <= 0) continue;
                         // Construct the caller's Activity object
                         const strConfType = (cTX.instantlock ? '⚡ C' : 'Unc');
                         const cActivity = {
