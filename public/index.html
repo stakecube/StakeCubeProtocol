@@ -650,7 +650,7 @@
               getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
             } else {
               NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
-                updateMempoolActivity(JSON.parse(strRes));
+                cachedActivityIS = JSON.parse(strRes);
               });
             }
           });
@@ -689,7 +689,7 @@
               getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
             } else {
               NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
-                updateMempoolActivity(JSON.parse(strRes));
+                cachedActivityIS = JSON.parse(strRes);
               });
             }
           });
@@ -750,16 +750,11 @@
         if (isFullnodePtr()) {
           updateMempoolActivity(await getMempoolActivity(WALLET.getActiveWallet().getPubkey()));
         } else {
-          NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
-            updateMempoolActivity(JSON.parse(strRes));
-          });
+          const strRes = await NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey());
+          cachedActivityIS = JSON.parse(strRes);
         }
         // Notify the user, finished!
         isClaiming = false;
-        // Pull mempool transactions
-        if (isFullnodePtr()) {
-          updateMempoolActivity(await getMempoolActivity(WALLET.getActiveWallet().getPubkey()));
-        }
         // Notify the user, finished!
         return M.toast({html: 'Redeemed ' + nClaims + ' rewards!', displayLength: 5000});
     }
@@ -831,7 +826,7 @@
               getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
             } else {
               NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
-                updateMempoolActivity(JSON.parse(strRes));
+                cachedActivityIS = JSON.parse(strRes);
               });
             }
             M.toast({html: 'Minting ' + (amount / COIN).toLocaleString('en-GB') + ' tokens!', displayLength: 3000});
@@ -864,7 +859,7 @@
               getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
             } else {
               NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
-                updateMempoolActivity(JSON.parse(strRes));
+                cachedActivityIS = JSON.parse(strRes);
               });
             }
             M.toast({html: 'Burning ' + (amount / COIN).toLocaleString('en-GB') + ' tokens!', displayLength: 3000});
@@ -1046,7 +1041,7 @@
       }
 
       // Also use this to update the Claim All button's visibility
-      if (cachedTokens.length && getSyncPercentage() >= 99.99) {
+      if ((!isFullnode && cachedTokens.length) || getSyncPercentage() >= 99.99) {
         let nPendingStakes = 0;
         for (const cToken of cachedTokens) {
           if (cToken.token.version !== 2) continue;
@@ -1100,7 +1095,7 @@
           getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
         } else {
           NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
-            updateMempoolActivity(JSON.parse(strRes));
+            cachedActivityIS = JSON.parse(strRes);
           });
         }
       }

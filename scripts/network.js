@@ -54,16 +54,22 @@ const getCoinSupply = function() {
 };
 const getUnspentTransactions = function() {
     if (isFullnodePtr()) {
-        getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(arrActivity => {
-            cachedActivityIS = arrActivity;
-        });
+        getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
     }
     WALLET.refreshUTXOs(WALLET.getActiveWallet().getPubkey()).then(res => {
         const reloader = document.getElementById('balanceRefresh');
         reloader.className = reloader.className.replace(/ playAnim/g, '');
         // Update the GUI with the newly cached UTXO set
-        getBalance(true);
-        refreshSendBalance();
+        if (!isFullnodePtr()) {
+            NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
+                cachedActivityIS = JSON.parse(strRes);
+                getBalance(true);
+                refreshSendBalance();
+            });
+        } else {
+            getBalance(true);
+            refreshSendBalance();
+        }
     });
 };
 const getTokensByAccountLight = function(address) {
