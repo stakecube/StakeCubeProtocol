@@ -12,11 +12,17 @@ const cPerms = require('./permissions.js');
 // Contextual pointers provided by the index.js process
 let ptrTOKENS;
 let ptrRpcMain;
+let ptrUPGRADES;
+let ptrGetBlockcount;
+let ptrGetFullMempool;
 let ptrIsFullnode;
 let strModule;
 
 function init(context) {
     ptrTOKENS = context.TOKENS;
+    ptrUPGRADES = context.UPGRADES;
+    ptrGetBlockcount = context.getBlockcount;
+    ptrGetFullMempool = context.gfm;
     ptrRpcMain = context.rpcMain;
     ptrIsFullnode = context.isFullnode;
     // Static Non-Pointer (native value)
@@ -192,6 +198,141 @@ async function listDeltas(req, res) {
     }
 }
 
+/* eslint-disable no-case-declarations */
+async function getMempoolActivity(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
+    if (!ptrIsFullnode()) {
+        return fullnodeError(res);
+    }
+    if (!req.params.account) {
+        return res.status(400).send('Missing "account" parameter!');
+    }
+    let account;
+    if (req.params.account.length !== 34 &&
+        req.params.account.toLowerCase() !== 'all') {
+        return res.status(400).send('Invalid "account" parameter! Use an' +
+                                        ' SCC address or "all" for all' +
+                                        ' activity data!');
+    } else if (req.params.account.length === 34) {
+        account = req.params.account;
+    } // else, no account, so use 'all'
+    try {
+        const arrFullMempool = await ptrGetFullMempool();
+        const arrActivity = [];
+        // Loop all mempool TXs
+        for (const cTX of arrFullMempool) {
+            // Loop all TX vouts
+            for (const cVout of cTX.vout) {
+                if (!cVout.scriptPubKey) continue;
+                if (!cVout.scriptPubKey.hex) continue;
+                // Scan the scriptPubKey for OP_RETURN (+ PUSHDATA)
+                if (cVout.scriptPubKey.hex.startsWith('6a4c')) {
+                    // Found an OP_RETURN! Parse the message from HEX to UTF-8
+                    const rawHex = cVout.scriptPubKey.asm.substr(10);
+                    const buf = Buffer.from(rawHex, 'hex');
+                    const strOp = buf.toString('utf8');
+                    if (!strOp.includes(' ')) continue;
+                    const arrOp = strOp.split(' ');
+                    const isLongData = strOp.length > 64;
+                    let isUsingIndex = false;
+                    if (ptrUPGRADES.isTokenIndexingActive(ptrGetBlockcount())) {
+                        isUsingIndex = strOp.startsWith('id');
+                        arrOp[0] = Number(arrOp[0].substr(2));
+                    }
+                    // If one of these flags are enabled, this is highly likely a normal token event
+                    if (isLongData || isUsingIndex) {
+                        // Ensure the token is valid and exists
+                        const cToken = ptrTOKENS.getToken(arrOp[0]);
+                        if (!cToken || cToken.error || cToken.supply <= 0) {
+                            continue;
+                        }
+                        // Construct the caller's Activity object
+                        const strConfType = (cTX.instantlock ? '⚡ C' : 'Unc');
+                        const cActivity = {
+                            'id': cTX.txid,
+                            'token': {
+                                'contract': cToken.contract,
+                                'ticker': cToken.ticker,
+                                'name': cToken.name
+                            },
+                            'block': strConfType + 'onfirmed',
+                            'contract': cToken.contract,
+                            'account': cTX.vout[1].scriptPubKey.addresses[0],
+                            'type': 'unknown',
+                            'amount': 0
+                        };
+                        const cAccount = cActivity.account;
+                        // Identify the transaction type
+                        const operation = arrOp[1];
+                        switch (operation) {
+                        case 'mint':
+                            cActivity.type = 'received';
+                            cActivity.amount = Number(arrOp[2]);
+                            if (!account ||
+                                    (account && cAccount === account)) {
+                                arrActivity.push(cActivity);
+                            }
+                            break;
+
+                        case 'burn':
+                            cActivity.type = 'sent';
+                            cActivity.amount = Number(arrOp[2]);
+                            if (!account ||
+                                    (account && cAccount === account)) {
+                                arrActivity.push(cActivity);
+                            }
+                            break;
+
+                        case 'send':
+                            // Sender activity
+                            cActivity.type = 'sent';
+                            cActivity.amount = Number(arrOp[2]);
+                            if (!account ||
+                                    (account && cAccount === account)) {
+                                arrActivity.push(cActivity);
+                            }
+                            // Receiver activity
+                            const cRecvActivity = JSON.parse(
+                                JSON.stringify(cActivity));
+                            cRecvActivity.type = 'received';
+                            cRecvActivity.account = arrOp[3];
+                            if (!account ||
+                                    (account && arrOp[3] === account)) {
+                                arrActivity.push(cRecvActivity);
+                            }
+                            break;
+
+                        case 'redeem':
+                            cActivity.type = 'staked';
+                            const cStatus = cToken.getStakingStatus(cAccount);
+                            cActivity.amount = cStatus.unclaimed_rewards;
+                            if (!account ||
+                                    (account && cAccount === account)) {
+                                arrActivity.push(cActivity);
+                            }
+                            break;
+
+                        default:
+                            break;
+                        }
+                        // End the vout loop
+                        break;
+                    }
+                }
+            }
+        }
+        return res.json(arrActivity);
+    } catch(e) {
+        console.error("Network error on API '" + strModule +
+                      "/getmempoolactivity'");
+        console.error(e);
+        return res.status(400).send('Internal API Error');
+    }
+}
+/* eslint-enable no-case-declarations */
+
 function fullnodeError(res) {
     return res.status(403).json({
         'error': 'This endpoint is only available to Full-nodes, please ' +
@@ -210,4 +351,5 @@ exports.getActivity = getActivity;
 exports.getAllActivity = getAllActivity;
 exports.getBlockActivity = getBlockActivity;
 exports.getActivityByTxid = getActivityByTxid;
+exports.getMempoolActivity = getMempoolActivity;
 exports.listDeltas = listDeltas;

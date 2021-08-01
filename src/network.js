@@ -77,6 +77,11 @@ async function getActivityLight(address) {
     return await get(rootSCCNet + 'scp/activity/getallactivity/' + address);
 }
 
+async function getMempoolActivityLight(address) {
+    return await get(rootSCCNet + 'scp/activity/getmempoolactivity/' +
+                     address);
+}
+
 async function getDeltasLight(address) {
     return await get(rootSCCNet + 'scp/wallet/listdeltas/' + address);
 }
@@ -109,6 +114,7 @@ async function getLatestRelease() {
 exports.get = get;
 exports.post = post;
 exports.getActivityLight = getActivityLight;
+exports.getMempoolActivityLight = getMempoolActivityLight;
 exports.getDeltasLight = getDeltasLight;
 exports.getLightUTXOs = getLightUTXOs;
 exports.getLightStakingStatus = getLightStakingStatus;

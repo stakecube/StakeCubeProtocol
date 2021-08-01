@@ -11,6 +11,12 @@ const regedit = require('regedit');
 
 let isFullnode = false;
 let isScanningBlocks = false;
+let nCacheHeight = 0;
+
+// A getter-pointer function for the block count
+function getBlockcount() {
+    return nCacheHeight;
+}
 
 // A getter-pointer function for the fullnode flag
 function isFullnodePtr() {
@@ -160,6 +166,9 @@ async function init(forcedCorePath = false, retry = false) {
             const fApiActivity = apiACTIVITY.init(app, {
                 'TOKENS': TOKENS,
                 'DB': DB,
+                'UPGRADES': UPGRADES,
+                'getBlockcount': getBlockcount,
+                'gfm': getFullMempool,
                 'rpcMain': rpcMain,
                 'isFullnode': isFullnodePtr
             });
@@ -371,7 +380,6 @@ if (process.platform === 'win32') {
 const chainMessages = [];
 const chainHashesCache = [];
 let nCacheScannedBlks = 0;
-let nCacheHeight = 0;
 let currentScanBlock = null;
 async function getMsgsFromChain(nBlocksTotal, rescanPossible = false) {
     isScanningBlocks = true;

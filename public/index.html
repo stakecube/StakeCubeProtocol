@@ -251,8 +251,8 @@
       if (strCurrency === 'scc') {
         // TODO: Add SCC InstantSend mempool-deltas
       } else {
-        const cToken = TOKENS.getToken(strCurrency);
-        if (!cToken.error) {
+        const cToken = isFullnode ? TOKENS.getToken(strCurrency) : getCachedToken(strCurrency);
+        if (cToken && !cToken.error) {
           for (const cActivity of cachedActivityIS) {
             if (cActivity.token.contract !== cToken.contract) continue;
             if (cActivity.type === 'received' || cActivity.type === 'staked') {
@@ -268,8 +268,8 @@
 
     function hasMempoolStakes(contract) {
       let fStaked = false;
-      const cToken = TOKENS.getToken(contract);
-      if (!cToken.error) {
+      const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
+      if (cToken && !cToken.error) {
         for (const cActivity of cachedActivityIS) {
           if (cActivity.token.contract !== cToken.contract) continue;
           if (cActivity.type === 'staked') {
@@ -322,15 +322,15 @@
                   const arrOp = strOp.split(' ');
                   const isLongData = strOp.length > 64;
                   let isUsingIndex = false;
-                  if (UPGRADES.isTokenIndexingActive(nCacheHeight)) {
+                  if (UPGRADES.isTokenIndexingActive(isFullnodePtr() ? nCacheHeight : cachedBlockCount)) {
                       isUsingIndex = strOp.startsWith('id');
                       arrOp[0] = Number(arrOp[0].substr(2));
                   }
                   // If one of these flags are enabled, this is highly likely a normal token event
                   if (isLongData || isUsingIndex) {
                       // Ensure the token is valid and exists
-                      const cToken = TOKENS.getToken(arrOp[0]);
-                      if (!cToken || cToken.supply <= 0) continue;
+                      const cToken = isFullnode ? TOKENS.getToken(arrOp[0]) : getCachedToken(arrOp[0]);
+                      if (!cToken || cToken.error || cToken.supply <= 0) continue;
                       // Construct the caller's Activity object
                       const cActivity = {
                           'id': cTX.txid,
@@ -339,7 +339,7 @@
                               'ticker': cToken.ticker,
                               'name': cToken.name
                           },
-                          'block': (cTX.instantlock ? '⚡ ' : '') + 'Unconfirmed',
+                          'block': (cTX.instantlock ? '⚡ C' : 'Unc') + 'onfirmed',
                           'contract': cToken.contract,
                           'account': cTX.vout[1].scriptPubKey.addresses[0],
                           'type': 'unknown',
@@ -388,7 +388,8 @@
 
                       case 'redeem':
                           cActivity.type = 'staked';
-                          const cStatus = cToken.getStakingStatus(cAccount);
+                          const cStatus = isFullnode ? cToken.getStakingStatus(cAccount) :
+                                                       JSON.parse(await NET.getLightStakingStatus(cToken.contract, cAccount));
                           cActivity.amount = cStatus.unclaimed_rewards;
                           if (!account ||
                                   (account && cAccount === account)) {
@@ -568,9 +569,9 @@
       renderActivity();
     }
 
-    function getCachedToken(contract) {
+    function getCachedToken(query) {
       for (const cToken of cachedTokens) {
-        if (cToken.token.contract === contract) return cToken.token;
+        if (cToken.token.contract === query || cToken.token.index === Number(query)) return cToken.token;
       }
       return false;
     }
@@ -647,6 +648,10 @@
             M.toast({html: 'Transaction Sent!', displayLength: 1250});
             if (isFullnodePtr()) {
               getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+            } else {
+              NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
+                updateMempoolActivity(JSON.parse(strRes));
+              });
             }
           });
         });
@@ -682,6 +687,10 @@
             cUTXO.spent = true;
             if (isFullnodePtr()) {
               getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+            } else {
+              NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
+                updateMempoolActivity(JSON.parse(strRes));
+              });
             }
           });
         });
@@ -736,6 +745,16 @@
         domClaimAllBtn.style.cursor = "pointer";
         domClaimAllBtn.style.display = "none";
         domClaimAllBtn.style.opacity = 1;
+        isClaiming = false;
+        // Pull mempool transactions
+        if (isFullnodePtr()) {
+          updateMempoolActivity(await getMempoolActivity(WALLET.getActiveWallet().getPubkey()));
+        } else {
+          NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
+            updateMempoolActivity(JSON.parse(strRes));
+          });
+        }
+        // Notify the user, finished!
         isClaiming = false;
         // Pull mempool transactions
         if (isFullnodePtr()) {
@@ -810,6 +829,10 @@
             const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
             if (isFullnodePtr()) {
               getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+            } else {
+              NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
+                updateMempoolActivity(JSON.parse(strRes));
+              });
             }
             M.toast({html: 'Minting ' + (amount / COIN).toLocaleString('en-GB') + ' tokens!', displayLength: 3000});
           });
@@ -839,6 +862,10 @@
             const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
             if (isFullnodePtr()) {
               getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+            } else {
+              NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
+                updateMempoolActivity(JSON.parse(strRes));
+              });
             }
             M.toast({html: 'Burning ' + (amount / COIN).toLocaleString('en-GB') + ' tokens!', displayLength: 3000});
           });
@@ -1071,6 +1098,10 @@
         getUnspentTransactions();
         if (isFullnodePtr()) {
           getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+        } else {
+          NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
+            updateMempoolActivity(JSON.parse(strRes));
+          });
         }
       }
       // Update Dashboard stats

@@ -233,3 +233,47 @@ Example: `curl -X GET "https://stakecubecoin.net/web3/scp/activity/listdeltas/sb
 </details>  
 
 ---
+
+**Get Mempool Activity**
+
+Gets the mempool activity (including InstantSend), optionally for a specific account only.
+
+```bash
+GET /api/v1/activity/getmempoolactivity/:account
+```
+
+Example: `curl -X GET "https://stakecubecoin.net/web3/scp/activity/getmempoolactivity/all"`
+
+**Fullnode required**: YES
+
+**Parameters**:
+
+| Name | Mandatory | Description |
+|---------|---------|---------|
+| account | YES | The account address OR `all` |
+
+<details>
+<summary><strong>Example Response</strong></summary>
+<p>
+
+```json
+[
+  {
+    "id": "9ff7ffaf9fcc3a7d39f6ff9a978f3ef4b1fc991fedf8bfb0b34f5832f3f1da4f",
+    "token": {
+      "contract": "69a3bd3c864b69390e02cc43a0f9725d2736f8129cea527e333af472bc92a05b",
+      "ticker": "TEST",
+      "name": "SCP-Faucet"
+    },
+    "block": "⚡ Confirmed",
+    "contract": "69a3bd3c864b69390e02cc43a0f9725d2736f8129cea527e333af472bc92a05b",
+    "account": "sXtD...",
+    "type": "staked",
+    "amount": 526161692
+  },
+  ...
+]
+```
+
+</p>
+</details>  
