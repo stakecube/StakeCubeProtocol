@@ -12,12 +12,16 @@ const cPerms = require('./permissions.js');
 // Contextual pointers provided by the index.js process
 let ptrTOKENS;
 let ptrRpcMain;
+let ptrUPGRADES;
+let ptrGetBlockcount;
 let ptrGetFullMempool;
 let ptrIsFullnode;
 let strModule;
 
 function init(context) {
     ptrTOKENS = context.TOKENS;
+    ptrUPGRADES = context.UPGRADES;
+    ptrGetBlockcount = context.getBlockcount;
     ptrGetFullMempool = context.gfm;
     ptrRpcMain = context.rpcMain;
     ptrIsFullnode = context.isFullnode;
@@ -194,6 +198,7 @@ async function listDeltas(req, res) {
     }
 }
 
+/* eslint-disable no-case-declarations */
 async function getMempoolActivity(req, res) {
     if (!cPerms.isModuleAllowed(strModule)) {
         return disabledError(res);
@@ -207,7 +212,7 @@ async function getMempoolActivity(req, res) {
     let account;
     if (req.params.account.length !== 34 &&
         req.params.account.toLowerCase() !== 'all') {
-            return res.status(400).send('Invalid "account" parameter! Use an' +
+        return res.status(400).send('Invalid "account" parameter! Use an' +
                                         ' SCC address or "all" for all' +
                                         ' activity data!');
     } else if (req.params.account.length === 34) {
@@ -232,15 +237,17 @@ async function getMempoolActivity(req, res) {
                     const arrOp = strOp.split(' ');
                     const isLongData = strOp.length > 64;
                     let isUsingIndex = false;
-                    if (UPGRADES.isTokenIndexingActive(nCacheHeight)) {
+                    if (ptrUPGRADES.isTokenIndexingActive(ptrGetBlockcount())) {
                         isUsingIndex = strOp.startsWith('id');
                         arrOp[0] = Number(arrOp[0].substr(2));
                     }
                     // If one of these flags are enabled, this is highly likely a normal token event
                     if (isLongData || isUsingIndex) {
                         // Ensure the token is valid and exists
-                        const cToken = TOKENS.getToken(arrOp[0]);
-                        if (!cToken || cToken.error || cToken.supply <= 0) continue;
+                        const cToken = ptrTOKENS.getToken(arrOp[0]);
+                        if (!cToken || cToken.error || cToken.supply <= 0) {
+                            continue;
+                        }
                         // Construct the caller's Activity object
                         const strConfType = (cTX.instantlock ? '⚡ C' : 'Unc');
                         const cActivity = {
@@ -324,6 +331,7 @@ async function getMempoolActivity(req, res) {
         return res.status(400).send('Internal API Error');
     }
 }
+/* eslint-enable no-case-declarations */
 
 function fullnodeError(res) {
     return res.status(403).json({
