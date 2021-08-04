@@ -544,7 +544,8 @@ async function processState(newMsg, tx) {
             TBD
             --- SCP-4 ---
             param 0 = VERSION (int)
-            param 1 = COLLECTIONNAME (str)            
+            param 1 = COLLECTIONNAME (str)          
+            param 2 = MAXSUPPLY (int) # -1 for no max supply   
         */
         const arrParams = newMsg.split(' ');
         let nVersion = -1;
@@ -568,7 +569,7 @@ async function processState(newMsg, tx) {
                     break;
                 case 4: // SCP-4 NFT
                     nVersion = 4;
-                    nExpectedParams = 2;
+                    nExpectedParams = 3;
                     break;
             }
         }
@@ -606,7 +607,9 @@ async function processState(newMsg, tx) {
                     break;
                 case 4: // SCP-4 NFT
                     check1 = arrParams[1].length > 0;
-                    if (check1) sCheck = true;
+                    check2 = Number(arrParams[2]);
+                    check2 = (check2 === -1 || (check2 > 0 && Number.isSafeInteger(check2))); // SCP-4 max supply
+                    if (check1 && check2) sCheck = true;
                     break;
             }
             
@@ -657,7 +660,8 @@ async function processState(newMsg, tx) {
                         if (nVersion === 4) {
                             newContract = new NFT.SCP4(tx.txid,
                                 arrParams[1],
-                                addrCaller,
+                                Number(arrParams[2]),
+                                addrCaller,                                
                                 []);
                             
                             NFT.addNFT(newContract);
