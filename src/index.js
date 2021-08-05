@@ -664,7 +664,7 @@ async function processState(newMsg, tx) {
                                 addrCaller,                                
                                 []);
                             
-                            NFT.addNFT(newContract);
+                            NFT.addCollection(newContract);
                         }
                         
                         console.log('New SCP-' + nVersion + ' contract created!');
@@ -716,7 +716,7 @@ async function processState(newMsg, tx) {
             // One of them is empty for now. 
             // TODO: improve and check what contract type it is
             const cToken = TOKENS.getToken(idContract);
-            const cNFT = NFT.getNFT(idContract);
+            const cCollection = NFT.getCollection(idContract);
 
             if (cToken && !cToken.error) {
                 // SCP TOKEN MINTING (Create new tokens on-demand, issuer-only, cannot mint above predefined max supply)
@@ -864,7 +864,7 @@ async function processState(newMsg, tx) {
                 }
             }
 
-            if (cNFT && !cNFT.error) {
+            if (cCollection && !cCollection.error) {
                 // SCP NFT MINTING (Create new NFT for the collection, issuer-only)
                 if (arrParams[1] === 'mint') {
                     /*
@@ -881,32 +881,32 @@ async function processState(newMsg, tx) {
                             throw Error('Missing creator address!');
                         }
                         // Check the change output against the NFT issuer
-                        if (addrCaller === cNFT.creator) {
+                        if (addrCaller === cCollection.creator) {
                             // Authentication: Ensure all inputs of the TX are from the issuer
                             const fSafe = await isCallAuthorized(tx,
                                 addrCaller);
                             if (fSafe) {
                                 // Authentication successful, mint NFT!
-                                cNFT.mintNFT(cNFT.creator, arrParams[2], arrParams[3], tx); 
+                                cCollection.mintNFT(cCollection.creator, arrParams[2], arrParams[3], tx); 
                             } else {
                                 console.error('An attempt to mint SCP-' +
-                                              cNFT.version + ' ' +
+                                              cCollection.version + ' ' +
                                               'containing a non-issuer input ' +
                                               'was detected, ignoring ' +
                                               'request...');
                             }
                         } else {
                             console.error('An attempt by a non-issuer to mint' +
-                                          ' SCP-' + cNFT.version + ' NFT' +
+                                          ' SCP-' + cCollection.version + ' NFT' +
                                           ' failed! (Issuer: ' +
-                                          cNFT.creator.substr(0, 5) + '... ' +
+                                          cCollection.creator.substr(0, 5) + '... ' +
                                           'Caller: ' + addrCaller.substr(0, 5) +
                                           '...)');
                         }
                     } else {
-                        console.error('An attempt to mint SCP-' +
-                                      cNFT.version +
-                                      ' NFT failed: no valid name and/or image url given! (Collection: ' + cNFT.collectionName + ')');
+                        console.warn('An attempt to mint SCP-' +
+                                      cCollection.version +
+                                      ' NFT failed: no valid name and/or image url given! (Collection: ' + cCollection.collectionName + ')');
                     }
                 }
             }
