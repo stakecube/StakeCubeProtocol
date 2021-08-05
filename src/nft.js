@@ -45,13 +45,44 @@ class SCP4 {
             'id': tx.txid,
             'name': name,
             'imgUrl': imgUrl,
-            'owner': address,
-            'block': tx.height
+            'owner': address,            
+            'activity': [{
+                'tx': tx.txid,
+                'type': 'mint',
+                'from': null,
+                'to': address,
+                'block': tx.height
+            }]
         });
 
         this.supply += 1;
         console.log("SCP-4: Issuer minted new NFT for '" +
                     this.collectionName + "'!");
+        return true;
+    }
+
+    transfer(acc1, acc2, nftId, tx) {
+        // Ensure the NFT exists and account 1 (sender) owns it
+        const nft = getNFTptr(nftId)
+        if (!nft || nft.error || nft.owner !== acc1) { // Fail if not valid NFT or owner not matching
+            console.error("SCP-4: Attempted to transfer NFT '" + nftId + "' failed. NFT not found or not owned by sender!");
+            return;
+        }
+
+        // Switch owner        
+        nft.owner = acc2;
+
+        // Add activity
+        nft.activity.push({
+            'id': tx.txid,
+            'type': 'transfer',
+            'from': acc1,
+            'to': acc2,
+            'block': tx.height
+        });
+        
+        console.log("SCP-" + this.version + ": NFT '" +
+        nftId + "' transferred from '" + acc1 + "' to '" + acc2 + "'!");
         return true;
     }
 }
@@ -94,6 +125,23 @@ function getCollection(query) {
     };
 }
 
+function getNFTptr(nftId) {    
+    // Loop all collections
+    for (const collection of stateCollections) {
+        // Loop NFTs
+        for (const nft of collection.nfts) {
+            if (nft.id === nftId) return nft;
+        }
+    }
+
+    // If we reach here, no NFT found!
+    return {
+        'error': true,
+        'message': 'NFT is not indexed in current chain state.',
+        'id': 10
+    };
+}
+
 function getAllNFTsByAccount(address) {
     // Find a list of NFTs in all collections via address
     const arrNFTs = [];
@@ -102,7 +150,7 @@ function getAllNFTsByAccount(address) {
         // Search for the account
         for (const nft of collection.nfts) {
             if(nft.owner === address)
-                arrNFTs.push({ 'nft': nft.id, 'name': nft.name, 'imgUrl': nft.imgUrl, 'collection': collection.contract, 'collectionName': collection.collectionName });
+                arrNFTs.push({ 'nft': nft.id, 'name': nft.name, 'imgUrl': nft.imgUrl, 'collection': collection.contract, 'collectionIndex': collection.index, 'collectionName': collection.collectionName, 'activity': nft.activity });
         }
     }
     return arrNFTs;
@@ -115,14 +163,14 @@ function getNFTbyId(query) {
         // Loop NFTs
         for (const nft of collection.nfts) {
             if (nft.id === query) 
-                return { 'nft': nft.id, 'name': nft.name, 'imgUrl': nft.imgUrl, 'collection': collection.contract, 'collectionName': collection.collectionName };
+                return { 'nft': nft.id, 'name': nft.name, 'imgUrl': nft.imgUrl, 'collection': collection.contract, 'collectionIndex': collection.index, 'collectionName': collection.collectionName, 'owner': nft.owner, 'activity': nft.activity };
         }
     }
     // If we reach here, no NFT found!
     return {
         'error': true,
         'message': 'NFT is not indexed in current chain state.',
-        'id': 10
+        'id': 11
     };
 }
 
@@ -132,5 +180,6 @@ exports.SCP4 = SCP4;
 exports.getCollectionPtr = getCollectionPtr;
 exports.addCollection = addCollection;
 exports.getCollection = getCollection;
+exports.getNFTptr = getNFTptr;
 exports.getAllNFTsByAccount = getAllNFTsByAccount;
 exports.getNFTbyId = getNFTbyId;

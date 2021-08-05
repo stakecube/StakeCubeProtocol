@@ -909,6 +909,38 @@ async function processState(newMsg, tx) {
                                       ' NFT failed: no valid name and/or image url given! (Collection: ' + cCollection.collectionName + ')');
                     }
                 }
+                // SCP NFT TRANSFER (Transfer NFT to another account, usable by anyone)
+                else if (arrParams[1] === 'transfer') {
+                    /*                        
+                        param 2 = RECEIVER (address str)
+                        param 3 = NFTID (str)
+                    */
+                    // Fetch the change output of the contract call TX, assume the change output is the caller.
+                    const addrCaller = tx.vout[1].scriptPubKey.addresses[0];
+                    if (isEmpty(addrCaller)) {
+                        throw Error('Missing caller address!');
+                    }
+                    // Run sanity checks
+                    const check3 = arrParams[2] && (await rpcMain.call('validateaddress', arrParams[2])).isvalid;
+                    const check4 = arrParams[3] && arrParams[3].length === 64;
+
+                    if (check3 && check4) {
+                        // Authentication: Ensure all inputs of the TX are from the caller
+                        const fSafe = await isCallAuthorized(tx, addrCaller);
+                        if (fSafe) {
+                            // Authentication successful, transfer NFT!
+                            cCollection.transfer(addrCaller, arrParams[2], arrParams[3], tx);
+                        } else {
+                            console.error('An attempt to transfer SCP-' +
+                                          cCollection.version + ' containing a ' +
+                                          'non-caller input was detected, ' +
+                                          'ignoring request...');
+                        }
+                    } else {
+                        console.warn('An attempt to transfer SCP-' +
+                                      cCollection.version + ' NFT failed: missing or not valid params!');
+                    }
+                }
             }
         }
     }
