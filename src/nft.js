@@ -75,7 +75,7 @@ class SCP4 {
 
         // Add activity
         nft.activity.push({
-            'id': tx.txid,
+            'tx': tx.txid,
             'type': 'transfer',
             'from': acc1,
             'to': acc2,
@@ -84,6 +84,39 @@ class SCP4 {
         
         console.log("SCP-" + this.version + ": NFT '" +
         nftId + "' transferred from '" + acc1 + "' to '" + acc2 + "'!");
+        return true;
+    }
+
+    destroy(acc, collection, nftId, tx) {
+        // Ensure the Collection is not protected
+        const coll = getCollection(collection)
+        console.log(coll)
+        if (!coll || coll.error || coll.protected) { // Fail if not valid collection or protected
+            console.error("SCP-4: Attempt to destroy NFT '" + nftId + "' failed. NFT not found or protected!");
+            return;
+        }
+
+        // Ensure the NFT exists and account 1 (sender) owns it
+        const nft = getNFTptr(nftId)
+        if (!nft || nft.error || nft.owner !== acc) { // Fail if not valid NFT or owner not matching
+            console.error("SCP-4: Attempt to destroy NFT '" + nftId + "' failed. NFT not found or not owned by caller!");
+            return;
+        }
+
+        // Destroy NFT by removing owner from state 
+        nft.owner = null;
+
+        // Add activity
+        nft.activity.push({
+            'tx': tx.txid,
+            'type': 'destroy',
+            'from': acc,
+            'to': null,
+            'block': tx.height
+        });
+        
+        console.log("SCP-" + this.version + ": NFT '" +
+        nftId + "' destroyed by '" + acc + "'!");
         return true;
     }
 }

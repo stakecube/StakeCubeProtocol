@@ -951,6 +951,35 @@ async function processState(newMsg, tx) {
                                       cCollection.version + ' NFT failed: missing or not valid params!');
                     }
                 }
+                // SCP NFT DESTROY (Remove NFT from account, usable by owner and only in non-protected collections)
+                else if (arrParams[1] === 'destroy') {                
+                    /*
+                        param 2 = NFT ID (str)
+                    */
+                    const check3 = arrParams[2] && arrParams[2].length === 64;
+
+                    if (check3) {
+                        // Fetch the change output of the contract call TX, assume the change output is the caller.
+                        const addrCaller = tx.vout[1].scriptPubKey.addresses[0];
+                        if (isEmpty(addrCaller)) {
+                            throw Error('Missing caller address!');
+                        }
+                        // Authentication: Ensure all inputs of the TX are from the caller
+                        const fSafe = await isCallAuthorized(tx, addrCaller);
+                        if (fSafe) {
+                            // Authentication successful, destroy NFT!
+                            cCollection.destroy(addrCaller, arrParams[0], arrParams[2], tx);
+                        } else {
+                            console.error('An attempt to destroy SCP-' +
+                                          cToken.version + ' NFT containing a ' +
+                                          'non-issuer input was detected, ' +
+                                          'ignoring request...');
+                        }
+                    } else {
+                        console.warn('An attempt to destroy SCP-' +
+                                      cCollection.version + ' NFT failed: missing or not valid params!');
+                    }
+                }
             }
         }
     }
