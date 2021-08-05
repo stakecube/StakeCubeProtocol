@@ -35,7 +35,7 @@ class SCP4 {
     mintNFT(address, name, imgUrl, tx) {
         // Ensure mint does not exceed the maximum supply (if set)
         if (this.maxSupply !== -1 && (this.supply + 1) > this.maxSupply) {
-            console.error("SCP-4: Attempted mint for collection '" +
+            console.warn("SCP-4: Attempted mint for collection '" +
                             this.collectionName + "' exceeds maximum supply of '" +
                             this.maxSupply + "'!");
             return false;
@@ -66,7 +66,7 @@ class SCP4 {
         // Ensure the NFT exists and account 1 (sender) owns it
         const nft = getNFTptr(nftId)
         if (!nft || nft.error || nft.owner !== acc1) { // Fail if not valid NFT or owner not matching
-            console.error("SCP-4: Attempted to transfer NFT '" + nftId + "' failed. NFT not found or not owned by sender!");
+            console.warn("SCP-4: Attempted to transfer NFT '" + nftId + "' failed. NFT not found or not owned by sender!");
             return;
         }
 
@@ -90,16 +90,15 @@ class SCP4 {
     destroy(acc, collection, nftId, tx) {
         // Ensure the Collection is not protected
         const coll = getCollection(collection)
-        console.log(coll)
         if (!coll || coll.error || coll.protected) { // Fail if not valid collection or protected
-            console.error("SCP-4: Attempt to destroy NFT '" + nftId + "' failed. NFT not found or protected!");
+            console.warn("SCP-4: Attempt to destroy NFT '" + nftId + "' failed. NFT not found or protected!");
             return;
         }
 
         // Ensure the NFT exists and account 1 (sender) owns it
         const nft = getNFTptr(nftId)
         if (!nft || nft.error || nft.owner !== acc) { // Fail if not valid NFT or owner not matching
-            console.error("SCP-4: Attempt to destroy NFT '" + nftId + "' failed. NFT not found or not owned by caller!");
+            console.warn("SCP-4: Attempt to destroy NFT '" + nftId + "' failed. NFT not found or not owned by caller!");
             return;
         }
 

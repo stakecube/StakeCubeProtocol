@@ -899,14 +899,14 @@ async function processState(newMsg, tx) {
                                 // Authentication successful, mint NFT!
                                 cCollection.mintNFT(cCollection.creator, arrParams[2], arrParams[3], tx); 
                             } else {
-                                console.error('An attempt to mint SCP-' +
+                                console.warn('An attempt to mint SCP-' +
                                               cCollection.version + ' ' +
                                               'containing a non-issuer input ' +
                                               'was detected, ignoring ' +
                                               'request...');
                             }
                         } else {
-                            console.error('An attempt by a non-issuer to mint' +
+                            console.warn('An attempt by a non-issuer to mint' +
                                           ' SCP-' + cCollection.version + ' NFT' +
                                           ' failed! (Issuer: ' +
                                           cCollection.creator.substr(0, 5) + '... ' +
@@ -941,7 +941,7 @@ async function processState(newMsg, tx) {
                             // Authentication successful, transfer NFT!
                             cCollection.transfer(addrCaller, arrParams[2], arrParams[3], tx);
                         } else {
-                            console.error('An attempt to transfer SCP-' +
+                            console.warn('An attempt to transfer SCP-' +
                                           cCollection.version + ' containing a ' +
                                           'non-caller input was detected, ' +
                                           'ignoring request...');
@@ -970,7 +970,7 @@ async function processState(newMsg, tx) {
                             // Authentication successful, destroy NFT!
                             cCollection.destroy(addrCaller, arrParams[0], arrParams[2], tx);
                         } else {
-                            console.error('An attempt to destroy SCP-' +
+                            console.warn('An attempt to destroy SCP-' +
                                           cToken.version + ' NFT containing a ' +
                                           'non-issuer input was detected, ' +
                                           'ignoring request...');
