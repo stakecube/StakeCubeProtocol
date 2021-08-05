@@ -387,6 +387,11 @@ function getUTXOsPtr() {
     return arrUTXOs;
 }
 
+// Returns the direct Wallets cache pointer, NOT recommended for most usage
+function getWalletsPtr() {
+    return arrWallets;
+}
+
 // Lib exports
 exports.sccjs = sccjs;
 // Class
@@ -414,5 +419,6 @@ exports.getIncomingUTXOs = getIncomingUTXOs;
 exports.getAvailableUTXOs = getAvailableUTXOs;
 exports.getCoinsToSpend = getCoinsToSpend;
 exports.getUTXOsPtr = getUTXOsPtr;
+exports.getWalletsPtr = getWalletsPtr;
 exports.countWallets = countWallets;
 exports.toDB = toDB;

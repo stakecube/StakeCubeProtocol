@@ -92,11 +92,10 @@ async function listAddresses(req, res) {
     }
     try {
         const arrAddresses = [];
-        const cWalletDB = ptrWALLET.toDB();
-        for (const cAddr of cWalletDB.wallets) {
+        for (const cWallet of ptrWALLET.getWalletsPtr()) {
             arrAddresses.push({
-                'address': cAddr.pubkey,
-                'unlocked': cAddr.privkeyDecrypted.length > 0
+                'address': cWallet.getPubkey(),
+                'unlocked': cWallet.getPrivkey() !== null
             });
         }
         return res.json(arrAddresses);
