@@ -865,14 +865,16 @@ async function processState(newMsg, tx) {
             }
 
             if (cNFT && !cNFT.error) {
-                // SCP NFT MINTING (Create new NFT on-demand for the collection, issuer-only)
+                // SCP NFT MINTING (Create new NFT for the collection, issuer-only)
                 if (arrParams[1] === 'mint') {
                     /*
-                        param 2 = IMAGE_URL (string) // IPFS recommended
+                        param 2 = NAME (string)
+                        param 3 = IMAGE_URL (string) // IPFS recommended
                     */
-                    const check3 = arrParams[2].length > 1; // TODO: Improve _url_ validation
+                    const check3 = arrParams[2] && arrParams[2].length > 1;
+                    const check4 = arrParams[3] && arrParams[3].length > 1; // TODO: Improve _url_ validation
 
-                    if (check3) {
+                    if (check3 && check4) {
                         // Grab change output --> Ensure change output is the contract issuer
                         const addrCaller = tx.vout[1].scriptPubKey.addresses[0];
                         if (isEmpty(addrCaller)) {
@@ -885,7 +887,7 @@ async function processState(newMsg, tx) {
                                 addrCaller);
                             if (fSafe) {
                                 // Authentication successful, mint NFT!
-                                // TODO: cNFT.mintNFT(arrParams[2]); 
+                                cNFT.mintNFT(cNFT.creator, arrParams[2], arrParams[3], tx); 
                             } else {
                                 console.error('An attempt to mint SCP-' +
                                               cNFT.version + ' ' +
@@ -904,7 +906,7 @@ async function processState(newMsg, tx) {
                     } else {
                         console.error('An attempt to mint SCP-' +
                                       cNFT.version +
-                                      ' NFT failed: no valid image url given! (Collection: ' + cNFT.collectionName + ')');
+                                      ' NFT failed: no valid name and/or image url given! (Collection: ' + cNFT.collectionName + ')');
                     }
                 }
             }

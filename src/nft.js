@@ -31,7 +31,45 @@ class SCP4 {
     }
 
     // ACCOUNTING METHODS
-    // TODO
+    mintNFT(address, name, imgUrl, tx) {
+        // Ensure mint does not exceed the maximum supply (if set)
+        if (this.maxSupply !== -1 && (this.supply + 1) > this.maxSupply) {
+            console.error("SCP-4: Attempted mint for collection '" +
+                            this.collectionName + "' exceeds maximum supply of '" +
+                            this.maxSupply + "'!");
+            return false;
+        }
+
+        // Search for an already-existing acccount
+        const cAcc = this.getAccount(address);
+        // If no account was found, we create one on-the-fly
+        if (!cAcc) {
+            this.owners.push({
+                'address': address,
+                'inventory': [
+                    {
+                        'id': tx.txid,
+                        'name': name,
+                        'imgUrl': imgUrl,
+                        'block': tx.height
+                    }
+                ]
+            });
+        } 
+        // Found existing account, append NFT to the Inventory!
+        else {        
+            cAcc.inventory.push({
+                'id': tx.txid,
+                'name': name,
+                'imgUrl': imgUrl,
+                'block': tx.height
+            });
+        }
+        this.supply += 1;
+        console.log("SCP-4: Issuer minted new NFT for '" +
+                    this.collectionName + "'!");
+        return true;
+    }
 
     // Search for an SCP-4 account by address
     getAccount(address) {
