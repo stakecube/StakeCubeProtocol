@@ -18,13 +18,14 @@ const stateCollections = [];
 
 // SCP-4: (SCP-4 represents 'barebones' NFTs, with an issuer-only minting process, with: mint and transfer functionality)
 class SCP4 {
-    constructor(contract, collectionName, maxSupply, creator, nfts) {
+    constructor(contract, collectionName, maxSupply, collectionProtected, creator, nfts) {
         this.index = -1;
         this.version = 4;
         this.contract = contract;
         this.collectionName = collectionName;        
         this.supply = 0;
         this.maxSupply = maxSupply; // -1 = infinity
+        this.protected = collectionProtected; // Default: true
         this.creator = creator;
         this.nfts = nfts;
         if (typeof this.nfts !== 'object') this.nfts = [];
