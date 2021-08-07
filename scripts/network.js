@@ -54,7 +54,7 @@ const getCoinSupply = function() {
 };
 const getUnspentTransactions = function() {
     if (isFullnodePtr()) {
-        getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+        getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(arrRes => cachedActivityIS = arrRes);
     }
     WALLET.refreshUTXOs(WALLET.getActiveWallet().getPubkey()).then(res => {
         const reloader = document.getElementById('balanceRefresh');

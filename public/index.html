@@ -297,12 +297,6 @@
       cachedActivityIS.push(cActivity);
     }
 
-    function updateMempoolActivity(arrNewActivity) {
-      cachedActivityIS = cachedActivityIS.concat(arrNewActivity).filter(function(item, pos) {
-        return cachedActivityIS.indexOf(item) == pos;
-      });
-    }
-
     async function getMempoolActivity(account = false) {
       const arrFullMempool = await getFullMempool();
       const arrActivity = [];
@@ -647,7 +641,7 @@
             cUTXO.spent = true;
             M.toast({html: 'Transaction Sent!', displayLength: 1250});
             if (isFullnodePtr()) {
-              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(arrRes => cachedActivityIS = arrRes);
             } else {
               NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
                 cachedActivityIS = JSON.parse(strRes);
@@ -686,7 +680,7 @@
           WALLET.broadcastTx(strSignedTx).then(strTXID => {
             cUTXO.spent = true;
             if (isFullnodePtr()) {
-              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(arrRes => cachedActivityIS = arrRes);
             } else {
               NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
                 cachedActivityIS = JSON.parse(strRes);
@@ -748,7 +742,7 @@
         isClaiming = false;
         // Pull mempool transactions
         if (isFullnodePtr()) {
-          updateMempoolActivity(await getMempoolActivity(WALLET.getActiveWallet().getPubkey()));
+          cachedActivityIS = await getMempoolActivity(WALLET.getActiveWallet().getPubkey());
         } else {
           const strRes = await NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey());
           cachedActivityIS = JSON.parse(strRes);
@@ -823,7 +817,7 @@
             cUTXO.spent = true;
             const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
             if (isFullnodePtr()) {
-              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(arrRes => cachedActivityIS = arrRes);
             } else {
               NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
                 cachedActivityIS = JSON.parse(strRes);
@@ -856,7 +850,7 @@
             cUTXO.spent = true;
             const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
             if (isFullnodePtr()) {
-              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(arrRes => cachedActivityIS = arrRes);
             } else {
               NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
                 cachedActivityIS = JSON.parse(strRes);
@@ -1092,7 +1086,7 @@
       if (WALLET.getActiveWallet().getPubkey()) {
         getUnspentTransactions();
         if (isFullnodePtr()) {
-          getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(updateMempoolActivity);
+          getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(arrRes => cachedActivityIS = arrRes);
         } else {
           NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
             cachedActivityIS = JSON.parse(strRes);
