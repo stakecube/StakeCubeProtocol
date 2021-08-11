@@ -118,4 +118,188 @@ Example: `curl -X GET "http://https://stakecubecoin.net/web3/scp/io/read/acf7e9f
 ```
 
 </p>
+</details>
+
+---
+
+**Create DApp ID**
+
+Deploy a DApp ID to the Blockchain, this will return an Identifier (the TX-ID of the deployment) alongside a storage contract, which allows immutable and mutable read/write operations.
+
+```bash
+GET /api/v1/io/createid/:address/:type
+```
+
+Example: `curl -X GET "localhost:3000/api/v1/io/createid/sc49Bo2Y8NBy4ASB9Bb2Xh3kbqTtFfPrEw/meta"`
+
+**Fullnode required**: YES
+
+**Parameters**:
+
+| Name | Mandatory | Description |
+|---------|---------|---------|
+| address | YES | The SCC address to deploy from |
+| type | YES | Currently only `meta` option supported |
+
+<details>
+<summary><strong>Example Response</strong></summary>
+<p>
+
+```json
+{
+    "note": "The given 'txid' is your DApp Identifier, please use this when calling your DApp!",
+    "txid": "acf7e9f8081c053dd16b4e4afc5ea5f2feb4c9d5b5b8ad3fbb5b4291342b81f2",
+    "rawTx": "020000000139EAF02107EAFD4DF7B1B57E4B4932631001B7AA9EFA85C063DEFD9BDFC635AF000000006B483045022100A2CAE4F4B961ECF23DEEB01B679DDCE3DC53CF418B591E42B724998E588BC61202202735D7C23B9E8BB5B9371F61547B38F73AD060FEAE31F9F8E206A4207AB09378012102649E331DBEE371E569E278189D15065F0C0C7C7E8A355DE64A02BF975882B32DFFFFFFFF0201000000000000000F6A4C0C48692053435020644170707370DFF505000000001976A914C35141B5DEF6FE8EDC8F806B7A3221DBC7C356BC88AC00000000"
+}
+```
+
+</p>
 </details>  
+
+---
+
+**Storage: Push string to array (Immutable)**
+
+Pushes (appends) a custom string into a DApp's storage contract array.
+
+```bash
+POST /api/v1/io/storage/push/:address/:id
+```
+
+Example: `curl -d "Hi SCP dApps" "localhost:3000/api/v1/io/storage/push/sc49Bo2Y8NBy4ASB9Bb2Xh3kbqTtFfPrEw/acf7e9f8081c053dd16b4e4afc5ea5f2feb4c9d5b5b8ad3fbb5b4291342b81f2"`
+
+**Fullnode required**: YES
+
+**Parameters**:
+
+| Name | Mandatory | Description |
+|---------|---------|---------|
+| address | YES | The SCC address to deploy from |
+| id | YES | The DApp ID of the storage contract |
+
+**POST Body**:
+
+| Name | Mandatory | Description |
+|---------|---------|---------|
+| data | YES | Data (up to 400 bytes) |
+
+<details>
+<summary><strong>Example Response</strong></summary>
+<p>
+
+```json
+{
+    "txid": "acf7e9f8081c053dd16b4e4afc5ea5f2feb4c9d5b5b8ad3fbb5b4291342b81f2",
+    "rawTx": "020000000139EAF02107EAFD4DF7B1B57E4B4932631001B7AA9EFA85C063DEFD9BDFC635AF000000006B483045022100A2CAE4F4B961ECF23DEEB01B679DDCE3DC53CF418B591E42B724998E588BC61202202735D7C23B9E8BB5B9371F61547B38F73AD060FEAE31F9F8E206A4207AB09378012102649E331DBEE371E569E278189D15065F0C0C7C7E8A355DE64A02BF975882B32DFFFFFFFF0201000000000000000F6A4C0C48692053435020644170707370DFF505000000001976A914C35141B5DEF6FE8EDC8F806B7A3221DBC7C356BC88AC00000000"
+}
+```
+
+</p>
+</details>  
+
+---
+
+**Storage: Read string array**
+
+Returns all items written via 'push' to a storage contract.
+
+```bash
+GET /api/v1/io/storage/getall/:id
+```
+
+Example: `curl -X GET "http://https://stakecubecoin.net/web3/scp/io/storage/getall/acf7e9f8081c053dd16b4e4afc5ea5f2feb4c9d5b5b8ad3fbb5b4291342b81f2"`
+
+**Fullnode required**: YES
+
+**Parameters**:
+
+| Name | Mandatory | Description |
+|---------|---------|---------|
+| id | YES | The DApp ID of the storage contract |
+
+<details>
+<summary><strong>Example Response</strong></summary>
+<p>
+
+```json
+[
+    "Hi SCP dApps"
+]
+```
+
+</p>
+</details>
+
+---
+
+**Storage: Set a key's value (Mutable)**
+
+Sets the value of a key within a storage contract, this will create a new key if the specified one doesn't exist, and will overwrite the value of a key if it was previously set.
+
+```bash
+POST /api/v1/io/storage/setkey/:address/:id/:key
+```
+
+Example: `curl -d "Hi SCP dApps" "localhost:3000/api/v1/io/storage/setkey/sc49Bo2Y8NBy4ASB9Bb2Xh3kbqTtFfPrEw/acf7e9f8081c053dd16b4e4afc5ea5f2feb4c9d5b5b8ad3fbb5b4291342b81f2/testkey"`
+
+**Fullnode required**: YES
+
+**Parameters**:
+
+| Name | Mandatory | Description |
+|---------|---------|---------|
+| address | YES | The SCC address to deploy from |
+| id | YES | The DApp ID of the storage contract |
+| key | YES | The string name of the key to write to |
+
+**POST Body**:
+
+| Name | Mandatory | Description |
+|---------|---------|---------|
+| data | YES | Data (up to 400 bytes) |
+
+<details>
+<summary><strong>Example Response</strong></summary>
+<p>
+
+```json
+{
+    "txid": "acf7e9f8081c053dd16b4e4afc5ea5f2feb4c9d5b5b8ad3fbb5b4291342b81f2",
+    "rawTx": "020000000139EAF02107EAFD4DF7B1B57E4B4932631001B7AA9EFA85C063DEFD9BDFC635AF000000006B483045022100A2CAE4F4B961ECF23DEEB01B679DDCE3DC53CF418B591E42B724998E588BC61202202735D7C23B9E8BB5B9371F61547B38F73AD060FEAE31F9F8E206A4207AB09378012102649E331DBEE371E569E278189D15065F0C0C7C7E8A355DE64A02BF975882B32DFFFFFFFF0201000000000000000F6A4C0C48692053435020644170707370DFF505000000001976A914C35141B5DEF6FE8EDC8F806B7A3221DBC7C356BC88AC00000000"
+}
+```
+
+</p>
+</details>  
+
+---
+
+**Storage: Read a key's value**
+
+Returns the value of a key from a storage contract, will throw an error if the key does not exist.
+
+```bash
+GET /api/v1/io/storage/getkey/:id/:key
+```
+
+Example: `curl -X GET "http://https://stakecubecoin.net/web3/scp/io/storage/getkey/acf7e9f8081c053dd16b4e4afc5ea5f2feb4c9d5b5b8ad3fbb5b4291342b81f2/testkey"`
+
+**Fullnode required**: YES
+
+**Parameters**:
+
+| Name | Mandatory | Description |
+|---------|---------|---------|
+| id | YES | The DApp ID of the storage contract |
+| key | YES | The string name of the key to read |
+
+<details>
+<summary><strong>Example Response</strong></summary>
+<p>
+
+```json
+"Hi SCP dApps"
+```
+
+</p>
+</details>
