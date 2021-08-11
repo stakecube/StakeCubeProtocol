@@ -39,7 +39,7 @@ function init(app, context) {
     // Get a list of strings stored in a storage contract
     app.get(strRoute + 'storage/getall/:id',
         cController.getAllFromStorage);
-    
+
     // Get the value of a key stored in a storage contract
     app.get(strRoute + 'storage/getkey/:id/:key',
         cController.getKeyFromStorage);

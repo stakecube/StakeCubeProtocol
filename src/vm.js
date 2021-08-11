@@ -14,12 +14,12 @@
 
 const OP = {
     'deploy': 0xde, // 222
-    'write': 0xdf   // 223
-}
+    'write': 0xdf // 223
+};
 
-let STATE = {
+const STATE = {
     // 'meta' is a reserved state key with key/value & array string storage for DApps
-    meta: []
+    'meta': []
 };
 
 // Run an SCP VM contract and return the results
@@ -30,23 +30,23 @@ async function run(tx, strContract = String()) {
         // Ensure there's some actual data
         if (!strContract || !strContract.length) return false;
         // Make sure there's at least 2 possible instructions
-        let arrInput = strContract.split(' ');
+        const arrInput = strContract.split(' ');
         if (arrInput.length < 2) return false;
-        
+
         // Execute the logic step-by-step
-        let i, len = arrInput.length, stopExec = false;
-        for (i=0; i<len; i++) {
+        let i; const len = arrInput.length; let stopExec = false;
+        for (i = 0; i < len; i++) {
             // Prev. instruction asked us to stop running this contract
             if (stopExec) break;
 
             // Parse the opcode (this will throw if non-int)
-            let op = parseInt(arrInput[i], 16);
+            const op = parseInt(arrInput[i], 16);
 
             // Find the opcode instruction
             if (op === OP.deploy) {
                 // Execute Deploy with the given params, if successful, end execution gracefully
                 stopExec = true;
-                if (deploy(tx, arrInput[i+1])) {
+                if (deploy(tx, arrInput[i + 1])) {
                     success = true;
                 } else {
                     success = false;
@@ -56,20 +56,20 @@ async function run(tx, strContract = String()) {
                 stopExec = true;
                 // Check we have all necessary params:
                 // Identifier
-                const check1 = arrInput[i+1] && arrInput[i+1].length === 64;
-                const strID = arrInput[i+1];
+                const check1 = arrInput[i + 1] && arrInput[i + 1].length === 64;
+                const strID = arrInput[i + 1];
                 // Data Type
-                let check2 = arrInput[i+2] && arrInput[i+2].length;
-                const strType = arrInput[i+2];
+                const check2 = arrInput[i + 2] && arrInput[i + 2].length;
+                const strType = arrInput[i + 2];
                 // Combined checks
-                let check3 = check1 && check2;
+                const check3 = check1 && check2;
                 if (check3) {
                     if (strType === 'push') {
                         write(strID, strType, strContract);
                         success = true;
                     } else if (strType === 'key') {
                         // Map Key
-                        const strKey = arrInput[i+3];
+                        const strKey = arrInput[i + 3];
                         if (strKey && strKey.length) {
                             write(strID, strType, strContract, strKey);
                             success = true;
@@ -87,12 +87,12 @@ async function run(tx, strContract = String()) {
                 // Should we refactor this somehow? More advanced 'TX type' detection?
                 // I just fear degrading sync performance, these checks must be very low-resource / low CPU cycle.
 
-                //console.error('VM: Interpretation failed, invalid opcode "' +
+                // console.error('VM: Interpretation failed, invalid opcode "' +
                 //              op + '"!');
                 return false;
             }
         }
-    } catch (e) {
+    } catch(e) {
         console.error('VM: Execution failure, ' + e);
         success = false;
     }

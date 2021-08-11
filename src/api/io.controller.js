@@ -251,7 +251,7 @@ async function writePushToStorage(req, res) {
         cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         // SCP output
         cTx.addoutputburn(0.00000001,
-                          ptrVM.createWritePushScript(strID, strData));
+            ptrVM.createWritePushScript(strID, strData));
         // Fee & Change output
         const nFee = ptrWALLET.getFee(cTx.serialize().length);
         const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
@@ -332,7 +332,7 @@ async function writeKeyToStorage(req, res) {
         cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         // SCP output
         cTx.addoutputburn(0.00000001,
-                          ptrVM.createWriteKeyScript(strID, strKey, strData));
+            ptrVM.createWriteKeyScript(strID, strKey, strData));
         // Fee & Change output
         const nFee = ptrWALLET.getFee(cTx.serialize().length);
         const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
@@ -368,7 +368,8 @@ async function getAllFromStorage(req, res) {
         const strID = req.params.id;
         const arrData = ptrVM.getMetaStateByIdPtr(strID);
         if (arrData === undefined || !arrData) {
-            return res.status(400).send('No storage contract exists with ID (' + strID + ')');
+            return res.status(400).send('No storage contract exists with ID (' +
+                                        strID + ')');
         }
         return res.json(arrData);
     } catch(e) {
@@ -397,7 +398,9 @@ async function getKeyFromStorage(req, res) {
         const strKey = req.params.key;
         const strData = ptrVM.getMetaKeyStr(strID, strKey);
         if (strData === undefined || !strData) {
-            return res.status(400).send('Storage Key does not exist, or the specified storage contract does not exist!');
+            return res.status(400)
+                .send('Storage Key does not exist, or the ' +
+                         'specified storage contract does not exist!');
         }
         return res.json(strData);
     } catch(e) {
