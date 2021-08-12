@@ -559,12 +559,13 @@
     }
 
     function getCachedToken(query) {
-      const nQuery = Number(query);
-      return cachedTokens.find(a => (a.token.index === nQuery || a.token.contract === query)) || false;
+      const cToken = cachedTokens.find(a => a.token.contract === query);
+      return cToken.token || false;
     }
 
     function getCachedAccount(ctoken) {
-      return cachedTokens.find(a => a.token.contract === ctoken.contract).account || false;
+      const cToken = cachedTokens.find(a => a.token.contract === ctoken.contract);
+      return cToken.account || false;
     }
 
     function isScpTx(strTx) {
@@ -635,6 +636,7 @@
               NET.getMempoolActivityLight(strAddr).then(strRes => {
                 cachedActivityIS = JSON.parse(strRes);
               });
+              getUnspentTransactions();
             }
           });
         });
@@ -675,6 +677,7 @@
               NET.getMempoolActivityLight(strAddr).then(strRes => {
                 cachedActivityIS = JSON.parse(strRes);
               });
+              getUnspentTransactions();
             }
           });
         });
@@ -813,6 +816,7 @@
               NET.getMempoolActivityLight(strAddr).then(strRes => {
                 cachedActivityIS = JSON.parse(strRes);
               });
+              getUnspentTransactions();
             }
             M.toast({html: 'Minting ' + (amount / COIN).toLocaleString('en-GB') + ' tokens!', displayLength: 3000});
           });
@@ -847,6 +851,7 @@
               NET.getMempoolActivityLight(strAddr).then(strRes => {
                 cachedActivityIS = JSON.parse(strRes);
               });
+              getUnspentTransactions();
             }
             M.toast({html: 'Burning ' + (amount / COIN).toLocaleString('en-GB') + ' tokens!', displayLength: 3000});
           });
@@ -1084,6 +1089,7 @@
           NET.getMempoolActivityLight(strAddr).then(strRes => {
             cachedActivityIS = JSON.parse(strRes);
           });
+          getUnspentTransactions();
         }
       }
       // Update Dashboard stats
