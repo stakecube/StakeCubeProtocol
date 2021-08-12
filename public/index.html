@@ -109,7 +109,7 @@
 
   <script>
     function finishLogin() {
-      let nPass = document.getElementById("pass1").value;
+      const nPass = document.getElementById("pass1").value;
       decryptWallet(nPass).then(done => {
         if (done) {
           document.getElementById("pass1").value = "";
@@ -121,9 +121,8 @@
             }
           });
           // Give the cache a kick
-          setTimeout(() => {
-            getBalance(true);
-          }, 750);
+          getBlockCount();
+          getUnspentTransactions();
           // If an update is available, notify the user after a brief period
           if (isOutdated) {
             setTimeout(() => {
@@ -281,7 +280,7 @@
     }
 
     function addMockActivity(strType = "unknown", nAmount = 0, cToken) {
-      let cActivity = {
+      const cActivity = {
           'id': null,
           'token': {
               'contract': cToken.contract,
@@ -411,17 +410,17 @@
     }
 
     function getBalance(updateGUI = false) {
-      let nBalance = WALLET.getBalance();
+      const strPubkey = WALLET.getActiveWallet().getPubkey();
+      const nBalance = WALLET.getBalance(strPubkey);
 
       // Update the GUI too, if chosen
       if (updateGUI) {
         // --- Update SCC Balances
         // Set the balance, and adjust font-size for large balance strings
-        domBalance.innerHTML = nBalance.toLocaleString('en-GB', { maximumFractionDigits: 8 });
+        domBalance.innerText = nBalance.toLocaleString('en-GB', { maximumFractionDigits: 8 });
         if (valueUSD > 0)
           domBalanceUSD.innerText = (nBalance * valueUSD).toFixed(2);
         // And update the Receive page pubkey
-        let strPubkey = WALLET.getActiveWallet().getPubkey();
         domReceiveAddress.innerText = strPubkey;
 
         // --- Update SCP token balances
@@ -454,7 +453,7 @@
             } else {
               let fStaked = hasMempoolStakes(cToken.token.contract);
               if (!fStaked) {
-                let nRewards = (cToken.account.unclaimed_balance / COIN);
+                const nRewards = (cToken.account.unclaimed_balance / COIN);
                 // Ensure we have unclaimed stakes, and the token has not hit max supply yet
                 if (cToken.account.unclaimed_balance > 0 && (cToken.token.supply + cToken.account.unclaimed_balance) < cToken.token.maxSupply)
                   stakingText = ' <i style="opacity:0.5;">(+' + nRewards.toLocaleString('en-GB', { maximumFractionDigits: (nRewards > 0.1 ? 2 : 8 ) }) + ')</i>';
@@ -494,7 +493,7 @@
           renderActivity();
       }
 
-      return Number(nBalance.toFixed(8));
+      return nBalance;
     }
 
     function renderActivity() {
@@ -507,16 +506,12 @@
         // (SCC view ONLY) Sort the individual output deltas into per-transaction deltas
         if (!activityViewSCP) {
           for (const cDelta of arrView) {
-            let fFoundTx = false;
-            for (const cTxDelta of arrTxView) {
-              // Found a previous TX delta for this output, merge into one
-              if (cDelta.txid === cTxDelta.txid) {
-                cTxDelta.satoshis += cDelta.satoshis;
-                fFoundTx = true;
-              }
-            }
-            // Didn't find any TX deltas, add a new one (Deep Clone)
-            if (!fFoundTx) {
+            const cFoundTx = arrTxView.find(a => a.txid === cDelta.txid);
+            if (cFoundTx) {
+              // Found a prev. TX delta, merge the values
+              cFoundTx.satoshis += cDelta.satoshis;
+            } else {
+              // Didn't find any TX deltas, add a new one (Deep Clone)
               arrTxView.push(JSON.parse(JSON.stringify(cDelta)));
             }
           }
@@ -564,86 +559,80 @@
     }
 
     function getCachedToken(query) {
-      for (const cToken of cachedTokens) {
-        if (cToken.token.contract === query || cToken.token.index === Number(query)) return cToken.token;
-      }
-      return false;
+      const nQuery = Number(query);
+      return cachedTokens.find(a => (a.token.index === nQuery || a.token.contract === query)) || false;
     }
 
-    function getCachedAccount(ctoken, address) {
-      for (const cToken of cachedTokens) {
-        if (cToken.token.contract === ctoken.contract) return cToken.account;
-      }
-      return false;
+    function getCachedAccount(ctoken) {
+      return cachedTokens.find(a => a.token.contract === ctoken.contract).account || false;
     }
 
     function isScpTx(strTx) {
-      for (const cActivity of cachedActivity) {
-        if (cActivity.id === strTx) return true;
-      }
-      return false;
+      return cachedActivity.findIndex(a => a.id === strTx) !== -1;
     }
 
     function sendTransactionGUI() {
-      let coinSelection = document.getElementById("sendingCoinVal").value;
-      let sendAmount = Number(document.getElementById("sendAmount").value.trim());
-      let sendAddress = document.getElementById("sendAddress").value.trim();
+      const coinSelection = document.getElementById("sendingCoinVal").value;
+      const sendAmount = Number(document.getElementById("sendAmount").value.trim());
+      const sendAddress = document.getElementById("sendAddress").value.trim();
       if (!sendAmount || !Number.isFinite(sendAmount)) {
         return M.toast({html: 'Please enter a valid amount!', displayLength: 2000});
       }
       if (!sendAddress || sendAddress.length !== 34 || !sendAddress.startsWith("s")) {
         return M.toast({html: 'Please enter a valid address!', displayLength: 2000});
       }
+      const strAddr = WALLET.getActiveWallet().getPubkey();
+      const strPrivkey = WALLET.getActiveWallet().getPrivkey();
       if (coinSelection === "scc") {
         console.log("Constructing TX of value: " + sendAmount + " SCC");
-        let cTx = WALLET.sccjs.tx.transaction();
+        const cTx = WALLET.sccjs.tx.transaction();
         // Inputs
-        let usedUTXOs = WALLET.getCoinsToSpend(sendAmount * COIN, false, WALLET.getActiveWallet().getPubkey());
-        let nUTXOs = usedUTXOs.reduce((a, b) => {return a + b.sats}, 0);
+        const usedUTXOs = WALLET.getCoinsToSpend(sendAmount * COIN, false, strAddr);
+        const nUTXOs = usedUTXOs.reduce((a, b) => {return a + b.sats}, 0);
         for (const cUTXO of usedUTXOs)
           cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         if (sendAmount >= nUTXOs / COIN) return M.toast({html: 'Not enough funds!', displayLength: 2000});
         // Destination output
         cTx.addoutput(sendAddress, sendAmount);
         // Fee & Change output
-        let nFee = WALLET.getFee(cTx.serialize().length);
-        let nSpent = (parseFloat(nFee) + parseFloat(sendAmount)).toFixed(8);
-        let nChange = (parseFloat(nUTXOs / COIN) - parseFloat(nSpent)).toFixed(8);
-        cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
+        const nFee = WALLET.getFee(cTx.serialize().length);
+        const nSpent = (nFee + sendAmount).toFixed(8);
+        const nChange = ((nUTXOs / COIN) - nSpent).toFixed(8);
+        cTx.addoutput(strAddr, nChange);
         // Broadcast
-        cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
+        cTx.sign(strPrivkey, 1).then(strSignedTx => {
           sendTransaction(strSignedTx, usedUTXOs);
         });
       } else {
-        let strToken = coinSelection.split('scptoken-')[1];
-        let cToken = isFullnode ? TOKENS.getToken(strToken) : getCachedToken(strToken);
-        let cAccount = isFullnode ? cToken.getAccount(WALLET.getActiveWallet().getPubkey()) : getCachedAccount(cToken, WALLET.getActiveWallet().getPubkey());
+        const strToken = coinSelection.substr(9);
+        const cToken = isFullnode ? TOKENS.getToken(strToken) : getCachedToken(strToken);
+        const cAccount = isFullnode ? cToken.getAccount(strAddr) : getCachedAccount(cToken);
         const nBal = getMempoolDeltas(cToken.contract) + cAccount.balance;
         if ((nBal / COIN) < sendAmount) return M.toast({html: 'You don\'t have enough ' + cToken.ticker + '!', displayLength: 3000});
         console.log("Constructing SCP-" + cToken.version + " Transfer TX for: " + sendAmount + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
-        let cTx = WALLET.sccjs.tx.transaction();
+        const cTx = WALLET.sccjs.tx.transaction();
         // Add input
-        let cUTXO = WALLET.getCoinsToSpend(10000, true, WALLET.getActiveWallet().getPubkey())[0];
+        const cUTXO = WALLET.getCoinsToSpend(10000, true, strAddr)[0];
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
         cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         // SCP output
-        let fIndexed = UPGRADES.isTokenIndexingActive(isFullnodePtr() ? nCacheHeight : cachedBlockCount);
-        let idContract = fIndexed ? "id" + cToken.index : cToken.contract;
-        cTx.addoutputburn(0.00000001, idContract + " send " + (sendAmount * COIN).toFixed(0) + " " + sendAddress);
+        const fIndexed = UPGRADES.isTokenIndexingActive(isFullnodePtr() ? nCacheHeight : cachedBlockCount);
+        const idContract = fIndexed ? "id" + cToken.index : cToken.contract;
+        cTx.addoutputburn(0.00000001, idContract + " send " + Math.round(sendAmount * COIN) + " " + sendAddress);
         // Fee & Change output
-        let nFee = WALLET.getFee(cTx.serialize().length);
-        let nChange = (parseFloat(cUTXO.sats / COIN) - parseFloat(nFee)).toFixed(8);
-        cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
+        const nFee = WALLET.getFee(cTx.serialize().length);
+        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
+        cTx.addoutput(strAddr, nChange);
         // Broadcast
-        cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
+        cTx.sign(strPrivkey, 1).then(strSignedTx => {
           addMockActivity("sent", sendAmount * COIN, cToken);
           WALLET.broadcastTx(strSignedTx).then(strTXID => {
             cUTXO.spent = true;
             M.toast({html: 'Transaction Sent!', displayLength: 1250});
             if (isFullnodePtr()) {
-              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(arrRes => cachedActivityIS = arrRes);
+              getMempoolActivity(strAddr).then(arrRes => cachedActivityIS = arrRes);
             } else {
-              NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
+              NET.getMempoolActivityLight(strAddr).then(strRes => {
                 cachedActivityIS = JSON.parse(strRes);
               });
             }
@@ -653,36 +642,37 @@
     }
 
     function claimStakingRewards(contract) {
-        let cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
-        let cAccount = isFullnode ? cToken.getAccount(WALLET.getActiveWallet().getPubkey()) : getCachedAccount(cToken, WALLET.getActiveWallet().getPubkey());
+        const strAddr = WALLET.getActiveWallet().getPubkey();
+        const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
+        const cAccount = isFullnode ? cToken.getAccount(strAddr) : getCachedAccount(cToken);
         console.log("Constructing SCP-" + cToken.version + " stake claim TX for " + (cAccount.unclaimed_balance / COIN).toLocaleString('en-GB') + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
         // Disable claim button
         domStakingRedeem.setAttribute('onclick', '');
         domStakingRedeem.classList.add('disabled');
         domStakingRedeem.innerText = 'Redeeming...';
         // Contruct SCP transaction
-        let cTx = WALLET.sccjs.tx.transaction();
+        const cTx = WALLET.sccjs.tx.transaction();
         // Add input
-        let cUTXO = WALLET.getCoinsToSpend(2000, true, WALLET.getActiveWallet().getPubkey())[0];
+        const cUTXO = WALLET.getCoinsToSpend(2000, true, strAddr)[0];
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
         cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         // SCP output
-        let fIndexed = UPGRADES.isTokenIndexingActive(isFullnodePtr() ? nCacheHeight : cachedBlockCount);
-        let idContract = fIndexed ? "id" + cToken.index : cToken.contract;
+        const fIndexed = UPGRADES.isTokenIndexingActive(isFullnodePtr() ? nCacheHeight : cachedBlockCount);
+        const idContract = fIndexed ? "id" + cToken.index : cToken.contract;
         cTx.addoutputburn(0.00000001, idContract + " redeem");
         // Fee & Change output
-        let nFee = WALLET.getFee(cTx.serialize().length);
-        let nChange = (parseFloat(cUTXO.sats / COIN) - parseFloat(nFee)).toFixed(8);
-        cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
+        const nFee = WALLET.getFee(cTx.serialize().length);
+        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
+        cTx.addoutput(strAddr, nChange);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
           addMockActivity("staked", cAccount.unclaimed_balance, cToken);
           WALLET.broadcastTx(strSignedTx).then(strTXID => {
             cUTXO.spent = true;
             if (isFullnodePtr()) {
-              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(arrRes => cachedActivityIS = arrRes);
+              getMempoolActivity(strAddr).then(arrRes => cachedActivityIS = arrRes);
             } else {
-              NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
+              NET.getMempoolActivityLight(strAddr).then(strRes => {
                 cachedActivityIS = JSON.parse(strRes);
               });
             }
@@ -705,20 +695,20 @@
           domClaimAllBtn.style.cursor = "default";
           domClaimAllBtn.innerText = "Claiming " + cToken.token.ticker;
           // Init wallet & TX constructor
-          let cTx = WALLET.sccjs.tx.transaction();
+          const cTx = WALLET.sccjs.tx.transaction();
           // Asynchronously sync UTXOs with the network
           await WALLET.refreshUTXOs(cWallet.getPubkey());
           // Add input
-          let cUTXO = WALLET.getCoinsToSpend(2000, true, cWallet.getPubkey())[0];
+          const cUTXO = WALLET.getCoinsToSpend(2000, true, cWallet.getPubkey())[0];
           if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
           cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
           // SCP output
-          let fIndexed = UPGRADES.isTokenIndexingActive(isFullnodePtr() ? nCacheHeight : cachedBlockCount);
-          let idContract = fIndexed ? "id" + cToken.token.index : cToken.token.contract;
+          const fIndexed = UPGRADES.isTokenIndexingActive(isFullnodePtr() ? nCacheHeight : cachedBlockCount);
+          const idContract = fIndexed ? "id" + cToken.token.index : cToken.token.contract;
           cTx.addoutputburn(0.00000001, idContract + " redeem");
           // Fee & Change output
-          let nFee = WALLET.getFee(cTx.serialize().length);
-          let nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
+          const nFee = WALLET.getFee(cTx.serialize().length);
+          const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
           cTx.addoutput(cWallet.getPubkey(), nChange);
           // Sign & Broadcast
           const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
@@ -729,9 +719,9 @@
           cUTXO.spent = true;
           // If no available UTXOs: Sleep to allow the mempool time to return our fresh UTXO set
           if (!WALLET.getAvailableUTXOs(cWallet.getPubkey()).length)
-            await sleep(1000);
+            await sleep(500);
         }
-        await sleep(1000);
+        await sleep(500);
         // Refresh the final UTXO set after a small sleep
         await WALLET.refreshUTXOs(cWallet.getPubkey());
         // Reset Claim All button
@@ -742,9 +732,9 @@
         isClaiming = false;
         // Pull mempool transactions
         if (isFullnodePtr()) {
-          cachedActivityIS = await getMempoolActivity(WALLET.getActiveWallet().getPubkey());
+          cachedActivityIS = await getMempoolActivity(cWallet.getPubkey());
         } else {
-          const strRes = await NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey());
+          const strRes = await NET.getMempoolActivityLight(cWallet.getPubkey());
           cachedActivityIS = JSON.parse(strRes);
         }
         // Notify the user, finished!
@@ -773,11 +763,11 @@
           }
         }
         console.log("Constructing SCP-" + version + " deployment TX");
-        let cTx = WALLET.sccjs.tx.transaction();
+        const cTx = WALLET.sccjs.tx.transaction();
         // Inputs
-        let nDeployCost = (nDeployFee * COIN) + 1000;
-        let usedUTXOs = WALLET.getCoinsToSpend(nDeployCost, false, WALLET.getActiveWallet().getPubkey());
-        let nUTXOs = usedUTXOs.reduce((a, b) => {return a + b.sats}, 0);
+        const nDeployCost = (nDeployFee * COIN) + 1000;
+        const usedUTXOs = WALLET.getCoinsToSpend(nDeployCost, false, WALLET.getActiveWallet().getPubkey());
+        const nUTXOs = usedUTXOs.reduce((a, b) => {return a + b.sats}, 0);
         for (const cUTXO of usedUTXOs)
           cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         if (nDeployCost >= nUTXOs) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
@@ -786,9 +776,9 @@
         // Static Deployment fee (Sent to the SCC burn address)
         cTx.addoutput(strDeployFeeDest, nDeployFee);
         // Fee & Change output
-        let nFee = WALLET.getFee(cTx.serialize().length);
-        let nSpent = (parseFloat(nFee) + parseFloat(nDeployFee)).toFixed(8);
-        let nChange = (parseFloat(nUTXOs / COIN) - parseFloat(nSpent)).toFixed(8);
+        const nFee = WALLET.getFee(cTx.serialize().length);
+        const nSpent = (nFee + nDeployFee).toFixed(8);
+        const nChange = ((nUTXOs / COIN) - nSpent).toFixed(8);
         cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
@@ -798,17 +788,18 @@
 
     function mintSCP(contract, amount) {
         console.log("Constructing SCP mint TX for " + (amount / COIN).toLocaleString('en-GB'));
-        let cTx = WALLET.sccjs.tx.transaction();
+        const strAddr = WALLET.getActiveWallet().getPubkey();
+        const cTx = WALLET.sccjs.tx.transaction();
         // Add input
-        let cUTXO = WALLET.getCoinsToSpend(10000, true, WALLET.getActiveWallet().getPubkey())[0];
+        const cUTXO = WALLET.getCoinsToSpend(10000, true, strAddr)[0];
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
         cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         // SCP output
         cTx.addoutputburn(0.00000001, contract + " mint " + amount);
         // Fee & Change output
-        let nFee = WALLET.getFee(cTx.serialize().length);
-        let nChange = (parseFloat(cUTXO.sats / COIN) - parseFloat(nFee)).toFixed(8);
-        cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
+        const nFee = WALLET.getFee(cTx.serialize().length);
+        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
+        cTx.addoutput(strAddr, nChange);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
           if (cToken && !cToken.error)
@@ -817,9 +808,9 @@
             cUTXO.spent = true;
             const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
             if (isFullnodePtr()) {
-              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(arrRes => cachedActivityIS = arrRes);
+              getMempoolActivity(strAddr).then(arrRes => cachedActivityIS = arrRes);
             } else {
-              NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
+              NET.getMempoolActivityLight(strAddr).then(strRes => {
                 cachedActivityIS = JSON.parse(strRes);
               });
             }
@@ -831,17 +822,18 @@
     function burnSCP(contract, amount) {
         console.log("Constructing SCP burn TX for " + (amount / COIN).toLocaleString('en-GB'));
         // Use our first UTXO, as the fees will be incredibly low anyway
-        let cTx = WALLET.sccjs.tx.transaction();
+        const strAddr = WALLET.getActiveWallet().getPubkey();
+        const cTx = WALLET.sccjs.tx.transaction();
         // Add input
-        let cUTXO = WALLET.getCoinsToSpend(10000, true, WALLET.getActiveWallet().getPubkey())[0];
+        const cUTXO = WALLET.getCoinsToSpend(10000, true, strAddr)[0];
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
         cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         // SCP output
         cTx.addoutputburn(0.00000001, contract + " burn " + amount);
         // Fee & Change output
-        let nFee = WALLET.getFee(cTx.serialize().length);
-        let nChange = (parseFloat(cUTXO.sats / COIN) - parseFloat(nFee)).toFixed(8);
-        cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
+        const nFee = WALLET.getFee(cTx.serialize().length);
+        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
+        cTx.addoutput(strAddr, nChange);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
           if (cToken && !cToken.error)
@@ -850,9 +842,9 @@
             cUTXO.spent = true;
             const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
             if (isFullnodePtr()) {
-              getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(arrRes => cachedActivityIS = arrRes);
+              getMempoolActivity(strAddr).then(arrRes => cachedActivityIS = arrRes);
             } else {
-              NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
+              NET.getMempoolActivityLight(strAddr).then(strRes => {
                 cachedActivityIS = JSON.parse(strRes);
               });
             }
@@ -867,24 +859,24 @@
 
     function refreshSendBalance() {
       // Update available balance display
-      let strPubkey = WALLET.getActiveWallet().getPubkey();
+      const strPubkey = WALLET.getActiveWallet().getPubkey();
       let nSendBalanceDisplay = 0;
-      let strCurrency = document.getElementById("sendingCoinVal").value;
+      const strCurrency = document.getElementById("sendingCoinVal").value;
       if (strCurrency === "scc") {
-        nSendBalanceDisplay = getBalance();
+        nSendBalanceDisplay = getBalance(strPubkey);
       } else {
-        let strToken = strCurrency.split('scptoken-')[1];
-        let cToken = isFullnode ? TOKENS.getToken(strToken) : getCachedToken(strToken);
-        let cAccount = isFullnode ? cToken.getAccount(strPubkey) : getCachedAccount(cToken, strPubkey);
+        const strToken = strCurrency.substr(9);
+        const cToken = isFullnode ? TOKENS.getToken(strToken) : getCachedToken(strToken);
+        const cAccount = isFullnode ? cToken.getAccount(strPubkey) : getCachedAccount(cToken);
         const nBal = getMempoolDeltas(cToken.contract) + cAccount.balance;
-        nSendBalanceDisplay = Number((nBal / COIN).toFixed(8));
+        nSendBalanceDisplay = nBal / COIN;
       }
       domSendingBalance.innerText = nSendBalanceDisplay.toLocaleString('en-GB', { maximumFractionDigits: 8 });
     }
 
     function refreshSyncStatus() {
       let domScpSyncing = document.getElementById("scpSyncing");
-      let syncPercent = getSyncPercentage();
+      const syncPercent = getSyncPercentage();
       if (syncPercent > 99.99) {
         // Sync is close enough to being finished, stop checking and load the tokens!
         clearInterval(syncStatusInterval);
@@ -902,29 +894,29 @@
     let guiStakingAccount;
     let guiStakingStatus;
     function refreshStakingStatus(contract) {
-      let strPubkey = WALLET.getActiveWallet().getPubkey();
+      const strPubkey = WALLET.getActiveWallet().getPubkey();
       if (isFullnode) {
         guiStakingToken   = TOKENS.getToken(contract);
         guiStakingAccount = guiStakingToken.getAccount(strPubkey);
         guiStakingStatus  = guiStakingToken.getStakingStatus(strPubkey);
       } else {
         guiStakingToken   = getCachedToken(contract);
-        guiStakingAccount = getCachedAccount(guiStakingToken, strPubkey);
+        guiStakingAccount = getCachedAccount(guiStakingToken);
         getStakingStatusLight(contract, strPubkey);
       }
       // Put token + account info on the Staking Page on this refresh!
       if ((guiStakingToken && guiStakingAccount && guiStakingStatus) && guiStakingStatus.enabled) {
         domStakingTitle.innerText = formatName(guiStakingToken.name, 18) + " (" + formatName(guiStakingToken.ticker, 6) + ")";
         // Run a quick'n'dirty APY calculation based on the current weight reward
-        let nReward = guiStakingToken.inflation * guiStakingStatus.weight;
-        let nTotalRewards = guiStakingAccount.unclaimed_balance / COIN;
+        const nReward = guiStakingToken.inflation * guiStakingStatus.weight;
+        const nTotalRewards = guiStakingAccount.unclaimed_balance / COIN;
         // Also check to ensure we haven't hit the max supply yet
         if (guiStakingToken.supply === guiStakingToken.maxSupply ||
            (guiStakingToken.supply + guiStakingAccount.unclaimed_balance) >= guiStakingToken.maxSupply)
         {
           domStakingApy.innerText = "0%";
           domStakingRoi.innerText = "";
-          domStakingSubtitle.innerText = formatName(guiStakingToken.name, 12) + " has hit it's max supply of " + (guiStakingToken.maxSupply / COIN).toLocaleString('en-GB') + " " + formatName(guiStakingToken.ticker, 6)  + "!";
+          domStakingSubtitle.innerText = formatName(guiStakingToken.name, 12) + " has hit it's max supply of " + (guiStakingToken.maxSupply / COIN).toLocaleString('en-GB', { maximumFractionDigits: 8 }) + " " + formatName(guiStakingToken.ticker, 6)  + "!";
           domStakingRewards.innerText = "Cap Reached";
           domStakingRedeem.setAttribute('onclick', '');
           if (!domStakingRedeem.classList.contains('disabled'))
@@ -932,7 +924,7 @@
           domStakingRedeem.innerText = 'No Stakes to Claim';
         } else {
           const fStaked = hasMempoolStakes(guiStakingToken.contract);
-          let nAPY = percentOf((nReward * 720) * 365, guiStakingAccount.balance);
+          const nAPY = percentOf((nReward * 720) * 365, guiStakingAccount.balance);
           if (nAPY > 0.01 && nReward > 1) {
             domStakingApy.innerText = nAPY.toLocaleString('en-GB', { maximumFractionDigits: (nAPY > 100 ? 0 : 2) }) + "%";
             domStakingRoi.innerText = "or a ROI of " + percentOf(guiStakingAccount.unclaimed_balance, guiStakingAccount.balance).toLocaleString('en-GB', { maximumFractionDigits: 2 }) + "%";
@@ -940,7 +932,7 @@
             domStakingApy.innerText = "---";
             domStakingRoi.innerText = "";
           }
-          domStakingSubtitle.innerHTML = "You've been staking for " + (guiStakingStatus.age - guiStakingToken.minAge).toLocaleString('en-GB') + " blocks and earned...";
+          domStakingSubtitle.innerText = "You've been staking for " + (guiStakingStatus.age - guiStakingToken.minAge).toLocaleString('en-GB') + " blocks and earned...";
           if (fStaked) {
             domStakingRewards.innerText = '0 ' + formatName(guiStakingToken.ticker, 6);
             domStakingRedeem.setAttribute('onclick', '');
@@ -964,8 +956,8 @@
         domStakingTitle.innerText = formatName(guiStakingToken.name, 18) + " (" + formatName(guiStakingToken.ticker, 6) + ")";
         domStakingApy.innerText = "---";
         domStakingRoi.innerText = "";
-        domStakingSubtitle.innerHTML = "Your tokens need another " + (guiStakingToken.minAge - guiStakingStatus.age).toLocaleString('en-GB') + " blocks to mature before earning stakes!";
-        domStakingRewards.innerHTML = nTotalRewards.toLocaleString('en-GB', { maximumFractionDigits: nTotalRewards > 1 ? 4 : 8 }) + " " + guiStakingToken.ticker;
+        domStakingSubtitle.innerText = "Your tokens need another " + (guiStakingToken.minAge - guiStakingStatus.age).toLocaleString('en-GB') + " blocks to mature before earning stakes!";
+        domStakingRewards.innerText = nTotalRewards.toLocaleString('en-GB', { maximumFractionDigits: nTotalRewards > 1 ? 4 : 8 }) + " " + guiStakingToken.ticker;
         domStakingRedeem.setAttribute('onclick', '');
         if (!domStakingRedeem.classList.contains('disabled'))
           domStakingRedeem.classList.add('disabled');
@@ -974,8 +966,8 @@
         domStakingTitle.innerText = guiStakingToken ? formatName(guiStakingToken.name, 18) + " (" + formatName(guiStakingToken.ticker, 6) + ")" : "Loading...";
         domStakingApy.innerText = "---";
         domStakingRoi.innerText = "";
-        domStakingSubtitle.innerHTML = "Loading...";
-        domStakingRewards.innerHTML = "...";
+        domStakingSubtitle.innerText = "Loading...";
+        domStakingRewards.innerText = "...";
         domStakingRedeem.setAttribute('onclick', '');
         if (!domStakingRedeem.classList.contains('disabled'))
           domStakingRedeem.classList.add('disabled');
@@ -984,8 +976,8 @@
     }
 
     function import2FA() {
-      let strNewSecret = document.getElementById("authSecretImport").value;
-      let testToken = authenticator.generate(strNewSecret);
+      const strNewSecret = document.getElementById("authSecretImport").value;
+      const testToken = authenticator.generate(strNewSecret);
       if (testToken && testToken.toString().length === 6) {
         WALLET.set2FAkey(strNewSecret);
         DB.setWallet(WALLET.toDB());
@@ -1000,14 +992,14 @@
 
     let lastAuthCode = null;
     function refreshAuthenticator() {
-      let checkForSecret = localStorage.getItem("authsecret");
+      const checkForSecret = localStorage.getItem("authsecret");
       if (checkForSecret) {
         WALLET.set2FAkey(checkForSecret);
         localStorage.removeItem("authsecret");
         console.log("DB: Migrated 2FA LS to Backend DB!");
         DB.setWallet(WALLET.toDB());
       }
-      let strSecret = WALLET.get2FAkey();
+      const strSecret = WALLET.get2FAkey();
       if (!strSecret) {
         // No authentication linked
         domAuthImport.style.display = "";
@@ -1021,10 +1013,10 @@
         domAuthTitle.innerText = "Login using 2FA";
         domAuthReset.style.display = "";
         // Fetch the current code
-        let authCode = authenticator.generate(strSecret);
+        const authCode = authenticator.generate(strSecret);
         if (lastAuthCode !== authCode)
           domAuthCode.innerText = authCode;
-        let authTimeRemaining = authenticator.timeRemaining()
+        const authTimeRemaining = authenticator.timeRemaining()
         domAuthTime.innerText = authTimeRemaining + " second" + (authTimeRemaining === 1 ? "" : "s") + " remaining until next code";
         lastAuthCode = authCode;
       }
@@ -1083,12 +1075,13 @@
     setInterval(() => {
       // Check block count + UTXO sync every 10 seconds
       getBlockCount();
-      if (WALLET.getActiveWallet().getPubkey()) {
+      const strAddr = WALLET.getActiveWallet().getPubkey();
+      if (strAddr) {
         getUnspentTransactions();
         if (isFullnodePtr()) {
-          getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(arrRes => cachedActivityIS = arrRes);
+          getMempoolActivity(strAddr).then(arrRes => cachedActivityIS = arrRes);
         } else {
-          NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
+          NET.getMempoolActivityLight(strAddr).then(strRes => {
             cachedActivityIS = JSON.parse(strRes);
           });
         }
@@ -1181,7 +1174,7 @@
           getUnspentTransactions();
         } else {
           // No encrypted wallet available, check for an unencrypted key
-          let tmpwifkey = localStorage.getItem("tmpwifkey");
+          const tmpwifkey = localStorage.getItem("tmpwifkey");
           let tmppass = localStorage.getItem("tmppass");
           if (!tmppass) throw "Unable to find encwif, and no tmppass available, bailing out!";
           console.log("Unable to find encrypted keys, but tmppass is available, checking for imported wifkey...");
@@ -1200,7 +1193,7 @@
               tmppass = null;
               localStorage.removeItem("tmppass");
               // Load the new keys
-              let strPubkey = WALLET.sccjs.pubFromPriv(WALLET.getActiveWallet().getPrivkey());
+              const strPubkey = WALLET.sccjs.pubFromPriv(WALLET.getActiveWallet().getPrivkey());
               cWallet.setKeys(strPubkey, null, newEncwif);
               DB.setWallet(WALLET.toDB());
               // Load the Dashboard screen
@@ -1244,7 +1237,7 @@
           <div class="card card-prop mb-4">
             <div class="card-body">
               <div class="card-title font-gray font-weight-bold">Balance<span
-                  id="balanceRefresh" onclick="getBlockCount(); getUnspentTransactions(); getBalance(true);" class="float-end theme-color refresh-button reload"><i class="fas fa-redo-alt"></i></span></div>
+                  id="balanceRefresh" onclick="getBlockCount(); getUnspentTransactions();" class="float-end theme-color refresh-button reload"><i class="fas fa-redo-alt"></i></span></div>
               <div class="mt-4 theme-color-secondary font-weight-bold">
                 <div class="float-end"><span id="guiBalance" class="font-balance">...</span> <span
                     class="font-size-ticker">SCC</span></div><br><br>

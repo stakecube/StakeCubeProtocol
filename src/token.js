@@ -156,13 +156,7 @@ class SCP1Token {
 
     // Search for an SCP-1 account by address
     getAccount(address) {
-        for (const cAcc of this.owners) {
-            if (cAcc.address === address) {
-                return cAcc;
-            }
-        }
-        // No account found!
-        return false;
+        return this.owners.find(a => a.address === address) || false;
     }
 
     percentOf(partial, full) {
@@ -410,15 +404,14 @@ class SCP2Token extends SCP1Token {
 
 function addToken(cToken = SCP1Token) {
     // First, ensure the token isn't already indexed in the current chain state.
-    for (const token of stateTokens) {
-        if (token.contract === cToken.contract) {
-            return {
-                'error': true,
-                'message': 'SCP-' + token.version + ' Token already indexed ' +
-                            'in current chain state.',
-                'id': 8
-            };
-        }
+    const ctToken = stateTokens.find(a => a.contract === cToken.contract);
+    if (ctToken) {
+        return {
+            'error': true,
+            'message': 'SCP-' + ctToken.version + ' Token already indexed ' +
+                       'in current chain state.',
+            'id': 8
+        };
     }
     // Calculate the index
     cToken.index = stateTokens.length;
@@ -436,9 +429,8 @@ function getToken(query) {
     // (Indexed ID only!) Fetch a Token by it's Index ID
     if (typeof query === 'number') return stateTokens[query];
     // Find a token by it's contract TX-ID
-    for (const token of stateTokens) {
-        if (token.contract === query) return token;
-    }
+    const cToken = stateTokens.find(a => a.contract === query);
+    if (cToken) return cToken;
     // If we reach here, no token contract found!
     return {
         'error': true,

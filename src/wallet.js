@@ -102,6 +102,11 @@ class UTXO {
 // The cache of all loaded wallets, a wallet consists of: pubkey, privkey, privkeyEncrypted
 const arrWallets = [];
 
+// Returns the count of wallets in memory
+function countWallets() {
+    return arrWallets.length;
+}
+
 // Deep-clones a Wallet
 function deepCloneWallet(cWallet = new Wallet()) {
     return new Wallet(
@@ -154,18 +159,16 @@ async function createWallet() {
 const arrUTXOs = [];
 
 // Returns the balance of the wallet (aggregate UTXOs value)
-function getBalance() {
-    let nBal = 0;
-    for (const cUTXO of getAvailableUTXOs()) {
-        // Calculate the balance from our UTXO cache
-        nBal += Number((cUTXO.sats / ptrCOIN).toFixed(8));
-    }
-    return nBal;
+function getBalance(strAddr = false) {
+    return getAvailableUTXOs(strAddr)
+        .reduce((a, b) => {
+            return a + b.sats;
+        }, 0) / ptrCOIN;
 }
 
 // Returns the fee for the given bytes
-function getFee(bytes) {
-    return Number(((bytes * 2) / ptrCOIN).toFixed(8));
+function getFee(nBytes) {
+    return (nBytes * 2) / ptrCOIN;
 }
 
 // Deep-clones a UTXO
@@ -181,10 +184,7 @@ function deepCloneUTXO(utxo = new UTXO()) {
 
 // Searches for a single UTXO and returns it, if it exists
 function getUTXO(id, vout) {
-    for (const cUTXO of arrUTXOs) {
-        if (cUTXO.id === id && cUTXO.vout === vout) return cUTXO;
-    }
-    return false;
+    return arrUTXOs.find(a => a.vout === vout && a.id === id) || false;
 }
 
 // Adds a new UTXO to the wallet, if not already added
@@ -196,23 +196,16 @@ function addUTXO(address, id, vout, script, sats, spent = false) {
 
 // Removes a new UTXO to the wallet, if it exists
 function removeUTXO(id, vout) {
-    let i; const len = arrUTXOs.length;
-    for (i = 0; i < len; i++) {
-        const cUTXO = arrUTXOs[i];
-        if (cUTXO.id === id && cUTXO.vout === vout) {
-            // Splice the UTXO from our list and return true!
-            arrUTXOs.splice(i, 1);
-            return true;
-        }
-    }
-    // If we reach here, our wallet doesn't contain this UTXO, return false
-    return false;
+    const i = arrUTXOs.findIndex(a => a.vout === vout && a.id === id);
+    if (i === -1) return false;
+    arrUTXOs.splice(i, 1);
+    return true;
 }
 
 // Merges a new set of of UTXOs into the current set
 // - Removes UTXOs from the wallet which are no longer in the mempool (and were spent).
 // - Adds UTXOs from the mempool which we werent previously aware of.
-function mergeUTXOs(arrNewUTXOs) {
+function mergeUTXOs(arrNewUTXOs, strAddr) {
     // Merge new UTXOs into our set
     for (const cNewUTXO of arrNewUTXOs) {
         const cUTXO = getUTXO(cNewUTXO.id, cNewUTXO.vout);
@@ -226,17 +219,13 @@ function mergeUTXOs(arrNewUTXOs) {
             }
         }
     }
-    // Remove UTXOs which are no longer present in the list
+    // Remove UTXOs which are no longer present in the list, ignoring UTXOs belonging to different addresses
     for (const cUTXO of arrUTXOs) {
-        let hasUTXO = false;
-        for (const cNewUTXO of arrNewUTXOs) {
-            if (cUTXO.id === cNewUTXO.id && cUTXO.vout === cNewUTXO.vout) {
-                // We still have this UTXO
-                hasUTXO = true;
-            }
-        }
+        if (countWallets() > 1 && cUTXO.address !== strAddr) continue;
+        const fUTXO = arrNewUTXOs
+            .find(a => a.vout === cUTXO.vout && a.id === cUTXO.id);
         // Do we still have this UTXO?
-        if (!hasUTXO) {
+        if (!fUTXO) {
             // Nuke it!
             removeUTXO(cUTXO.id, cUTXO.vout);
         }
@@ -245,17 +234,17 @@ function mergeUTXOs(arrNewUTXOs) {
 }
 
 // Fetches, parses and merges UTXOs for a given address from our data source(s)
-async function refreshUTXOs(address = String()) {
+async function refreshUTXOs(strAddr = String()) {
     // Step 1 --- Blockchain Sync
     // Headless Default source: Core RPC
     // GUI Fallback Source: Use scc.net web3 server
     const res = ptrIsHeadless()
-        ? await ptrRpcMain.call('getaddressutxos', address)
-        : JSON.parse(await NET.getLightUTXOs(address));
+        ? await ptrRpcMain.call('getaddressutxos', strAddr)
+        : JSON.parse(await NET.getLightUTXOs(strAddr));
     // Convert explorer dataset into UTXO classes and merge with the current set
     const arrUTXOList = [];
     for (const rawUTXO of res) {
-        arrUTXOList.push(new UTXO(address,
+        arrUTXOList.push(new UTXO(strAddr,
             rawUTXO.txid,
             rawUTXO.outputIndex,
             rawUTXO.script,
@@ -263,14 +252,30 @@ async function refreshUTXOs(address = String()) {
     }
 
     // Step 2 --- Mempool Sync
-    await refreshMempoolUTXOs(arrUTXOList);
+    const arrMempool = [];
+    await refreshMempoolUTXOs(arrUTXOList, arrMempool);
 
-    // Merge our newly fetched UTXO set with our known in-wallet set and return the result
-    return mergeUTXOs(arrUTXOList);
+    // Merge our newly fetched UTXO set with our known in-wallet set
+    mergeUTXOs(arrUTXOList, strAddr);
+
+    // Identify and mark all spent VINs from our wallet in the mempool
+    for (const rawTX of arrMempool) {
+        // Search for all spent VINs for our wallet, and mark them as spent
+        for (const rawVin of rawTX.vin) {
+            const spentVout = getUTXO(rawVin.txid, rawVin.vout);
+            if (spentVout) {
+                // Mark this UTXO as spent!
+                spentVout.spent = true;
+            }
+        }
+    }
+
+    // Finished!
+    return true;
 }
 
 // Fetches, parses and merges mempool UTXOs for all local addresses from our data source(s)
-async function refreshMempoolUTXOs(arrUTXOList) {
+async function refreshMempoolUTXOs(arrUTXOList, arrMempool) {
     try {
         const rawMempool = ptrIsHeadless()
             ? await ptrGetFullMempool()
@@ -297,15 +302,9 @@ async function refreshMempoolUTXOs(arrUTXOList) {
                     arrUTXOList.push(cUTXO);
                 }
             }
-            // Search for all spent VINs for our wallet, and mark them as spent
-            for (const rawVin of rawTX.vin) {
-                const spentVout = getUTXO(rawVin.txid, rawVin.vout);
-                if (spentVout) {
-                    // Mark this UTXO as spent!
-                    spentVout.spent = true;
-                }
-            }
         }
+        // Set the mempool pointer to allow for external spent-VIN linkage
+        arrMempool = rawMempool;
         return true;
     } catch(e) {
         console.error('Wallet: Unable to sync Mempool data!');
@@ -323,35 +322,24 @@ async function broadcastTx(strTx) {
 
 // Returns a list of all incoming mempool UTXOs
 function getIncomingUTXOs() {
-    const arrMempoolUTXOs = [];
-    for (const cUTXO of arrUTXOs) {
-        if (cUTXO.mempool && !cUTXO.spent) arrMempoolUTXOs.push(cUTXO);
-    }
-    return arrMempoolUTXOs;
+    return arrUTXOs.filter(a => a.mempool && !a.spent);
 }
 
 // Returns a list of all available (unspent) UTXOs
-function getAvailableUTXOs(address = false) {
-    const arrAvailUTXOs = [];
-    for (const cUTXO of arrUTXOs) {
-        if (cUTXO.spent) continue;
-        if (address && cUTXO.address !== address) continue;
-        arrAvailUTXOs.push(cUTXO);
-    }
-    return arrAvailUTXOs;
+function getAvailableUTXOs(strAddr = false) {
+    const fAddr = countWallets() > 1 && strAddr !== false;
+    return arrUTXOs.filter(a => !a.spent && (!fAddr || a.address === strAddr));
 }
 
 // Returns a list of calculated UTXOs to be spent in fulfilment of the given spend parameters
 function getCoinsToSpend(sats = 0, min = false, chosenAddress = false) {
     let spent = 0;
     const chosenUTXOs = [];
-    const suitableUTXOs = getAvailableUTXOs();
+    const suitableUTXOs = getAvailableUTXOs(chosenAddress);
     // Goal: Loop all UTXOs until the 'spent' amount is >= the sats amount, plus estimated fees
     for (const cUTXO of suitableUTXOs) {
         // If a minimum is enforced, ONLY accept UTXOs above the minimum
         if (min && cUTXO.sats <= sats) continue;
-        // If an address is enforced, ONLY accept UTXOs from said address
-        if (chosenAddress && cUTXO.address !== chosenAddress) continue;
         if (spent >= (sats + 1000)) {
             console.log('Coin Control: Selected ' + chosenUTXOs.length +
                         ' input(s) (' + (spent / ptrCOIN) + ' SCC)');
@@ -362,11 +350,6 @@ function getCoinsToSpend(sats = 0, min = false, chosenAddress = false) {
     }
     // If we reach here, we don't have sufficient balance for the spend!
     return chosenUTXOs;
-}
-
-// Returns the count of wallets in memory
-function countWallets() {
-    return arrWallets.length;
 }
 
 // Returns the entire wallets cache in a DB-sanitized format
