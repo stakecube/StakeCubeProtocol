@@ -24,6 +24,26 @@ function init(app, context) {
     app.post(strRoute + 'write/:address',
         cController.writeTx);
 
+    // Deploy a DApp Identifier + storage contract
+    app.get(strRoute + 'createid/:address/:type',
+        cController.createDappIdentifier);
+
+    // Write a string Push operation to a storage contract
+    app.post(strRoute + 'storage/push/:address/:id',
+        cController.writePushToStorage);
+
+    // Write a string Key operation to a storage contract
+    app.post(strRoute + 'storage/setkey/:address/:id/:key',
+        cController.writeKeyToStorage);
+
+    // Get a list of strings stored in a storage contract
+    app.get(strRoute + 'storage/getall/:id',
+        cController.getAllFromStorage);
+
+    // Get the value of a key stored in a storage contract
+    app.get(strRoute + 'storage/getkey/:id/:key',
+        cController.getKeyFromStorage);
+
     // Return if this module is enabled via config
     return cbackRes;
 }

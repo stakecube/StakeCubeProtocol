@@ -11,6 +11,7 @@ const cPerms = require('./permissions.js');
 
 // Contextual pointers provided by the index.js process
 let ptrWALLET;
+let ptrVM;
 let ptrGetMsgFromTx;
 let ptrIsFullnode;
 let strModule;
@@ -18,6 +19,7 @@ let COIN;
 
 function init(context) {
     ptrWALLET = context.WALLET;
+    ptrVM = context.VM;
     ptrGetMsgFromTx = context.getMsgFromTx;
     ptrIsFullnode = context.isFullnode;
     // Static Non-Pointer (native value)
@@ -127,6 +129,288 @@ async function writeTx(req, res) {
     }
 }
 
+async function createDappIdentifier(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
+    if (!ptrIsFullnode()) {
+        return fullnodeError(res);
+    }
+    if (!req.params.address || req.params.address.length !== 34) {
+        return res.status(400).send('Missing "address" parameter!');
+    }
+    if (!req.params.type || !req.params.type.length) {
+        return res.status(400).send('Missing "type" parameter!');
+    }
+    try {
+        const strAddr = req.params.address;
+        const strType = req.params.type;
+        // Ensure we have the address specified, and it's unlocked
+        const cWallet = ptrWALLET.getWallet(strAddr);
+        if (!cWallet) {
+            return res.status(400)
+                .send('Address "' + strAddr +
+                        '" does not exist in this wallet!');
+        }
+        const strPubkey = cWallet.getPubkey();
+        if (cWallet.getPrivkey() === null) {
+            return res.status(400)
+                .send('This address is locked (encrypted)' +
+                        ' via passphrase! Please unlock via' +
+                        ' GUI before using the API.');
+        }
+
+        // Asynchronously sync UTXOs with the network
+        await ptrWALLET.refreshUTXOs(strPubkey);
+
+        // Construct the transaction
+        const cTx = ptrWALLET.sccjs.tx.transaction();
+        // Add input
+        const cUTXO = ptrWALLET.getCoinsToSpend(10000, true, strPubkey)[0];
+        if (!cUTXO) {
+            return res.status(400).send('Not enough gas funds!');
+        }
+        cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
+        // SCP output
+        cTx.addoutputburn(0.00000001, ptrVM.createIdentifierScript(strType));
+        // Fee & Change output
+        const nFee = ptrWALLET.getFee(cTx.serialize().length);
+        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
+        cTx.addoutput(strPubkey, nChange);
+        // Broadcast
+        const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
+        const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
+        // Mark UTXO as spent
+        cUTXO.spent = true;
+        return res.json({
+            'note': 'The given \'txid\' is your DApp Identifier, please use ' +
+                    'this when calling your DApp!',
+            'txid': strTXID,
+            'rawTx': strSignedTx
+        });
+    } catch(e) {
+        console.error("Network error on API '" + strModule + "/createid'");
+        console.error(e);
+        return res.status(400).send('Internal API Error');
+    }
+}
+
+async function writePushToStorage(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
+    if (!ptrIsFullnode()) {
+        return fullnodeError(res);
+    }
+    if (!req.params.address || req.params.address.length !== 34) {
+        return res.status(400).send('Missing "address" parameter!');
+    }
+    if (!req.params.id || !req.params.id.length) {
+        return res.status(400).send('Missing "id" parameter!');
+    }
+    try {
+        if (!req.body || !req.body.byteLength) {
+            return res.status(400).send('Missing "body" data!');
+        }
+        const strAddr = req.params.address;
+        const strID = req.params.id;
+        const strData = req.body.toString();
+        // Ensure the data doesn't exceed 400 bytes in HEX (the maximum SCC data relay, with SCP overhead buffer)
+        const nByteLen = req.body.byteLength * 2;
+        if (nByteLen > 400) {
+            return res.status(400).json({
+                'error': 'The provided data (' + nByteLen + ' bytes in HEX) ' +
+                         'exceeds the maximum length of 400 bytes'
+            });
+        }
+        // Ensure we have the address specified, and it's unlocked
+        const cWallet = ptrWALLET.getWallet(strAddr);
+        if (!cWallet) {
+            return res.status(400)
+                .send('Address "' + strAddr +
+                        '" does not exist in this wallet!');
+        }
+        const strPubkey = cWallet.getPubkey();
+        if (cWallet.getPrivkey() === null) {
+            return res.status(400)
+                .send('This address is locked (encrypted)' +
+                        ' via passphrase! Please unlock via' +
+                        ' GUI before using the API.');
+        }
+
+        // Asynchronously sync UTXOs with the network
+        await ptrWALLET.refreshUTXOs(strPubkey);
+
+        // Construct the transaction
+        const cTx = ptrWALLET.sccjs.tx.transaction();
+        // Add input
+        const cUTXO = ptrWALLET.getCoinsToSpend(10000, true, strPubkey)[0];
+        if (!cUTXO) {
+            return res.status(400).send('Not enough gas funds!');
+        }
+        cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
+        // SCP output
+        cTx.addoutputburn(0.00000001,
+            ptrVM.createWritePushScript(strID, strData));
+        // Fee & Change output
+        const nFee = ptrWALLET.getFee(cTx.serialize().length);
+        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
+        cTx.addoutput(strPubkey, nChange);
+        // Broadcast
+        const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
+        const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
+        // Mark UTXO as spent
+        cUTXO.spent = true;
+        return res.json({
+            'txid': strTXID,
+            'rawTx': strSignedTx
+        });
+    } catch(e) {
+        console.error("Network error on API '" + strModule + "/storage/push'");
+        console.error(e);
+        return res.status(400).send('Internal API Error');
+    }
+}
+
+async function writeKeyToStorage(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
+    if (!ptrIsFullnode()) {
+        return fullnodeError(res);
+    }
+    if (!req.params.address || req.params.address.length !== 34) {
+        return res.status(400).send('Missing "address" parameter!');
+    }
+    if (!req.params.id || !req.params.id.length) {
+        return res.status(400).send('Missing "id" parameter!');
+    }
+    if (!req.params.key || !req.params.key.length) {
+        return res.status(400).send('Missing "key" parameter!');
+    }
+    try {
+        if (!req.body || !req.body.byteLength) {
+            return res.status(400).send('Missing "body" data!');
+        }
+        const strAddr = req.params.address;
+        const strID = req.params.id;
+        const strKey = req.params.key;
+        const strData = req.body.toString();
+        // Ensure the data doesn't exceed 400 bytes in HEX (the maximum SCC data relay, with SCP overhead buffer)
+        const nByteLen = req.body.byteLength * 2;
+        if (nByteLen > 400) {
+            return res.status(400).json({
+                'error': 'The provided data (' + nByteLen + ' bytes in HEX) ' +
+                         'exceeds the maximum length of 400 bytes'
+            });
+        }
+        // Ensure we have the address specified, and it's unlocked
+        const cWallet = ptrWALLET.getWallet(strAddr);
+        if (!cWallet) {
+            return res.status(400)
+                .send('Address "' + strAddr +
+                        '" does not exist in this wallet!');
+        }
+        const strPubkey = cWallet.getPubkey();
+        if (cWallet.getPrivkey() === null) {
+            return res.status(400)
+                .send('This address is locked (encrypted)' +
+                        ' via passphrase! Please unlock via' +
+                        ' GUI before using the API.');
+        }
+
+        // Asynchronously sync UTXOs with the network
+        await ptrWALLET.refreshUTXOs(strPubkey);
+
+        // Construct the transaction
+        const cTx = ptrWALLET.sccjs.tx.transaction();
+        // Add input
+        const cUTXO = ptrWALLET.getCoinsToSpend(10000, true, strPubkey)[0];
+        if (!cUTXO) {
+            return res.status(400).send('Not enough gas funds!');
+        }
+        cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
+        // SCP output
+        cTx.addoutputburn(0.00000001,
+            ptrVM.createWriteKeyScript(strID, strKey, strData));
+        // Fee & Change output
+        const nFee = ptrWALLET.getFee(cTx.serialize().length);
+        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
+        cTx.addoutput(strPubkey, nChange);
+        // Broadcast
+        const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
+        const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
+        // Mark UTXO as spent
+        cUTXO.spent = true;
+        return res.json({
+            'txid': strTXID,
+            'rawTx': strSignedTx
+        });
+    } catch(e) {
+        console.error("Network error on API '" + strModule +
+                      "/storage/setkey'");
+        console.error(e);
+        return res.status(400).send('Internal API Error');
+    }
+}
+
+async function getAllFromStorage(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
+    if (!ptrIsFullnode()) {
+        return fullnodeError(res);
+    }
+    if (!req.params.id || !req.params.id.length) {
+        return res.status(400).send('Missing "id" parameter!');
+    }
+    try {
+        const strID = req.params.id;
+        const arrData = ptrVM.getMetaStateByIdPtr(strID);
+        if (arrData === undefined || !arrData) {
+            return res.status(400).send('No storage contract exists with ID (' +
+                                        strID + ')');
+        }
+        return res.json(arrData);
+    } catch(e) {
+        console.error("Network error on API '" + strModule +
+                      "/storage/getall'");
+        console.error(e);
+        return res.status(400).send('Internal API Error');
+    }
+}
+
+async function getKeyFromStorage(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
+    if (!ptrIsFullnode()) {
+        return fullnodeError(res);
+    }
+    if (!req.params.id || !req.params.id.length) {
+        return res.status(400).send('Missing "id" parameter!');
+    }
+    if (!req.params.key || !req.params.key.length) {
+        return res.status(400).send('Missing "key" parameter!');
+    }
+    try {
+        const strID = req.params.id;
+        const strKey = req.params.key;
+        const strData = ptrVM.getMetaKeyStr(strID, strKey);
+        if (strData === undefined || !strData) {
+            return res.status(400)
+                .send('Storage Key does not exist, or the ' +
+                         'specified storage contract does not exist!');
+        }
+        return res.json(strData);
+    } catch(e) {
+        console.error("Network error on API '" + strModule +
+                      "/storage/getkey'");
+        console.error(e);
+        return res.status(400).send('Internal API Error');
+    }
+}
+
 function fullnodeError(res) {
     return res.status(403).json({
         'error': 'This endpoint is only available to Full-nodes, please ' +
@@ -143,3 +427,8 @@ function disabledError(res) {
 exports.init = init;
 exports.readTx = readTx;
 exports.writeTx = writeTx;
+exports.createDappIdentifier = createDappIdentifier;
+exports.writePushToStorage = writePushToStorage;
+exports.writeKeyToStorage = writeKeyToStorage;
+exports.getAllFromStorage = getAllFromStorage;
+exports.getKeyFromStorage = getKeyFromStorage;

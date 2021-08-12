@@ -33,7 +33,7 @@ let isOutdated = false;
 
 let npmPackage;
 // Main Modules
-let DB, NET, RPC, TOKENS, WALLET, UPGRADES;
+let DB, NET, RPC, TOKENS, WALLET, UPGRADES, VM;
 // API Modules
 let apiACTIVITY, apiBLOCKCHAIN, apiTOKENS, apiWALLET, apiIO;
 try {
@@ -44,6 +44,7 @@ try {
     TOKENS = require('../src/token.js');
     WALLET = require('../src/wallet.js');
     UPGRADES = require('../src/upgrades.js');
+    VM = require('../src/vm.js');
     apiACTIVITY = require('../src/api/activity.routes.js');
     apiBLOCKCHAIN = require('../src/api/blockchain.routes.js');
     apiTOKENS = require('../src/api/tokens.routes.js');
@@ -82,6 +83,7 @@ try {
         TOKENS = require('./token.js');
         WALLET = require('./wallet.js');
         UPGRADES = require('./upgrades.js');
+        VM = require('./vm.js');
         apiACTIVITY = require('./api/activity.routes.js');
         apiBLOCKCHAIN = require('./api/blockchain.routes.js');
         apiTOKENS = require('./api/tokens.routes.js');
@@ -192,6 +194,7 @@ async function init(forcedCorePath = false, retry = false) {
             const fApiIO = apiIO.init(app, {
                 'WALLET': WALLET,
                 'DB': DB,
+                'VM': VM,
                 'getMsgFromTx': getMsgFromTx,
                 'isFullnode': isFullnodePtr,
                 'COIN': COIN
@@ -509,6 +512,12 @@ async function isCallAuthorized(cTx, strAuthAddr) {
 
 // Chain State Processing
 async function processState(newMsg, tx) {
+    // Attempt to run the data as a contract's bytecode
+    const vmRet = await VM.run(tx, newMsg);
+    // If this returns true, it means the TX successfully executed as VM bytecode
+    if (vmRet === true) return true;
+
+    // If the code reaches here, it's likely a non-bytecode (hardcoded) protocol call
     const isLongData = newMsg.length > 64;
     let isUsingIndex = false;
     if (UPGRADES.isTokenIndexingActive(nCacheHeight)) {
