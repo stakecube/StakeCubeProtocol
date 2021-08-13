@@ -53,15 +53,16 @@ const getCoinSupply = function() {
     request.send();
 };
 const getUnspentTransactions = function() {
+    const strAddr = WALLET.getActiveWallet().getPubkey();
     if (isFullnodePtr()) {
-        getMempoolActivity(WALLET.getActiveWallet().getPubkey()).then(arrRes => cachedActivityIS = arrRes);
+        getMempoolActivity(strAddr).then(arrRes => cachedActivityIS = arrRes);
     }
-    WALLET.refreshUTXOs(WALLET.getActiveWallet().getPubkey()).then(res => {
+    WALLET.refreshUTXOs(strAddr).then(res => {
         const reloader = document.getElementById('balanceRefresh');
         reloader.className = reloader.className.replace(/ playAnim/g, '');
         // Update the GUI with the newly cached UTXO set
         if (!isFullnodePtr()) {
-            NET.getMempoolActivityLight(WALLET.getActiveWallet().getPubkey()).then(strRes => {
+            NET.getMempoolActivityLight(strAddr).then(strRes => {
                 cachedActivityIS = JSON.parse(strRes);
                 getBalance(true);
                 refreshSendBalance();

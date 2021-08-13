@@ -154,6 +154,7 @@ function setMetaKeyStr(id, strKey, strMeta) {
 
 // Return the value of a key within a metadata contract
 function getMetaKeyStr(id, strKey) {
+    if (!STATE.meta[id] || !STATE.meta[id][strKey]) return undefined;
     return STATE.meta[id][strKey];
 }
 

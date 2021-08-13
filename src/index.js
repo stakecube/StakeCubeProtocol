@@ -6,9 +6,6 @@
 
 'use strict';
 
-// NPM
-const regedit = require('regedit');
-
 let isFullnode = false;
 let isScanningBlocks = false;
 let nCacheHeight = 0;
@@ -309,11 +306,11 @@ async function init(forcedCorePath = false, retry = false) {
                 arrErr.push('RPC: Unable to connect to SCC Core.');
                 if (arrErr[0] && !retry) {
                     console.log('--- ERRORS ---');
-                    arrErr.map((a) => console.log(a));
+                    arrErr.map(a => console.log(a));
                 }
                 if (arrWarn[0] && !retry) {
                     console.log('--- WARNINGS ---');
-                    arrWarn.map((a) => console.log(a));
+                    arrWarn.map(a => console.log(a));
                 }
 
                 if (arrErr[0] && !retry) {
@@ -348,6 +345,8 @@ async function init(forcedCorePath = false, retry = false) {
 
 // If we're on Windows; check the registry for SCC Core's data directory
 if (process.platform === 'win32') {
+    // We only load Regedit if we're on win32, no point in requiring regedit on non-win32 systems
+    const regedit = require('regedit');
     const regPath = 'HKCU\\Software\\StakeCubeCoin\\SCC-Qt';
     let regCorePath;
     regedit.list(regPath, function(err, result) {

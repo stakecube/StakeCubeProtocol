@@ -23,21 +23,21 @@ $('.btn-select').attr('value', 'scc');
 
 //change button stuff on click
 function setCoinSelector(img, text, value) {
-  var item = '<li><img src="' + img + '"/><span>' + text + '</span></li>';
+  const item = '<li><img src="' + img + '"/><span>' + text + '</span></li>';
   $('.btn-select').html(item);
   $('.btn-select').attr('value', value);
   $(".b").toggle();
 
   // Update available balance display
-  let strPubkey = WALLET.getActiveWallet().getPubkey();
+  const strPubkey = WALLET.getActiveWallet().getPubkey();
   let nSendBalanceDisplay = 0;
   if (value === "scc") {
     nSendBalanceDisplay = getBalance();
   } else {
-    let strToken = value.split('scptoken-')[1];
-    let cToken = isFullnode ? TOKENS.getToken(strToken) : getCachedToken(strToken);
-    let cAccount = isFullnode ? cToken.getAccount(strPubkey) : getCachedAccount(cToken, strPubkey);
-    nSendBalanceDisplay = Number((cAccount.balance / COIN).toFixed(8));
+    const strToken = value.substr(9); // Extract the token ID from the element, excluding "scptoken-"
+    const cToken = isFullnode ? TOKENS.getToken(strToken) : getCachedToken(strToken);
+    const cAccount = isFullnode ? cToken.getAccount(strPubkey) : getCachedAccount(cToken);
+    nSendBalanceDisplay = cAccount.balance / COIN;
   }
   domSendingBalance.innerText = nSendBalanceDisplay.toLocaleString('en-GB', { maximumFractionDigits: 8 });
 }
