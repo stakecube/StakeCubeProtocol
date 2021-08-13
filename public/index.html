@@ -630,6 +630,9 @@
           WALLET.broadcastTx(strSignedTx).then(strTXID => {
             cUTXO.spent = true;
             M.toast({html: 'Transaction Sent!', displayLength: 1250});
+            // Reset inputs
+            document.getElementById("sendAmount").value = "";
+            document.getElementById("sendAddress").value = "";
             if (isFullnodePtr()) {
               getMempoolActivity(strAddr).then(arrRes => cachedActivityIS = arrRes);
             } else {
@@ -1306,7 +1309,7 @@
 
           <div class="card card-prop mb-4">
             <div class="card-body">
-              <div class="card-title font-gray font-weight-bold">Withdraw</div>
+              <div class="card-title font-gray font-weight-bold">Transfer coins or tokens</div>
 
               <div class="alert alert-danger-custom" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> &nbsp;Please make sure to enter the correct address. Transactions cannot be reversed.</div><br>
 
@@ -1341,7 +1344,7 @@
                   <div class="omrs-input-group" style="width:100%;">
                     <label class="omrs-input-underlined">
                       <input required id="sendAddress" type="text">
-                      <span class="omrs-input-label">SCC Address</span>
+                      <span class="omrs-input-label">Recipient Address</span>
                     </label>
                   </div>
                 </div>
