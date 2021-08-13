@@ -37,7 +37,8 @@
   "config": {
     "forge": {
       "packagerConfig": {
-        "icon": "public/imgs/sc-logo.ico"
+        "icon": "public/imgs/sc-logo.ico",
+        "ignore": ["docs", ".github", ".gitignore", "linter.js", ".eslintrc.js"]
       },
       "makers": [
         {
