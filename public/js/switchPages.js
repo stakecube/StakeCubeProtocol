@@ -9,6 +9,7 @@ function switchToLogin() {
   domAuthPage.style.display = "none";
   domStakingPage.style.display = "none";
   domSettingsPage.style.display = "none";
+  domCreateTokenPage.style.display = "none";
 
   // Show
   domLoginPage.style.display = "block";
@@ -25,6 +26,7 @@ function switchToSend() {
   domAuthPage.style.display = "none";
   domStakingPage.style.display = "none";
   domSettingsPage.style.display = "none";
+  domCreateTokenPage.style.display = "none";
 
   // Show
   domSendPage.style.display = "block";
@@ -35,6 +37,7 @@ function switchToSend() {
   domDashboardBtn.classList.remove('active');
   domReceiveBtn.classList.remove('active');
   dom2FABtn.classList.remove('active');
+  domCreateTokenBtn.classList.remove('active');
 
   // Add active
   domSendBtn.classList.add('active');
@@ -56,6 +59,7 @@ function switchToDashboard() {
   domAuthPage.style.display = "none";
   domStakingPage.style.display = "none";
   domSettingsPage.style.display = "none";
+  domCreateTokenPage.style.display = "none";
 
   // Show
   domDashboardPage.style.display = "block";
@@ -66,6 +70,7 @@ function switchToDashboard() {
   domSendBtn.classList.remove('active');
   domReceiveBtn.classList.remove('active');
   dom2FABtn.classList.remove('active');
+  domCreateTokenBtn.classList.remove('active');
 
   // Add active
   domDashboardBtn.classList.add('active');
@@ -80,6 +85,7 @@ function switchToReceive() {
   domAuthPage.style.display = "none";
   domStakingPage.style.display = "none";
   domSettingsPage.style.display = "none";
+  domCreateTokenPage.style.display = "none";
 
   // Show
   domReceivePage.style.display = "block";
@@ -98,6 +104,7 @@ function switchToReceive() {
   domSendBtn.classList.remove('active');
   domDashboardBtn.classList.remove('active');
   dom2FABtn.classList.remove('active');
+  domCreateTokenBtn.classList.remove('active');
 
   // Add active
   domReceiveBtn.classList.add('active');
@@ -111,6 +118,7 @@ function switchToAuth() {
   domReceivePage.style.display = "none";
   domStakingPage.style.display = "none";
   domSettingsPage.style.display = "none";
+  domCreateTokenPage.style.display = "none";
 
   // Show
   domAuthPage.style.display = "block";
@@ -120,6 +128,7 @@ function switchToAuth() {
   domSendBtn.classList.remove('active');
   domDashboardBtn.classList.remove('active');
   domReceiveBtn.classList.remove('active');
+  domCreateTokenBtn.classList.remove('active');
 
   // Add active
   dom2FABtn.classList.add('active');
@@ -132,6 +141,7 @@ function switchToStaking(contract) {
   domLoginPage.style.display = "none";
   domReceivePage.style.display = "none";
   domSettingsPage.style.display = "none";
+  domCreateTokenPage.style.display = "none";
 
   // Show
   domStakingPage.style.display = "block";
@@ -149,6 +159,7 @@ function switchToSettings() {
   domReceivePage.style.display = "none";
   domStakingPage.style.display = "none";
   domAuthPage.style.display = "none";
+  domCreateTokenPage.style.display = "none";
 
   // Show
   domHeader.style.display = "block";
@@ -158,4 +169,29 @@ function switchToSettings() {
   domSendBtn.classList.remove('active');
   domDashboardBtn.classList.remove('active');
   domReceiveBtn.classList.remove('active');
+  domCreateTokenBtn.classList.remove('active');
+}
+
+function switchToCreateToken() {
+  // Hide
+  domSendPage.style.display = "none";
+  domDashboardPage.style.display = "none";
+  domLoginPage.style.display = "none";
+  domReceivePage.style.display = "none";
+  domStakingPage.style.display = "none";
+  domAuthPage.style.display = "none";
+  domSettingsPage.style.display = "none";
+
+  // Show
+  domHeader.style.display = "block";
+  domCreateTokenPage.style.display = "block";
+
+  // Remove active
+  domSendBtn.classList.remove('active');
+  domDashboardBtn.classList.remove('active');
+  domReceiveBtn.classList.remove('active');
+  dom2FABtn.classList.remove('active');
+
+  // Add active
+  domCreateTokenBtn.classList.add('active');
 }
