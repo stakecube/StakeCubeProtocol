@@ -29,6 +29,13 @@ const nUpgradeBlock1_minStake = 196000;
 // - This upgrade takes place at the same height as the Min Stake upgrade.
 const nUpgradeBlock2_tokenIndexing = nUpgradeBlock1_minStake;
 
+// SCP IMPROVEMENT UPGRADE 3
+// - Implements the SCP-4 Standard, which is an NFT standard for deploying
+// ... NFT 'collections', these collections have properties such as:
+// ... 'name', 'max supply', 'protected', these properties apply to all
+// ... NFTs that exist within the given collection.
+const nUpgradeBlock3_scp4 = 0; // TODO: SET SCP-4 UPGRADE HEIGHT BEFORE RELEASE!
+
 function isMinStakeActive(height = Number) {
     return height >= nUpgradeBlock1_minStake;
 }
@@ -37,7 +44,12 @@ function isTokenIndexingActive(height = Number) {
     return height >= nUpgradeBlock2_tokenIndexing;
 }
 
+function isScp4Active(height = Number) {
+    return height >= nUpgradeBlock3_scp4;
+}
+
 /* eslint-enable camelcase */
 
 exports.isMinStakeActive = isMinStakeActive;
 exports.isTokenIndexingActive = isTokenIndexingActive;
+exports.isScp4Active = isScp4Active;

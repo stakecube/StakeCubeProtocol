@@ -658,7 +658,7 @@ async function processState(newMsg, tx) {
                             
                             TOKENS.addToken(newContract);
                         }
-                        if (nVersion === 4) {
+                        if (nVersion === 4 && UPGRADES.isScp4Active(nCacheHeight)) {
                             // Optional params
                             // ------------------
                             // Protected (bool, default = true)
@@ -677,8 +677,10 @@ async function processState(newMsg, tx) {
                             NFT.addCollection(newContract);
                         }
                         
-                        console.log('New SCP-' + nVersion + ' contract created!');
-                        console.log(newContract);
+                        if (newContract) {
+                            console.log('New SCP-' + nVersion + ' contract created!');
+                            console.log(newContract);
+                        }
                     } else {
                         console.warn('An attempt to create a new SCP-' +
                                      nVersion + ' contract has failed, invalid ' +

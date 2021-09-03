@@ -11,8 +11,6 @@
     This file hosts the interpreter functionality, classes and logic handling NFTs.
 */
 
-const cUpgrades = require('./upgrades.js');
-
 // The current chain state of SCP NFTs
 const stateCollections = [];
 
