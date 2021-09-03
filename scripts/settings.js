@@ -3,6 +3,7 @@ let allowEnterKey = true; // Allow the 'Enter' key to continue actions on dialog
 let display2FAMenu = true; // Displays the 2FA button in the header menu.
 let limitActivity = true; // Limit the activity list to increase performance on large wallets.
 let hideZeroBalance = true; // Hide wallets from view when they have no balance.
+let displayDevMenu = false; // Displays the SCP Developer button in the header menu.
 
 // Toggles a setting via a UI checkbox
 function toggleSetting(evt) {
@@ -20,6 +21,10 @@ function toggleSetting(evt) {
         renderActivity();
     }
     if (strSetting === 'hideZeroBalance') hideZeroBalance = checked;
+    if (strSetting === 'displayDevMenu') {
+        domCreateTokenBtn.style.display = checked ? '' : 'none';
+        displayDevMenu = checked;
+    }
     // Now save to disk and log!
     localStorage.setItem(strSetting, checked);
     console.log("Settings: Set '" + strSetting + "' to " + checked);
@@ -28,25 +33,33 @@ function toggleSetting(evt) {
 // Loads all settings from disk
 function loadSettings() {
     if (localStorage.length === 0) return;
+
+    // TODO: Fix the 'checked' status being 'fixed' to true, ignoring the HTML 'checked=false' attribute.
+    // ... I really don't know why it does this! Annoying.
+    document.getElementById('displayDevMenuSetting').checked = false;
+
     for (const dbKey of Object.keys(localStorage)) {
         const dbValue = localStorage[dbKey];
         const boolVal = dbValue === 'true';
         if (dbKey === 'allowEnterKey') {
             allowEnterKey = boolVal;
-            document.getElementById(dbKey + 'Setting').checked = boolVal;
         }
         if (dbKey === 'display2FAMenu') {
             display2FAMenu = boolVal;
-            document.getElementById(dbKey + 'Setting').checked = boolVal;
         }
         if (dbKey === 'limitActivity') {
             limitActivity = boolVal;
-            document.getElementById(dbKey + 'Setting').checked = boolVal;
         }
         if (dbKey === 'hideZeroBalance') {
             hideZeroBalance = boolVal;
-            document.getElementById(dbKey + 'Setting').checked = boolVal;
         }
+        if (dbKey === 'displayDevMenu') {
+            displayDevMenu = boolVal;
+        }
+        // Set the UI element
+        const domSwitch = document.getElementById(dbKey + 'Setting');
+        if (domSwitch)
+            domSwitch.checked = boolVal;
     }
 }
 

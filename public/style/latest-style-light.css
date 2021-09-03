@@ -28,10 +28,6 @@
   color: #304258!important;
 }
 
-.card-body {
-  min-height: 170px !important;
-}
-
 .card-prop {
   border: none;
   border-radius: 15px;
@@ -304,4 +300,32 @@ div.omrs-input-group {
     -ms-flex-pack: justify;
     justify-content: space-between;
     cursor: default
+}
+
+.omrs-input-hover {
+  position: absolute;
+  top: 0.9375rem;
+  right: 0.875rem;
+  line-height: 147.6%;
+}
+
+.omrs-input-message {
+  background-color: #0c76e8f5;
+  border-radius: 7px;
+  border-bottom-right-radius: 0px;
+  padding: 5px 9px;
+  position: absolute;
+  bottom: 37px;
+  right: 0px;
+  color: #fff;
+  opacity: 0;
+  -webkit-transition: opacity 400ms, visibility 400ms;
+  transition: opacity 400ms, visibility 400ms;
+}
+
+.tooltip-questionmark {
+  color: #a5a5a5;
+  top: 5px;
+  right: -9px;
+  position: relative;
 }

@@ -174,6 +174,12 @@
                 2FA
               </a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" id="createTokenBtn" onclick="switchToCreateToken()">
+                <i class="fas fa-tools" style="margin-right: 5px;"></i>
+                Create token
+              </a>
+            </li>
           </ul>
           <form class="d-flex" style="margin-bottom:0px;">
             <a href="#" onclick="switchToSettings()"><i class="fas fa-cog fas-higher-contrast"></i></a>
@@ -209,12 +215,21 @@
     let domReceiveBtn;
     let dom2FABtn;
     let dom2FAMenu;
+    let domCreateTokenBtn;
+    let domScpTokenErrors;
+    let domScpTokenName;
+    let domScpTokenTicker;
+    let domScpTokenSupply;
+    let domScpTokenPoSReward;
+    let domScpTokenMinAge;
+    let domScpTokenDeployBtn;
     let domDashboardPage;
     let domSendPage;
     let domReceivePage;
     let domAuthPage;
     let domStakingPage;
     let domSettingsPage;
+    let domCreateTokenPage;
 
     let domPass1Visibility;
 
@@ -1119,8 +1134,6 @@
       domThemeButton = document.getElementById("themeButton");
       // Initialize theme from disk
       loadTheme();
-      // Load settings from disk
-      loadSettings();
       domHeader = document.getElementById("guiHeader");
       domLoginPage = document.getElementById("loginPage");
       domPass1Visibility = document.getElementById("pass1Visibility");
@@ -1130,6 +1143,7 @@
       domAuthPage = document.getElementById('authPage');
       domStakingPage = document.getElementById('stakingPage');
       domSettingsPage = document.getElementById('settingsPage');
+      domCreateTokenPage = document.getElementById('createTokenPage');
       domAuthDisplay = document.getElementById('authDisplay');
       domAuthImport = document.getElementById('authImport');
       domAuthTitle = document.getElementById('authTitle');
@@ -1151,15 +1165,28 @@
       domSendBtn = document.getElementById("sendBtn");
       domReceiveBtn = document.getElementById("receiveBtn");
       dom2FABtn = document.getElementById("2faBtn");
+      domCreateTokenBtn = document.getElementById("createTokenBtn");
+      domScpTokenErrors = document.getElementById("scpTokenErrors");
+      domScpTokenName = document.getElementById("scpTokenName");
+      domScpTokenTicker = document.getElementById("scpTokenTicker");
+      domScpTokenSupply = document.getElementById("scpTokenSupply");
+      domScpTokenPoSReward = document.getElementById("scpTokenPoSReward");
+      domScpTokenMinAge = document.getElementById("scpTokenMinAge");
+      domScpTokenDeployBtn = document.getElementById("scpTokenDeployBtn");
       dom2FAMenu = document.getElementById("2faBtnMenu");
-      if (!display2FAMenu)
-        dom2FAMenu.style.display = "none";
       domStakingTitle = document.getElementById("stakingTitle");
       domStakingSubtitle = document.getElementById("stakingSubtitle");
       domStakingApy = document.getElementById("stakingApy");
       domStakingRoi = document.getElementById("stakingRoi");
       domStakingRewards = document.getElementById("stakingRewards");
       domStakingRedeem = document.getElementById("stakingRedeem");
+      // Load settings from disk
+      loadSettings();
+      // Apply UI settings
+      if (!displayDevMenu)
+        domCreateTokenBtn.style.display = "none";
+      if (!display2FAMenu)
+        dom2FAMenu.style.display = "none";
       // Don't need to cache these as it's just one-time use
       if (npmPackage) {
         document.getElementById("version").innerText = "v" + npmPackage.version;
@@ -1232,6 +1259,18 @@
           }
         }
       });
+    }
+
+    function showTooltip(obj) {
+      obj = document.getElementById(obj);
+      obj.style.opacity = "1";
+      obj.style["z-index"] = "1000";
+    }
+
+    function hideTooltip(obj) {
+      obj = document.getElementById(obj);
+      obj.style.opacity = "0";
+      obj.style["z-index"] = "-1000";
     }
   </script>
 
@@ -1575,6 +1614,26 @@
                       </div>
                     </div>
                   </div>
+                  
+                  <hr style="color: #bcc4d2;">
+                  
+                  <div class="row">
+                    <div class="col-9">
+                      <span>Display the SCP Developer menu</span><br>
+                      <span style="font-size:12px; color:#97a1b1;">Enabling this will display the SCP Developer Toolkit menu.<br>This page can be used for creating, deploying and interacting with custom DApps!</span>
+                    </div>
+                    <div class="col-3">
+                      <div class="container">
+                        <div class="row align-items-center justify-content-center" style="height: 100%;">
+                          <div class="col-md-6">
+                            <div class="form-check form-switch">
+                              <input class="form-check-input darkBorder" type="checkbox" value="" id="displayDevMenuSetting" checked="false" setting="displayDevMenu" onclick="toggleSetting(this)">
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1606,6 +1665,286 @@
             </div>
           </div>
 
+        </div>
+      </div>
+    </div>
+
+    <div class="container marketing pt-navbar" id="createTokenPage">
+      <h4 class="mb-5 theme-color-secondary font-weight-bold">Create Token</h4>
+
+      <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+
+          <div class="card card-prop mb-4">
+            <div class="card-body">
+              <div class="card-title font-gray font-weight-bold">Token information</div>
+
+              <script>
+                let nDeploymentVer = 0;
+                function changeTokenType(obj) {
+                  document.getElementById('scpTokenSettings').style.display = '';
+                  const strDesc = document.getElementById('scpTokenDescription');
+                  nDeploymentVer = Number(obj.options[obj.selectedIndex].value);
+                  if (obj.options[obj.selectedIndex].value == '1') {
+                    document.getElementById('scp2TokenSettings').style.display = 'none';
+                    document.getElementById('scp2TokenSettings2').style.display = 'none';
+                    strDesc.innerText = 'SCP-1 is a minimalistic issuer-minted token, featuring on-demand issuer minting, burns from anyone, and a max supply cap for barebones security.';
+                  } else if (obj.options[obj.selectedIndex].value == '2') {
+                    strDesc.innerText = 'SCP-2 is an advanced SCP-1 variant, with trustworthy issuance based on fair and fractional PoS, incentivising users to hold for long periods.';
+                    document.getElementById('scp2TokenSettings').style.display = 'flex';
+                    document.getElementById('scp2TokenSettings2').style.display = 'flex';
+                  }
+
+                  // Force a re-check of the params
+                  checkDeployerInput();
+                }
+
+                // Write an 'oninput' function that checks all inputs, logs errors in the below warning div, and disables button until good
+                function checkDeployerInput() {
+                    // Reset the warning error
+                    domScpTokenErrors.innerHTML = "";
+                    let isComplete = true;
+                    // Name
+                    if (domScpTokenName.value.length) {
+                        // Remove all whitespace
+                        domScpTokenName.value = domScpTokenName.value.replace(/ /g, '').trim();
+                        // Limit to 25 characters
+                        if (domScpTokenName.value.length > 25) domScpTokenName.value = domScpTokenName.value.substr(0, 25);
+                    } else {
+                        isComplete = false;
+                    }
+
+                    // Ticker
+                    if (domScpTokenTicker.value.length) {
+                        // Remove all whitespace
+                        domScpTokenTicker.value = domScpTokenTicker.value.replace(/ /g, '').trim();
+                        // Limit to 6 characters
+                        if (domScpTokenTicker.value.length > 6) domScpTokenTicker.value = domScpTokenTicker.value.substr(0, 6);
+                    } else {
+                        isComplete = false;
+                    }
+
+                    // Supply
+                    if (domScpTokenSupply.value.length) {
+                        // Remove all whitespace
+                        domScpTokenSupply.value = domScpTokenSupply.value.replace(/ /g, '').trim();
+                        const nSupply = Number(domScpTokenSupply.value * COIN);
+                        // Supply must be 1 coin minimum
+                        if (nSupply < COIN) {
+                            domScpTokenErrors.innerHTML += 'Supply: Minimum is 1!<br>';
+                            isComplete = false;
+                        }
+                        // Do not allow supplies larger than the safe integer
+                        if (!Number.isSafeInteger(nSupply)) {
+                            domScpTokenErrors.innerHTML += 'Supply: Max supply is ' + (Math.floor((Number.MAX_SAFE_INTEGER / COIN) / 1000000)).toLocaleString('en-GB', { maximumFractionDigits: 0 }) + 'm!<br>';
+                            isComplete = false;
+                        }
+                    } else {
+                        isComplete = false;
+                    }
+                    
+                    // SCP-2 CHECKS
+                    if (nDeploymentVer === 2) {
+                        // Block Reward
+                        if (domScpTokenPoSReward.value.length) {
+                            // Remove all whitespace
+                            domScpTokenPoSReward.value = domScpTokenPoSReward.value.replace(/ /g, '').trim();
+                            const nReward = Number(domScpTokenPoSReward.value * COIN);
+                            // Reward must be a number
+                            if (!Number.isFinite(nReward)) {
+                                domScpTokenErrors.innerHTML += 'Rewards: Must be a number!<br>';
+                                isComplete = false;
+                            }
+                            // Reward cannot be smaller than 0.0001 coins
+                            if (nReward < (0.001 * COIN)) {
+                                domScpTokenErrors.innerHTML += 'Rewards: Cannot be smaller than 0.0001!<br>';
+                                isComplete = false;
+                            }
+                            const nSupply = Number(domScpTokenSupply.value * COIN);
+                            // Reward cannot be equal to the max supply
+                            if (nReward === nSupply) {
+                                domScpTokenErrors.innerHTML += 'Rewards: Cannot be equal to the max supply!<br>';
+                                isComplete = false;
+                            }
+                            // Reward cannot be larger than to the max supply
+                            if (nReward > nSupply) {
+                                domScpTokenErrors.innerHTML += 'Rewards: Cannot be larger than the max supply!<br>';
+                                isComplete = false;
+                            }
+                        } else {
+                            isComplete = false;
+                        }
+
+                        // Min Stake Age
+                        if (domScpTokenMinAge.value.length) {
+                            // Remove all whitespace
+                            domScpTokenMinAge.value = domScpTokenMinAge.value.replace(/ /g, '').trim();
+                            const nMinAge = Number(domScpTokenMinAge.value);
+                            // Min Age must be an integer
+                            if (!Number.isInteger(nMinAge)) {
+                                domScpTokenErrors.innerHTML += 'Min Age: Must be an integer!<br>';
+                                isComplete = false;
+                            }
+                            // Min Age must be atleast 1 block
+                            if (nMinAge < 1) {
+                                domScpTokenErrors.innerHTML += 'Min Age: Must be atleast 1 block!<br>';
+                                isComplete = false;
+                            }
+                            // Min Age must be a safe integer
+                            if (Number.isInteger(nMinAge) && !Number.isSafeInteger(nMinAge)) {
+                                domScpTokenErrors.innerHTML += 'Min Age: Too large to be safe!<br>';
+                                isComplete = false;
+                            }
+                        } else {
+                            isComplete = false;
+                        }
+                    }
+
+                    // Apply any error messages, if they exist
+                    if (domScpTokenErrors.innerHTML.length) {
+                        document.getElementById('scpTokenErrorsWidget').style.display = '';
+                        domScpTokenDeployBtn.setAttribute('disabled', '');
+                    } else {
+                        document.getElementById('scpTokenErrorsWidget').style.display = 'none';
+                        if (isComplete)
+                          domScpTokenDeployBtn.removeAttribute('disabled');
+                    }
+
+                    // Disable the button if the form isn't complete
+                    if (!isComplete) {
+                        domScpTokenDeployBtn.setAttribute('disabled', '');
+                    }
+                }
+
+                function guiDeploySCP() {
+                    // Cannot deploy if the button is disabled (due to unsatisfied inputs)
+                    if (domScpTokenDeployBtn.hasAttribute('disabled')) return;
+                    // Convert the input into SCP params
+                    const arrParams = [];
+
+                    // SCP-1 Spec
+                    if (nDeploymentVer === 1) {
+                        // Name
+                        arrParams.push(domScpTokenName.value);
+                        // Ticker
+                        arrParams.push(domScpTokenTicker.value);
+                        // Supply
+                        arrParams.push((Number(domScpTokenSupply.value) * COIN).toString());
+                    }
+
+                    // SCP-2 Spec
+                    if (nDeploymentVer === 2) {
+                        // Name
+                        arrParams.push(domScpTokenName.value);
+                        // Ticker
+                        arrParams.push(domScpTokenTicker.value);
+                        // Supply
+                        arrParams.push((Number(domScpTokenSupply.value) * COIN).toString());
+                        // PoS Reward
+                        arrParams.push((Number(domScpTokenPoSReward.value) * COIN).toString());
+                        // Min Stake Age
+                        arrParams.push(domScpTokenMinAge.value);
+                    }
+
+                    if (arrParams.length > 1)
+                        deploySCP(nDeploymentVer, arrParams);
+                }
+              </script>
+
+              <div class="alert alert-danger-custom" style="font-size:13px; display: none;" id="scpTokenErrorsWidget">
+                <i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i><b id="scpTokenErrors"></b>
+              </div>
+
+              <select class="form-select" oninput="changeTokenType(this)" style="margin-bottom: 20px;">
+                <option selected disabled>Token type</option>
+                <option value="1">SCP-1</option>
+                <option value="2">SCP-2</option>
+              </select>
+
+              <div class="col-md-12">
+                <div style="width:100%;">
+                    <p id='scpTokenDescription' style="text-align: center;">
+                      Select a token standard to get started!
+                    </p>
+                </div>
+              </div>
+
+              <div id="scpTokenSettings" style="display: none;">
+                <hr style="color: #bcc4d2;">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="omrs-input-group" style="width:100%;">
+                      <label class="omrs-input-underlined">
+                        <input id="scpTokenName" oninput="checkDeployerInput()" required type="text">
+                        <span class="omrs-input-label">Token Name</span>
+                        <span class="omrs-input-hover" onmouseover="showTooltip('tokenNameTip')"
+                        onmouseout="hideTooltip('tokenNameTip')"><i class="fas fa-question-circle tooltip-questionmark"></i></span>
+                      <span class="omrs-input-message" id="tokenNameTip" style="z-index: -1000;">The public name of your token, displayed on SCP Wallet, Explorers, etc.</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="omrs-input-group" style="width:100%;">
+                      <label class="omrs-input-underlined">
+                        <input id="scpTokenTicker" oninput="checkDeployerInput()" required type="text">
+                        <span class="omrs-input-label">Token Ticker</span>
+                        <span class="omrs-input-hover" onmouseover="showTooltip('tokenTickerTip')"
+                        onmouseout="hideTooltip('tokenTickerTip')"><i class="fas fa-question-circle tooltip-questionmark"></i></span>
+                      <span class="omrs-input-message" id="tokenTickerTip" style="z-index: -1000;">The public ticker of your token, displayed on SCP Wallet, Explorers, etc.</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="omrs-input-group" style="width:100%;">
+                      <label class="omrs-input-underlined">
+                        <input id="scpTokenSupply" oninput="checkDeployerInput()" required type="text">
+                        <span class="omrs-input-label">Max Supply</span>
+                        <span class="omrs-input-hover" onmouseover="showTooltip('maxSupplyTip')"
+                        onmouseout="hideTooltip('maxSupplyTip')"><i class="fas fa-question-circle tooltip-questionmark"></i></span>
+                      <span class="omrs-input-message" id="maxSupplyTip" style="z-index: -1000;">The maximum amount of tokens that can exist at once.</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div id="scp2TokenSettings" style="display:none;">
+                      <div class="omrs-input-group" style="width:100%;">
+                        <label class="omrs-input-underlined">
+                          <input id="scpTokenPoSReward" oninput="checkDeployerInput()" required type="text">
+                          <span class="omrs-input-label">Block Reward</span>
+                          <span class="omrs-input-hover" onmouseover="showTooltip('blockRewardTip')"
+                          onmouseout="hideTooltip('blockRewardTip')"><i class="fas fa-question-circle tooltip-questionmark"></i></span>
+                        <span class="omrs-input-message" id="blockRewardTip" style="z-index: -1000;">The reward per-block in tokens, distributed in proportional fractions to stakeholders.</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row" style="display:none;" id="scp2TokenSettings2">
+                  <div class="col-md-6">
+                    <div class="omrs-input-group" style="width:100%;">
+                      <label class="omrs-input-underlined">
+                        <input id="scpTokenMinAge" oninput="checkDeployerInput()" required type="text">
+                        <span class="omrs-input-label">Minimum Staking Age</span>
+                        <span class="omrs-input-hover" onmouseover="showTooltip('stakingAgeTip')"
+                          onmouseout="hideTooltip('stakingAgeTip')"><i class="fas fa-question-circle tooltip-questionmark"></i></span>
+                        <span class="omrs-input-message" id="stakingAgeTip" style="z-index: -1000;">The minimum time, in blocks, that tokens must stay untouched before earning staking rewards.</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <center>
+                  <button id="scpTokenDeployBtn" onclick="guiDeploySCP()" disabled style="margin-top: 10px;" class="btn btn-theme btn-layout">Create token</button>
+                  <p style="margin-top: 20px;opacity: 0.35;">Deploying an SCP Token requires a fixed deployment fee of 10 SCC!</p>
+                </center>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
