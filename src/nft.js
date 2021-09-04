@@ -40,11 +40,11 @@ class SCP4 {
         }
 
         // Append NFT to the Collection!
-        this.nfts.push({            
+        this.nfts.push({
             'id': tx.txid,
             'name': name,
             'imgUrl': imgUrl,
-            'owner': address,            
+            'owner': address,
             'activity': [{
                 'tx': tx.txid,
                 'type': 'mint',
@@ -61,14 +61,21 @@ class SCP4 {
     }
 
     transfer(acc1, acc2, nftId, tx) {
-        // Ensure the NFT exists and account 1 (sender) owns it
-        const nft = getNFTptr(nftId)
-        if (!nft || nft.error || nft.owner !== acc1) { // Fail if not valid NFT or owner not matching
-            console.warn("SCP-4: Attempted to transfer NFT '" + nftId + "' failed. NFT not found or not owned by sender!");
+        // Ensure the NFT exists
+        const nft = getNFTptr(nftId);
+        if (!nft || nft.error) {
+            console.warn("SCP-4: Attempted to transfer NFT '" + nftId +
+                         "' failed. NFT not found within state!");
+            return;
+        }
+        // Ensure account 1 (sender) owns the NFT
+        if (nft.owner !== acc1) {
+            console.warn("SCP-4: Attempted to transfer NFT '" + nftId +
+                         "' failed. NFT not owned by sender!");
             return;
         }
 
-        // Switch owner        
+        // Switch owner
         nft.owner = acc2;
 
         // Add activity
@@ -80,23 +87,36 @@ class SCP4 {
             'block': tx.height
         });
         
-        console.log("SCP-" + this.version + ": NFT '" +
-        nftId + "' transferred from '" + acc1 + "' to '" + acc2 + "'!");
+        console.log("SCP-" + this.version + ": NFT '" + nftId +
+                    "' transferred from '" + acc1 + "' to '" + acc2 + "'!");
         return true;
     }
 
     destroy(acc, collection, nftId, tx) {
-        // Ensure the Collection is not protected
-        const coll = getCollection(collection)
-        if (!coll || coll.error || coll.protected) { // Fail if not valid collection or protected
-            console.warn("SCP-4: Attempt to destroy NFT '" + nftId + "' failed. NFT not found or protected!");
+        // Ensure the Collection exists
+        const coll = getCollection(collection);
+        if (!coll || coll.error) {
+            console.warn("SCP-4: Attempt to destroy NFT '" + nftId +
+                         "' failed. Collection not found within state!");
             return;
         }
-
-        // Ensure the NFT exists and account 1 (sender) owns it
-        const nft = getNFTptr(nftId)
-        if (!nft || nft.error || nft.owner !== acc) { // Fail if not valid NFT or owner not matching
-            console.warn("SCP-4: Attempt to destroy NFT '" + nftId + "' failed. NFT not found or not owned by caller!");
+        // Ensure the Collection is not protected
+        if (coll.protected) {
+            console.warn("SCP-4: Attempt to destroy NFT '" + nftId +
+                         "' failed. Collection is protected!");
+            return;
+        }
+        // Ensure the NFT exists
+        const nft = getNFTptr(nftId);
+        if (!nft || nft.error) {
+            console.warn("SCP-4: Attempt to destroy NFT '" + nftId +
+                         "' failed. NFT not found within state!");
+            return;
+        }
+        // Ensure account 1 (sender) owns the NFT
+        if (nft.owner !== acc) {
+            console.warn("SCP-4: Attempt to destroy NFT '" + nftId +
+                         "' failed. NFT not owned by caller!");
             return;
         }
 
@@ -124,7 +144,8 @@ function addCollection(collection = SCP4) {
         if (coll.contract === collection.contract) {
             return {
                 'error': true,
-                'message': 'SCP-' + nft.version + ' already indexed in current chain state.',
+                'message': 'SCP-' + nft.version +
+                           ' already indexed in current chain state.',
                 'id': 8
             };
         }
@@ -156,7 +177,7 @@ function getCollection(query) {
     };
 }
 
-function getNFTptr(nftId) {    
+function getNFTptr(nftId) {
     // Loop all collections
     for (const collection of stateCollections) {
         // Loop NFTs
@@ -180,21 +201,38 @@ function getAllNFTsByAccount(address) {
     for (const collection of stateCollections) {
         // Search for the account
         for (const nft of collection.nfts) {
-            if(nft.owner === address)
-                arrNFTs.push({ 'nft': nft.id, 'name': nft.name, 'imgUrl': nft.imgUrl, 'collection': collection.contract, 'collectionIndex': collection.index, 'collectionName': collection.collectionName, 'activity': nft.activity });
+            if (nft.owner === address)
+                arrNFTs.push({
+                    'nft': nft.id,
+                    'name': nft.name,
+                    'imgUrl': nft.imgUrl,
+                    'collection': collection.contract,
+                    'collectionIndex': collection.index,
+                    'collectionName': collection.collectionName,
+                    'activity': nft.activity
+                });
         }
     }
     return arrNFTs;
 }
 
 // Find a NFT by it's ID
-function getNFTbyId(query) {    
+function getNFTbyId(query) {
     // Loop all collections
     for (const collection of stateCollections) {
         // Loop NFTs
         for (const nft of collection.nfts) {
-            if (nft.id === query) 
-                return { 'nft': nft.id, 'name': nft.name, 'imgUrl': nft.imgUrl, 'collection': collection.contract, 'collectionIndex': collection.index, 'collectionName': collection.collectionName, 'owner': nft.owner, 'activity': nft.activity };
+            if (nft.id === query)
+                return {
+                    'nft': nft.id,
+                    'name': nft.name,
+                    'imgUrl': nft.imgUrl,
+                    'collection': collection.contract,
+                    'collectionIndex': collection.index,
+                    'collectionName': collection.collectionName,
+                    'owner': nft.owner,
+                    'activity': nft.activity
+                };
         }
     }
     // If we reach here, no NFT found!
