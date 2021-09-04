@@ -16,6 +16,8 @@ function init(app, context) {
     context.strModule = strModule;
     const cbackRes = cController.init(context);
 
+    /* --- SCP-1 and SCP-2 --- */
+
     // Get All Tokens
     app.get(strRoute + 'getalltokens',
         cController.getAllTokens);
@@ -31,6 +33,24 @@ function init(app, context) {
     // Get an SCP-2 token's staking status for a single account
     app.get(strRoute + 'getstakingstatus/:contract/:account',
         cController.getStakingStatus);
+
+    /* --- SCP-4 --- */
+
+    // Get All Collections
+    app.get(strRoute + 'getallcollections',
+        cController.getAllCollections);
+
+    // Get a single Collection
+    app.get(strRoute + 'getcollection/:contract',
+        cController.getCollection);
+    
+    // Get NFTs by Account
+    app.get(strRoute + 'getnftsbyaccount/:account',
+        cController.getNFTsByAccount);
+    
+    // Get a single NFT
+    app.get(strRoute + 'getnft/:id',
+        cController.getNFTbyID);
 
     /// / BACKWARDS-COMPAT: Removal scheduled for v1.1.6
     app.get('/api/v1/getalltokens',

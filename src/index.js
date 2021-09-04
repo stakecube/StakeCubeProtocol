@@ -181,12 +181,14 @@ async function init(forcedCorePath = false, retry = false) {
             const fApiTokens = apiTOKENS.init(app, {
                 'TOKENS': TOKENS,
                 'DB': DB,
+                'NFT': NFT,
                 'isFullnode': isFullnodePtr
             });
             const fApiWallet = apiWALLET.init(app, {
                 'TOKENS': TOKENS,
                 'WALLET': WALLET,
                 'DB': DB,
+                'NFT': NFT,
                 'isFullnode': isFullnodePtr,
                 'COIN': COIN
             });
