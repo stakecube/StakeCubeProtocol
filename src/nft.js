@@ -16,13 +16,13 @@ const stateCollections = [];
 
 // SCP-4: (SCP-4 represents 'barebones' NFTs, with an issuer-only minting process, with: mint and transfer functionality)
 class SCP4 {
-    constructor(contract, collectionName, maxSupply, collectionProtected, creator, nfts) {
+    constructor(contract, collectionName, maxMints, collectionProtected, creator, nfts) {
         this.index = -1;
         this.version = 4;
         this.contract = contract;
         this.collectionName = collectionName;        
-        this.supply = 0;
-        this.maxSupply = maxSupply; // -1 = infinity
+        this.mints = 0;
+        this.maxMints = maxMints; // -1 = infinity
         this.protected = collectionProtected; // Default: true
         this.creator = creator;
         this.nfts = nfts;
@@ -31,11 +31,11 @@ class SCP4 {
 
     // ACCOUNTING METHODS
     mintNFT(address, name, imgUrl, tx) {
-        // Ensure mint does not exceed the maximum supply (if set)
-        if (this.maxSupply !== -1 && (this.supply + 1) > this.maxSupply) {
+        // Ensure mint does not exceed the maximum mints (if set)
+        if (this.maxMints !== -1 && (this.mints + 1) > this.maxMints) {
             console.warn("SCP-4: Attempted mint for collection '" +
-                            this.collectionName + "' exceeds maximum supply of '" +
-                            this.maxSupply + "'!");
+                            this.collectionName + "' exceeds maximum mints of '" +
+                            this.maxMints + "'!");
             return false;
         }
 
@@ -54,7 +54,7 @@ class SCP4 {
             }]
         });
 
-        this.supply += 1;
+        this.mints += 1;
         console.log("SCP-4: Issuer minted new NFT for '" +
                     this.collectionName + "'!");
         return true;

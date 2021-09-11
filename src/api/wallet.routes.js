@@ -16,6 +16,8 @@ function init(app, context) {
     context.strModule = strModule;
     const cbackRes = cController.init(context);
 
+    /* --- SCC, SCP-1 and SCP-2 --- */
+
     // Get the balances of all owned tokens by this account, including SCC
     app.get(strRoute + 'getbalances/:account',
         cController.getBalances);
@@ -31,6 +33,21 @@ function init(app, context) {
     // Creates a stake transaction to claim the pending rewards of a given account
     app.get(strRoute + 'stake/:address/:contract',
         cController.stake);
+    
+    /* --- SCP-4 --- */
+
+    // Creates a collection deploy transaction to create a new SCP-4 collection
+    app.get(strRoute + 'createcollection/:address/:name/:maxmints/:protected',
+        cController.createCollection);
+    // Mints a new NFT within a specified collection
+    app.get(strRoute + 'mintnft/:address/:contract/:name/:image_url',
+        cController.mintNFT);
+    // Burns an NFT (by ID) from our account
+    app.get(strRoute + 'burnnft/:address/:contract/:id',
+        cController.burnNFT);
+    // Transfers an NFT (by ID) from our account to another account
+    app.get(strRoute + 'transfernft/:address/:contract/:to/:id',
+        cController.transferNFT);
 
     // Return if this module is enabled via config
     return cbackRes;

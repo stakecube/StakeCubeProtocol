@@ -190,7 +190,9 @@ async function init(forcedCorePath = false, retry = false) {
                 'DB': DB,
                 'NFT': NFT,
                 'isFullnode': isFullnodePtr,
-                'COIN': COIN
+                'COIN': COIN,
+                'nDeployFee': nDeployFee,
+                'strDeployFeeDest': strDeployFeeDest
             });
             const fApiIO = apiIO.init(app, {
                 'WALLET': WALLET,
@@ -546,9 +548,9 @@ async function processState(newMsg, tx) {
             TBD
             --- SCP-4 ---
             param 0 = VERSION (int)
-            param 1 = COLLECTIONNAME (str)          
-            param 2 = MAXSUPPLY (int) # -1 for no max supply
-            param 3 = PROTECTED (bool) # optional, default = true
+            param 1 = COLLECTIONNAME (str)
+            param 2 = MAXMINTS (int) # -1 for no max mints
+            param 3 = PROTECTED (bool flag) # 1 for true, 0 for false
         */
         const arrParams = newMsg.split(' ');
         let nVersion = -1;
@@ -572,7 +574,7 @@ async function processState(newMsg, tx) {
                     break;
                 case 4: // SCP-4 NFT
                     nVersion = 4;
-                    nExpectedParams = 3;
+                    nExpectedParams = 4;
                     break;
             }
         }
@@ -599,7 +601,7 @@ async function processState(newMsg, tx) {
                     check1 = arrParams[1].length > 0;
                     check2 = arrParams[2].length > 0;
                     check3 = Number(arrParams[3]);
-                    check3 = (check3 > 0 && Number.isSafeInteger(check3));                    
+                    check3 = (check3 > 0 && Number.isSafeInteger(check3));
                     check4 = Number(arrParams[4]);
                     check5 = Number(arrParams[5]);
                     check4 = (check4 > 1 && Number.isSafeInteger(check4)); // SCP-2 inflation
@@ -611,7 +613,7 @@ async function processState(newMsg, tx) {
                 case 4: // SCP-4 NFT
                     check1 = arrParams[1].length > 0;
                     check2 = Number(arrParams[2]);
-                    check2 = (check2 === -1 || (check2 > 0 && Number.isSafeInteger(check2))); // SCP-4 max supply                    
+                    check2 = (check2 === -1 || (check2 > 0 && Number.isSafeInteger(check2))); // SCP-4 max mints
                     if (check1 && check2) sCheck = true;
                     break;
             }
@@ -661,19 +663,23 @@ async function processState(newMsg, tx) {
                             TOKENS.addToken(newContract);
                         }
                         if (nVersion === 4 && UPGRADES.isScp4Active(nCacheHeight)) {
-                            // Optional params
-                            // ------------------
-                            // Protected (bool, default = true)
+                            // Protected (bool flag)
                             // NFTs in protected Collections can **not** be burned / destroyed by owners
-                            // Setting it actively to false/0 allows to create SCP-4 contracts with destructable NFTs
+                            // Setting it to false/0 allows creating SCP-4 contracts with destructable NFTs
                             let colProtected = true;
-                            if(arrParams[3] && (arrParams[3] === false || arrParams[3] === 0)) colProtected = false;                                
+                            if (arrParams[3] === '0') {
+                                colProtected = false;
+                            } else if (arrParams[3] !== '1') {
+                                throw Error('SCP-4 Param "protected" must be' + 
+                                            ' 0 or 1! Input "' + arrParams[3] +
+                                            '" is invalid!');
+                            }
 
                             newContract = new NFT.SCP4(tx.txid,
                                 arrParams[1],
                                 Number(arrParams[2]),
                                 colProtected,
-                                addrCaller,                                
+                                addrCaller,
                                 []);
                             
                             NFT.addCollection(newContract);
@@ -956,7 +962,7 @@ async function processState(newMsg, tx) {
                     }
                 }
                 // SCP NFT DESTROY (Remove NFT from account, usable by owner and only in non-protected collections)
-                else if (arrParams[1] === 'destroy') {                
+                else if (arrParams[1] === 'destroy') {
                     /*
                         param 2 = NFT ID (str)
                     */

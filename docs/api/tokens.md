@@ -2,7 +2,7 @@
 
 **All Tokens**
 
-Returns the complete 'state' of SCP, including all tokens with their meta data, owners/accounts, activity and balances.
+Returns the complete 'state' of non-divisible, SCP-1-Based tokens, including all their meta data, owners/accounts, activity and balances.
 
 ```bash
 GET /api/v1/tokens/getalltokens
@@ -135,7 +135,7 @@ Example: `curl -X GET "https://stakecubecoin.net/web3/scp/tokens/gettoken/063d13
 ```
 
 </p>
-</details>  
+</details>
 
 ---
 
@@ -247,6 +247,243 @@ Example: `curl -X GET "https://stakecubecoin.net/web3/scp/tokens/getstakingstatu
     "unclaimed_rewards": 18995484,
     "weight": 0.018995484582832304,
     "note": "currently staking 10,001.665 TEST with an age of 11 blocks, with 0.19 TEST in unclaimed stake rewards"
+}
+```
+
+</p>
+</details>
+
+---
+
+**Get All Collections (SCP-4)**
+
+Returns the complete 'state' of SCP-4-Based NFT collections, along with all metadata and all NFTs for each collection.
+
+```bash
+GET /api/v1/tokens/getallcollections
+```
+
+Example: `curl -X GET "https://stakecubecoin.net/web3/scp/tokens/getallcollections"`
+
+**Fullnode required**: YES
+
+**Parameters**: NONE
+
+<details>
+<summary><strong>Example Response</strong></summary>
+<p>
+
+```json
+[
+  {
+    "index": 0,
+    "version": 4,
+    "contract": "02f08b8cfc938a901ac939243bd091e48a650475d5d2f78baacef5f7c1cb899c",
+    "collectionName": "test",
+    "mints": 3,
+    "maxMints": 1,
+    "protected": false,
+    "creator": "sDpkbWCCyh1zvAUHiJKGKr3h11ciaui3mP",
+    "nfts": [
+      {
+        "id": "b617e7a5f236ecbd3a734c855dd5040e8bf589e35e0d4e42c0ccadf5363c6075",
+        "name": "first_nft!",
+        "imgUrl": "QmQC9Vz1kPoLBwn9zRADw1vrVdHAPooq9nDW4AgB43rzHa",
+        "owner": "sY2NPdY7TSpmH3Es1Ao4cB8mB9odbT1S2g",
+        "activity": [
+          {
+            "tx": "b617e7a5f236ecbd3a734c855dd5040e8bf589e35e0d4e42c0ccadf5363c6075",
+            "type": "mint",
+            "from": null,
+            "to": "sDpkbWCCyh1zvAUHiJKGKr3h11ciaui3mP",
+            "block": 222321
+          },
+          {
+            "tx": "8981623655b1bd0e68eab4f83214d2a078880ba6ba833f0f6f293d266b7ccdcb",
+            "type": "transfer",
+            "from": "sDpkbWCCyh1zvAUHiJKGKr3h11ciaui3mP",
+            "to": "sY2NPdY7TSpmH3Es1Ao4cB8mB9odbT1S2g",
+            "block": 223763
+          }
+        ]
+      }
+    ]
+  }
+]
+```
+
+</p>
+</details>
+
+---
+
+**Get Single Collection**
+
+Returns the complete 'state' of a single SCP-4 Collection with its metadata, NFTs and activity.
+
+```bash
+GET /api/v1/tokens/getcollection/:contract
+```
+
+Example: `curl -X GET "https://stakecubecoin.net/web3/scp/tokens/getcollection/02f08b8cfc938a901ac939243bd091e48a650475d5d2f78baacef5f7c1cb899c"`
+
+**Fullnode required**: YES
+
+**Parameters**:
+
+| Name | Mandatory | Description |
+|---------|---------|---------|
+| contract | YES | The unique collection id |
+
+<details>
+<summary><strong>Example Response</strong></summary>
+<p>
+
+```json
+{
+  "index": 0,
+  "version": 4,
+  "contract": "02f08b8cfc938a901ac939243bd091e48a650475d5d2f78baacef5f7c1cb899c",
+  "collectionName": "test",
+  "mints": 3,
+  "maxMints": 1,
+  "protected": false,
+  "creator": "sDpkbWCCyh1zvAUHiJKGKr3h11ciaui3mP",
+  "nfts": [
+    {
+      "id": "b617e7a5f236ecbd3a734c855dd5040e8bf589e35e0d4e42c0ccadf5363c6075",
+      "name": "first_nft!",
+      "imgUrl": "QmQC9Vz1kPoLBwn9zRADw1vrVdHAPooq9nDW4AgB43rzHa",
+      "owner": "sY2NPdY7TSpmH3Es1Ao4cB8mB9odbT1S2g",
+      "activity": [
+        {
+          "tx": "b617e7a5f236ecbd3a734c855dd5040e8bf589e35e0d4e42c0ccadf5363c6075",
+          "type": "mint",
+          "from": null,
+          "to": "sDpkbWCCyh1zvAUHiJKGKr3h11ciaui3mP",
+          "block": 222321
+        },
+        {
+          "tx": "8981623655b1bd0e68eab4f83214d2a078880ba6ba833f0f6f293d266b7ccdcb",
+          "type": "transfer",
+          "from": "sDpkbWCCyh1zvAUHiJKGKr3h11ciaui3mP",
+          "to": "sY2NPdY7TSpmH3Es1Ao4cB8mB9odbT1S2g",
+          "block": 223763
+        }
+      ]
+    }
+  ]
+}
+```
+
+</p>
+</details>
+
+---
+
+**NFTs by Account**
+
+Finds and returns all NFTs owned by the specified account, regardless of their collection.
+
+```bash
+GET /api/v1/tokens/getnftsbyaccount/:account
+```
+
+Example: `curl -X GET "https://stakecubecoin.net/web3/scp/tokens/getnftsbyaccount/sY2NPdY7TSpmH3Es1Ao4cB8mB9odbT1S2g"`
+
+**Fullnode required**: YES
+
+**Parameters**:
+
+| Name | Mandatory | Description |
+|---------|---------|---------|
+| account | YES | The account address |
+
+<details>
+<summary><strong>Example Response</strong></summary>
+<p>
+
+```json
+[
+  {
+    "nft": "b617e7a5f236ecbd3a734c855dd5040e8bf589e35e0d4e42c0ccadf5363c6075",
+    "name": "first_nft!",
+    "imgUrl": "QmQC9Vz1kPoLBwn9zRADw1vrVdHAPooq9nDW4AgB43rzHa",
+    "collection": "02308b8ccc938a901ac939243bd091e48a650475d5d2f78baacef5f7c1cb899c",
+    "collectionIndex": 0,
+    "collectionName": "teeest",
+    "activity": [
+      {
+        "tx": "b617e7a5f236ecbd3a734c855dd5040e8bf589e35e0d4e42c0ccadf5363c6075",
+        "type": "mint",
+        "from": null,
+        "to": "sDpkbWCCyh1zvAUHiJKGKr3h11ciaui3mP",
+        "block": 222321
+      },
+      {
+        "tx": "8981623655b1bd0e68eab4f83214d2a078880ba6ba833f0f6f293d266b7ccdcb",
+        "type": "transfer",
+        "from": "sDpkbWCCyh1zvAUHiJKGKr3h11ciaui3mP",
+        "to": "sY2NPdY7TSpmH3Es1Ao4cB8mB9odbT1S2g",
+        "block": 223763
+      }
+    ]
+  }
+]
+```
+
+</p>
+</details>
+
+---
+
+**Get Single NFT**
+
+Returns the a single SCP-4 NFT by it's ID.
+
+```bash
+GET /api/v1/tokens/getnft/:id
+```
+
+Example: `curl -X GET "https://stakecubecoin.net/web3/scp/tokens/getnft/b617e7a5f236ecbd3a734c855dd5040e8bf589e35e0d4e42c0ccadf5363c6075"`
+
+**Fullnode required**: YES
+
+**Parameters**:
+
+| Name | Mandatory | Description |
+|---------|---------|---------|
+| contract | YES | The unique NFT id |
+
+<details>
+<summary><strong>Example Response</strong></summary>
+<p>
+
+```json
+{
+  "nft": "b617e7a5f236ecbd3a734c855dd5040e8bf589e35e0d4e42c0ccadf5363c6075",
+  "name": "first_nft!",
+  "imgUrl": "QmQC9Vz1kPoLBwn9zRADw1vrVdHAPooq9nDW4AgB43rzHa",
+  "collection": "02308b8ccc938a901ac939243bd091e48a650475d5d2f78baacef5f7c1cb899c",
+  "collectionIndex": 0,
+  "collectionName": "teeest",
+  "owner": "sY2NPdY7TSpmH3Es1Ao4cB8mB9odbT1S2g",
+  "activity": [
+    {
+      "tx": "b617e7a5f236ecbd3a734c855dd5040e8bf589e35e0d4e42c0ccadf5363c6075",
+      "type": "mint",
+      "from": null,
+      "to": "sDpkbWCCyh1zvAUHiJKGKr3h11ciaui3mP",
+      "block": 222321
+    },
+    {
+      "tx": "8981623655b1bd0e68eab4f83214d2a078880ba6ba833f0f6f293d266b7ccdcb",
+      "type": "transfer",
+      "from": "sDpkbWCCyh1zvAUHiJKGKr3h11ciaui3mP",
+      "to": "sY2NPdY7TSpmH3Es1Ao4cB8mB9odbT1S2g",
+      "block": 223763
+    }
+  ]
 }
 ```
 
