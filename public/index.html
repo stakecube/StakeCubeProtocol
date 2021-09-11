@@ -809,6 +809,7 @@
 
     function mintSCP(contract, amount) {
         console.log("Constructing SCP mint TX for " + (amount / COIN).toLocaleString('en-GB'));
+        const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
         const strAddr = WALLET.getActiveWallet().getPubkey();
         const cTx = WALLET.sccjs.tx.transaction();
         // Add input
@@ -844,6 +845,7 @@
     function burnSCP(contract, amount) {
         console.log("Constructing SCP burn TX for " + (amount / COIN).toLocaleString('en-GB'));
         // Use our first UTXO, as the fees will be incredibly low anyway
+        const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
         const strAddr = WALLET.getActiveWallet().getPubkey();
         const cTx = WALLET.sccjs.tx.transaction();
         // Add input
