@@ -43,11 +43,11 @@ function init(app, context) {
     // Get a single Collection
     app.get(strRoute + 'getcollection/:contract',
         cController.getCollection);
-    
+
     // Get NFTs by Account
     app.get(strRoute + 'getnftsbyaccount/:account',
         cController.getNFTsByAccount);
-    
+
     // Get a single NFT
     app.get(strRoute + 'getnft/:id',
         cController.getNFTbyID);

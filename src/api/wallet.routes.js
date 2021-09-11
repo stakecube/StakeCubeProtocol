@@ -33,7 +33,7 @@ function init(app, context) {
     // Creates a stake transaction to claim the pending rewards of a given account
     app.get(strRoute + 'stake/:address/:contract',
         cController.stake);
-    
+
     /* --- SCP-4 --- */
 
     // Creates a collection deploy transaction to create a new SCP-4 collection

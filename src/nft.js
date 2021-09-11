@@ -16,11 +16,12 @@ const stateCollections = [];
 
 // SCP-4: (SCP-4 represents 'barebones' NFTs, with an issuer-only minting process, with: mint and transfer functionality)
 class SCP4 {
-    constructor(contract, collectionName, maxMints, collectionProtected, creator, nfts) {
+    constructor(contract, collectionName, maxMints, collectionProtected,
+        creator, nfts) {
         this.index = -1;
         this.version = 4;
         this.contract = contract;
-        this.collectionName = collectionName;        
+        this.collectionName = collectionName;
         this.mints = 0;
         this.maxMints = maxMints; // -1 = infinity
         this.protected = collectionProtected; // Default: true
@@ -34,8 +35,8 @@ class SCP4 {
         // Ensure mint does not exceed the maximum mints (if set)
         if (this.maxMints !== -1 && (this.mints + 1) > this.maxMints) {
             console.warn("SCP-4: Attempted mint for collection '" +
-                            this.collectionName + "' exceeds maximum mints of '" +
-                            this.maxMints + "'!");
+                            this.collectionName + "' exceeds maximum mints" +
+                            " of '" + this.maxMints + "'!");
             return false;
         }
 
@@ -86,8 +87,8 @@ class SCP4 {
             'to': acc2,
             'block': tx.height
         });
-        
-        console.log("SCP-" + this.version + ": NFT '" + nftId +
+
+        console.log('SCP-' + this.version + ": NFT '" + nftId +
                     "' transferred from '" + acc1 + "' to '" + acc2 + "'!");
         return true;
     }
@@ -120,7 +121,7 @@ class SCP4 {
             return;
         }
 
-        // Destroy NFT by removing owner from state 
+        // Destroy NFT by removing owner from state
         nft.owner = null;
 
         // Add activity
@@ -131,8 +132,8 @@ class SCP4 {
             'to': null,
             'block': tx.height
         });
-        
-        console.log("SCP-" + this.version + ": NFT '" +
+
+        console.log('SCP-' + this.version + ": NFT '" +
         nftId + "' destroyed by '" + acc + "'!");
         return true;
     }
@@ -144,7 +145,7 @@ function addCollection(collection = SCP4) {
         if (coll.contract === collection.contract) {
             return {
                 'error': true,
-                'message': 'SCP-' + nft.version +
+                'message': 'SCP-' + coll.version +
                            ' already indexed in current chain state.',
                 'id': 8
             };
@@ -201,7 +202,7 @@ function getAllNFTsByAccount(address) {
     for (const collection of stateCollections) {
         // Search for the account
         for (const nft of collection.nfts) {
-            if (nft.owner === address)
+            if (nft.owner === address) {
                 arrNFTs.push({
                     'nft': nft.id,
                     'name': nft.name,
@@ -211,6 +212,7 @@ function getAllNFTsByAccount(address) {
                     'collectionName': collection.collectionName,
                     'activity': nft.activity
                 });
+            }
         }
     }
     return arrNFTs;
@@ -222,7 +224,7 @@ function getNFTbyId(query) {
     for (const collection of stateCollections) {
         // Loop NFTs
         for (const nft of collection.nfts) {
-            if (nft.id === query)
+            if (nft.id === query) {
                 return {
                     'nft': nft.id,
                     'name': nft.name,
@@ -233,6 +235,7 @@ function getNFTbyId(query) {
                     'owner': nft.owner,
                     'activity': nft.activity
                 };
+            }
         }
     }
     // If we reach here, no NFT found!

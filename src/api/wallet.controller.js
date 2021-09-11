@@ -443,8 +443,9 @@ async function createCollection(req, res) {
                         ')');
         }
         // Add inputs
-        for (const cUTXO of usedUTXOs)
+        for (const cUTXO of usedUTXOs) {
             cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
+        }
         // SCP output
         cTx.addoutputburn(0.00000001,
             'SCPCREATE4 ' + strName + ' ' + nMaxMints + ' ' +
@@ -460,8 +461,9 @@ async function createCollection(req, res) {
         const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
         const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
         // Mark UTXOs as spent
-        for (const cUTXO of usedUTXOs)
+        for (const cUTXO of usedUTXOs) {
             cUTXO.spent = true;
+        }
         // Return API data
         return res.json({
             'txid': strTXID,
