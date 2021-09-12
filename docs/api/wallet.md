@@ -288,7 +288,7 @@ Example: `curl -X GET "localhost:3000/api/v1/wallet/burnnft/sgu2PRDZv9yeqco6ouVG
 | Name | Mandatory | Description |
 |---------|---------|---------|
 | address | YES | The account address |
-| contract | YES | The tokens unique contract id |
+| contract | YES | The unique ID of the collection |
 | id | YES | The unique ID of the NFT to burn |
 
 <details>
@@ -326,7 +326,7 @@ Example: `curl -X GET "localhost:3000/api/v1/wallet/transfernft/sgu2PRDZv9yeqco6
 | Name | Mandatory | Description |
 |---------|---------|---------|
 | address | YES | The 'from' address |
-| collection | YES |  unique contract id |
+| collection | YES | The unique ID of the collection |
 | to | YES | The receiver / the destination address |
 | id | YES | The unique id of the NFT |
 
