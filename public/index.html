@@ -766,7 +766,7 @@
 
     function deploySCP(version = 1, params = []) {
         if (!Number.isSafeInteger(version)) return console.error("SCP token must have a version integer!");
-        if (params.length < 3) return console.error("SCP token deployment requires params!\nE.g; deploySCP(1, ['CatCoin', 'CAT', " + COIN + "])");
+        if (params.length < 1) return console.error("SCP token deployment requires params!\nE.g; deploySCP(1, ['CatCoin', 'CAT', " + COIN + "])");
         // Ensure SCP params look atleast somewhat sane
         for (const param of params) {
           if (typeof param === 'string') {
@@ -809,6 +809,7 @@
 
     function mintSCP(contract, amount) {
         console.log("Constructing SCP mint TX for " + (amount / COIN).toLocaleString('en-GB'));
+        const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
         const strAddr = WALLET.getActiveWallet().getPubkey();
         const cTx = WALLET.sccjs.tx.transaction();
         // Add input
@@ -844,6 +845,7 @@
     function burnSCP(contract, amount) {
         console.log("Constructing SCP burn TX for " + (amount / COIN).toLocaleString('en-GB'));
         // Use our first UTXO, as the fees will be incredibly low anyway
+        const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
         const strAddr = WALLET.getActiveWallet().getPubkey();
         const cTx = WALLET.sccjs.tx.transaction();
         // Add input

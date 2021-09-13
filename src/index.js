@@ -30,7 +30,7 @@ let isOutdated = false;
 
 let npmPackage;
 // Main Modules
-let DB, NET, RPC, TOKENS, WALLET, UPGRADES, VM;
+let DB, NET, RPC, TOKENS, NFT, WALLET, UPGRADES, VM;
 // API Modules
 let apiACTIVITY, apiBLOCKCHAIN, apiTOKENS, apiWALLET, apiIO;
 try {
@@ -39,6 +39,7 @@ try {
     NET = require('../src/network.js');
     RPC = require('../src/rpc.js');
     TOKENS = require('../src/token.js');
+    NFT = require('../src/nft.js');
     WALLET = require('../src/wallet.js');
     UPGRADES = require('../src/upgrades.js');
     VM = require('../src/vm.js');
@@ -78,6 +79,7 @@ try {
         NET = require('./network.js');
         RPC = require('./rpc.js');
         TOKENS = require('./token.js');
+        NFT = require('./nft.js');
         WALLET = require('./wallet.js');
         UPGRADES = require('./upgrades.js');
         VM = require('./vm.js');
@@ -179,14 +181,18 @@ async function init(forcedCorePath = false, retry = false) {
             const fApiTokens = apiTOKENS.init(app, {
                 'TOKENS': TOKENS,
                 'DB': DB,
+                'NFT': NFT,
                 'isFullnode': isFullnodePtr
             });
             const fApiWallet = apiWALLET.init(app, {
                 'TOKENS': TOKENS,
                 'WALLET': WALLET,
                 'DB': DB,
+                'NFT': NFT,
                 'isFullnode': isFullnodePtr,
-                'COIN': COIN
+                'COIN': COIN,
+                'nDeployFee': nDeployFee,
+                'strDeployFeeDest': strDeployFeeDest
             });
             const fApiIO = apiIO.init(app, {
                 'WALLET': WALLET,
@@ -526,47 +532,96 @@ async function processState(newMsg, tx) {
     // Create a new SCP-predefined token, with name, ticker and max supply
     if (!isUsingIndex && newMsg.startsWith('SCPCREATE')) {
         /*
-            param 0 = SCPCREATE
-            version = "SCPCREATE<version>"
+            --- SCP-1 ---
+            param 0 = VERSION (int)
             param 1 = NAME (str)
             param 2 = TICKER (str)
             param 3 = MAXSUPPLY (int)
             --- SCP-2 ---
+            param 0 = VERSION (int)
+            param 1 = NAME (str)
+            param 2 = TICKER (str)
+            param 3 = MAXSUPPLY (int)
             param 4 = INFLATION (int)
             param 5 = MINAGE (int)
+            --- SCP-3 ---
+            TBD
+            --- SCP-4 ---
+            param 0 = VERSION (int)
+            param 1 = COLLECTIONNAME (str)
+            param 2 = MAXMINTS (int) # -1 for no max mints
+            param 3 = PROTECTED (bool flag) # 1 for true, 0 for false
         */
         const arrParams = newMsg.split(' ');
-        let nVersion = 1;
-        let nExpectedParams = 4;
+        let nVersion = -1;
+        let nExpectedParams = -1;
+
         if (arrParams[0] !== 'SCPCREATE') {
             const arrVersion = Number(arrParams[0].substr(9));
-            if (arrVersion === 2) {
+
+            switch (arrVersion) {
+            case 1: // SCP-1 Token
+                nVersion = 1;
+                nExpectedParams = 4;
+                break;
+            case 2: // SCP-2 Token
                 nVersion = 2;
                 nExpectedParams = 6;
+                break;
+            case 3: // Not defined yet
+                nVersion = 3;
+                nExpectedParams = -1;
+                break;
+            case 4: // SCP-4 NFT
+                nVersion = 4;
+                nExpectedParams = 4;
+                break;
             }
         }
+
         // Ensure we have the correct amount of params
         if (arrParams.length === nExpectedParams) {
             // Sanity checks
-            const check1 = arrParams[1].length > 0;
-            const check2 = arrParams[2].length > 0;
-            const nCheck3 = Number(arrParams[3]);
-            const check3 = (nCheck3 > 0 && Number.isSafeInteger(nCheck3));
-            // SCP-2 inflation
-            const nCheck4 = Number(arrParams[4]);
-            let check4 = true;
-            // SCP-2 minimum age (in blocks) to stake
-            const nCheck5 = Number(arrParams[5]);
-            let check5 = true;
-            if (nVersion === 2) {
-                check4 = (nCheck4 > 1 && Number.isSafeInteger(nCheck4));
-                check5 = (nCheck5 > 1 && Number.isSafeInteger(nCheck5));
+            let sCheck = false;
+            let check1 = false;
+            let check2 = false;
+            let check3 = false;
+            let check4 = false;
+            let check5 = false;
+
+            switch (nVersion) {
+            case 1: // SCP-1 Token
+                check1 = arrParams[1].length > 0;
+                check2 = arrParams[2].length > 0;
+                check3 = Number(arrParams[3]);
+                check3 = (check3 > 0 && Number.isSafeInteger(check3));
+                if (check1 && check2 && check3) sCheck = true;
+                break;
+            case 2: // SCP-2 Token
+                check1 = arrParams[1].length > 0;
+                check2 = arrParams[2].length > 0;
+                check3 = Number(arrParams[3]);
+                check3 = (check3 > 0 && Number.isSafeInteger(check3));
+                check4 = Number(arrParams[4]);
+                check5 = Number(arrParams[5]);
+                check4 = (check4 > 1 && Number.isSafeInteger(check4)); // SCP-2 inflation
+                check5 = (check5 > 1 && Number.isSafeInteger(check5)); // SCP-2 minimum age (in blocks) to stake
+                if (check1 && check2 && check3 && check4 && check5) sCheck = true;
+                break;
+            case 3: // Not defined yet
+                break;
+            case 4: // SCP-4 NFT
+                check1 = arrParams[1].length > 0;
+                check2 = Number(arrParams[2]);
+                check2 = (check2 === -1 || (check2 > 0 && Number.isSafeInteger(check2))); // SCP-4 max mints
+                if (check1 && check2) sCheck = true;
+                break;
             }
-            if (check1 && check2 && check3 &&
-                (check4 && check5)) {
+
+            if (sCheck) {
                 // Params look good, now verify outputs
                 try {
-                    // Grab change output (last vout) --> Ensure change output is the token issuer
+                    // Grab change output (last vout) --> Ensure change output is the contract issuer
                     const voutCaller = tx.vout[tx.vout.length - 1];
                     const addrCaller = voutCaller.scriptPubKey.addresses[0];
                     if (isEmpty(addrCaller)) {
@@ -584,46 +639,74 @@ async function processState(newMsg, tx) {
                         if (feePubkey !== strDeployFeeDest) {
                             throw Error('Deployment fee output is invalid!');
                         }
-                        let newToken;
+                        let newContract;
                         if (nVersion === 1) {
-                            newToken = new TOKENS.SCP1Token(tx.txid,
+                            newContract = new TOKENS.SCP1Token(tx.txid,
                                 arrParams[1],
                                 arrParams[2],
-                                nCheck3,
+                                Number(arrParams[3]),
                                 addrCaller,
                                 []);
+
+                            TOKENS.addToken(newContract);
                         }
                         if (nVersion === 2) {
-                            newToken = new TOKENS.SCP2Token(tx.txid,
+                            newContract = new TOKENS.SCP2Token(tx.txid,
                                 arrParams[1],
                                 arrParams[2],
-                                nCheck3,
+                                Number(arrParams[3]),
                                 addrCaller,
                                 [],
-                                nCheck4,
-                                nCheck5);
+                                Number(arrParams[4]),
+                                Number(arrParams[5]));
+
+                            TOKENS.addToken(newContract);
                         }
-                        TOKENS.addToken(newToken);
-                        console.log('New SCP-' + nVersion + ' token created!');
-                        console.log(newToken);
+                        if (nVersion === 4 && UPGRADES.isScp4Active(nCacheHeight)) {
+                            // Protected (bool flag)
+                            // NFTs in protected Collections can **not** be burned / destroyed by owners
+                            // Setting it to false/0 allows creating SCP-4 contracts with destructable NFTs
+                            let colProtected = true;
+                            if (arrParams[3] === '0') {
+                                colProtected = false;
+                            } else if (arrParams[3] !== '1') {
+                                throw Error('SCP-4 Param "protected" must be' +
+                                            ' 0 or 1! Input "' + arrParams[3] +
+                                            '" is invalid!');
+                            }
+
+                            newContract = new NFT.SCP4(tx.txid,
+                                arrParams[1],
+                                Number(arrParams[2]),
+                                colProtected,
+                                addrCaller,
+                                []);
+
+                            NFT.addCollection(newContract);
+                        }
+
+                        if (newContract) {
+                            console.log('New SCP-' + nVersion + ' contract created!');
+                            console.log(newContract);
+                        }
                     } else {
                         console.warn('An attempt to create a new SCP-' +
-                                     nVersion + ' token has failed, invalid ' +
+                                     nVersion + ' contract has failed, invalid ' +
                                      'fee output!');
                     }
                 } catch(e) {
                     console.warn('An attempt to create a new SCP-' +
-                                 nVersion + ' token has failed, failed ' +
+                                 nVersion + ' contract has failed, failed ' +
                                  'to verify outputs!');
                     console.error(e);
                 }
             } else {
                 console.warn('An attempt to create a new SCP-' + nVersion +
-                             ' token has failed, incorrect params!');
+                             ' contract has failed, incorrect params!');
             }
         } else {
             console.warn('An attempt to create a new SCP-' + nVersion +
-                         ' token has failed, incorrect param count! (has ' +
+                         ' contract has failed, incorrect param count! (has ' +
                          arrParams.length + ', expected ' + nExpectedParams +
                          ')\nTX: ' + tx.txid);
         }
@@ -649,10 +732,13 @@ async function processState(newMsg, tx) {
         const check2 = !isEmpty(arrParams[1]);
         if (check1 && check2) {
             // Fetch the contract being called
-            // SCP Token Contracts
+            // One of them is empty for now.
+            // TODO: improve and check what contract type it is
             const cToken = TOKENS.getToken(idContract);
-            if (!cToken.error) {
-                // SCP MINTING (Create new tokens on-demand, issuer-only, cannot mint above predefined max supply)
+            const cCollection = NFT.getCollection(idContract);
+
+            if (cToken && !cToken.error) {
+                // SCP TOKEN MINTING (Create new tokens on-demand, issuer-only, cannot mint above predefined max supply)
                 if (arrParams[1] === 'mint') {
                     /*
                         param 2 = AMOUNT (satoshi int)
@@ -668,7 +754,8 @@ async function processState(newMsg, tx) {
                                     Number.isSafeInteger(nCheck3));
                     if (check3) {
                         // Grab change output --> Ensure change output is the token issuer
-                        const addrCaller = tx.vout[1].scriptPubKey.addresses[0];
+                        const addrCaller = tx.vout[1]
+                            .scriptPubKey.addresses[0];
                         if (isEmpty(addrCaller)) {
                             throw Error('Missing creator address!');
                         }
@@ -698,12 +785,12 @@ async function processState(newMsg, tx) {
                         }
                     } else {
                         console.error('An attempt to mint SCP-' +
-                                      cToken.version +
-                                      ' tokens failed! (Token: ' + cToken.name +
+                                      cToken.version + ' tokens failed! ' +
+                                      '(Token: ' + cToken.name +
                                       ', amount: ' + arrParams[2] + ')');
                     }
                 } else if (arrParams[1] === 'burn') {
-                // SCP BURNING (Burn tokens from your account balance, usable by anyone, cannot burn more than your available balance)
+                    // SCP TOKEN BURNING (Burn tokens from your account balance, usable by anyone, cannot burn more than your available balance)
                     /*
                         param 2 = AMOUNT (satoshi int)
                     */
@@ -712,7 +799,8 @@ async function processState(newMsg, tx) {
                                     Number.isSafeInteger(nCheck3));
                     if (check3) {
                         // Fetch the change output of the contract call TX, assume the change output is the caller.
-                        const addrCaller = tx.vout[1].scriptPubKey.addresses[0];
+                        const addrCaller = tx.vout[1]
+                            .scriptPubKey.addresses[0];
                         if (isEmpty(addrCaller)) {
                             throw Error('Missing caller address!');
                         }
@@ -730,12 +818,12 @@ async function processState(newMsg, tx) {
                         }
                     } else {
                         console.error('An attempt to burn SCP-' +
-                                      cToken.version +
-                                      ' tokens failed! (Token: ' + cToken.name +
+                                      cToken.version + ' tokens' +
+                                      ' failed! (Token: ' + cToken.name +
                                       ', amount: ' + arrParams[2] + ')');
                     }
                 } else if (arrParams[1] === 'send') {
-                // SCP SENDS (Transfer tokens to another account, usable by anyone, cannot send more than your available balance)
+                    // SCP TOKEN SENDS (Transfer tokens to another account, usable by anyone, cannot send more than your available balance)
                     /*
                         param 2 = AMOUNT (satoshi int)
                         param 3 = RECEIVER (address str)
@@ -770,11 +858,11 @@ async function processState(newMsg, tx) {
                                       cToken.version + ' tokens failed! ' +
                                       '(Token: ' + cToken.name + ', from ' +
                                       addrCaller.substr(0, 5) + ', to ' +
-                                      arrParams[3].substr(0, 5) + ', amount: ' +
-                                      arrParams[2] + ')');
+                                      arrParams[3].substr(0, 5) + ', amount:' +
+                                      ' ' + arrParams[2] + ')');
                     }
                 } else if (cToken.version === 2 && arrParams[1] === 'redeem') {
-                // SCP-2 STAKING (Redeem an amount of unclaimed balance, credited from staking rewards)
+                    // SCP-2 TOKEN STAKING (Redeem an amount of unclaimed balance, credited from staking rewards)
                     // Fetch the change output of the contract call TX, assume the change output is the caller.
                     const addrCaller = tx.vout[1].scriptPubKey.addresses[0];
                     if (isEmpty(addrCaller)) {
@@ -792,11 +880,126 @@ async function processState(newMsg, tx) {
                                       'ignoring request...');
                     }
                 }
-            } else {
-                console.error('Contract write attempted on a non-existant ' +
-                              'contract, skipping!');
-                // Dump the error too, for good debugging measure
-                console.error(cToken);
+            }
+
+            if (cCollection && !cCollection.error) {
+                // SCP NFT MINTING (Create new NFT for the collection, issuer-only)
+                if (arrParams[1] === 'mint') {
+                    /*
+                        param 2 = NAME (string)
+                        param 3 = IMAGE_URL (string) // IPFS recommended
+                    */
+                    const check3 = arrParams[2] && arrParams[2].length > 1;
+                    const check4 = arrParams[3] && arrParams[3].length > 1; // TODO: Improve _url_ validation
+
+                    if (check3 && check4) {
+                        // Grab change output --> Ensure change output is the contract issuer
+                        const addrCaller = tx.vout[1]
+                            .scriptPubKey.addresses[0];
+                        if (isEmpty(addrCaller)) {
+                            throw Error('Missing creator address!');
+                        }
+                        // Check the change output against the NFT issuer
+                        if (addrCaller === cCollection.creator) {
+                            // Authentication: Ensure all inputs of the TX are from the issuer
+                            const fSafe = await isCallAuthorized(tx,
+                                addrCaller);
+                            if (fSafe) {
+                                // Authentication successful, mint NFT!
+                                cCollection.mintNFT(cCollection.creator,
+                                    arrParams[2], arrParams[3],
+                                    tx);
+                            } else {
+                                console.warn('An attempt to mint SCP-' +
+                                              cCollection.version + ' ' +
+                                              'containing a non-issuer input ' +
+                                              'was detected, ignoring ' +
+                                              'request...');
+                            }
+                        } else {
+                            console.warn('An attempt by a non-issuer to mint' +
+                                          ' SCP-' + cCollection.version + ' NFT' +
+                                          ' failed! (Issuer: ' +
+                                          cCollection.creator.substr(0, 5) + '... ' +
+                                          'Caller: ' + addrCaller.substr(0, 5) +
+                                          '...)');
+                        }
+                    } else {
+                        console.warn('An attempt to mint SCP-' +
+                                      cCollection.version +
+                                      ' NFT failed: no valid name and/or ' +
+                                      'image url given! (Collection: ' +
+                                      cCollection.collectionName + ')');
+                    }
+                } else if (arrParams[1] === 'transfer') {
+                    // SCP NFT TRANSFER (Transfer NFT to another account, usable by anyone)
+                    /*
+                        param 2 = RECEIVER (address str)
+                        param 3 = NFTID (str)
+                    */
+                    // Fetch the change output of the contract call TX, assume the change output is the caller.
+                    const addrCaller = tx.vout[1].scriptPubKey.addresses[0];
+                    if (isEmpty(addrCaller)) {
+                        throw Error('Missing caller address!');
+                    }
+                    // Run sanity checks
+                    const check3 = arrParams[2] && (await rpcMain
+                        .call(
+                            'validateaddress',
+                            arrParams[2]))
+                        .isvalid;
+                    const check4 = arrParams[3] && arrParams[3].length === 64;
+
+                    if (check3 && check4) {
+                        // Authentication: Ensure all inputs of the TX are from the caller
+                        const fSafe = await isCallAuthorized(tx, addrCaller);
+                        if (fSafe) {
+                            // Authentication successful, transfer NFT!
+                            cCollection.transfer(addrCaller, arrParams[2],
+                                arrParams[3], tx);
+                        } else {
+                            console.warn('An attempt to transfer SCP-' +
+                                          cCollection.version + ' containing' +
+                                          ' a non-caller input was detected,' +
+                                          ' ignoring request...');
+                        }
+                    } else {
+                        console.warn('An attempt to transfer SCP-' +
+                                      cCollection.version + ' NFT failed: ' +
+                                      'missing or not valid params!');
+                    }
+                } else if (arrParams[1] === 'destroy') {
+                    // SCP NFT DESTROY (Remove NFT from account, usable by owner and only in non-protected collections)
+                    /*
+                        param 2 = NFT ID (str)
+                    */
+                    const check3 = arrParams[2] && arrParams[2].length === 64;
+
+                    if (check3) {
+                        // Fetch the change output of the contract call TX, assume the change output is the caller.
+                        const addrCaller = tx.vout[1]
+                            .scriptPubKey.addresses[0];
+                        if (isEmpty(addrCaller)) {
+                            throw Error('Missing caller address!');
+                        }
+                        // Authentication: Ensure all inputs of the TX are from the caller
+                        const fSafe = await isCallAuthorized(tx, addrCaller);
+                        if (fSafe) {
+                            // Authentication successful, destroy NFT!
+                            cCollection.destroy(addrCaller, arrParams[0],
+                                arrParams[2], tx);
+                        } else {
+                            console.warn('An attempt to destroy SCP-' +
+                                          cToken.version + ' NFT containing' +
+                                          ' a non-issuer input was detected' +
+                                          ', ignoring request...');
+                        }
+                    } else {
+                        console.warn('An attempt to destroy SCP-' +
+                                      cCollection.version + ' NFT failed: ' +
+                                      'missing or not valid params!');
+                    }
+                }
             }
         }
     }
