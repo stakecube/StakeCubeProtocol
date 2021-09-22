@@ -10,6 +10,9 @@ function switchToLogin() {
   domStakingPage.style.display = "none";
   domSettingsPage.style.display = "none";
   domCreateTokenPage.style.display = "none";
+  domViewCollection.style.display = "none";
+  domCollections.style.display = "none";
+  domViewNFT.style.display = "none";
 
   // Show
   domLoginPage.style.display = "block";
@@ -27,6 +30,9 @@ function switchToSend() {
   domStakingPage.style.display = "none";
   domSettingsPage.style.display = "none";
   domCreateTokenPage.style.display = "none";
+  domViewCollection.style.display = "none";
+  domCollections.style.display = "none";
+  domViewNFT.style.display = "none";
 
   // Show
   domSendPage.style.display = "block";
@@ -38,6 +44,7 @@ function switchToSend() {
   domReceiveBtn.classList.remove('active');
   dom2FABtn.classList.remove('active');
   domCreateTokenBtn.classList.remove('active');
+  domNFTCollectionsBtn.classList.remove('active');
 
   // Add active
   domSendBtn.classList.add('active');
@@ -60,6 +67,9 @@ function switchToDashboard() {
   domStakingPage.style.display = "none";
   domSettingsPage.style.display = "none";
   domCreateTokenPage.style.display = "none";
+  domViewCollection.style.display = "none";
+  domCollections.style.display = "none";
+  domViewNFT.style.display = "none";
 
   // Show
   domDashboardPage.style.display = "block";
@@ -71,6 +81,7 @@ function switchToDashboard() {
   domReceiveBtn.classList.remove('active');
   dom2FABtn.classList.remove('active');
   domCreateTokenBtn.classList.remove('active');
+  domNFTCollectionsBtn.classList.remove('active');
 
   // Add active
   domDashboardBtn.classList.add('active');
@@ -86,6 +97,9 @@ function switchToReceive() {
   domStakingPage.style.display = "none";
   domSettingsPage.style.display = "none";
   domCreateTokenPage.style.display = "none";
+  domViewCollection.style.display = "none";
+  domCollections.style.display = "none";
+  domViewNFT.style.display = "none";
 
   // Show
   domReceivePage.style.display = "block";
@@ -105,6 +119,7 @@ function switchToReceive() {
   domDashboardBtn.classList.remove('active');
   dom2FABtn.classList.remove('active');
   domCreateTokenBtn.classList.remove('active');
+  domNFTCollectionsBtn.classList.remove('active');
 
   // Add active
   domReceiveBtn.classList.add('active');
@@ -119,6 +134,9 @@ function switchToAuth() {
   domStakingPage.style.display = "none";
   domSettingsPage.style.display = "none";
   domCreateTokenPage.style.display = "none";
+  domViewCollection.style.display = "none";
+  domCollections.style.display = "none";
+  domViewNFT.style.display = "none";
 
   // Show
   domAuthPage.style.display = "block";
@@ -129,6 +147,7 @@ function switchToAuth() {
   domDashboardBtn.classList.remove('active');
   domReceiveBtn.classList.remove('active');
   domCreateTokenBtn.classList.remove('active');
+  domNFTCollectionsBtn.classList.remove('active');
 
   // Add active
   dom2FABtn.classList.add('active');
@@ -142,6 +161,9 @@ function switchToStaking(contract) {
   domReceivePage.style.display = "none";
   domSettingsPage.style.display = "none";
   domCreateTokenPage.style.display = "none";
+  domViewCollection.style.display = "none";
+  domCollections.style.display = "none";
+  domViewNFT.style.display = "none";
 
   // Show
   domStakingPage.style.display = "block";
@@ -160,6 +182,9 @@ function switchToSettings() {
   domStakingPage.style.display = "none";
   domAuthPage.style.display = "none";
   domCreateTokenPage.style.display = "none";
+  domViewCollection.style.display = "none";
+  domCollections.style.display = "none";
+  domViewNFT.style.display = "none";
 
   // Show
   domHeader.style.display = "block";
@@ -181,6 +206,9 @@ function switchToCreateToken() {
   domStakingPage.style.display = "none";
   domAuthPage.style.display = "none";
   domSettingsPage.style.display = "none";
+  domViewCollection.style.display = "none";
+  domCollections.style.display = "none";
+  domViewNFT.style.display = "none";
 
   // Show
   domHeader.style.display = "block";
@@ -191,7 +219,89 @@ function switchToCreateToken() {
   domDashboardBtn.classList.remove('active');
   domReceiveBtn.classList.remove('active');
   dom2FABtn.classList.remove('active');
+  domNFTCollectionsBtn.classList.remove('active');
 
   // Add active
   domCreateTokenBtn.classList.add('active');
+}
+
+function switchToViewCollection() {
+  // Hide
+  domSendPage.style.display = "none";
+  domDashboardPage.style.display = "none";
+  domLoginPage.style.display = "none";
+  domReceivePage.style.display = "none";
+  domStakingPage.style.display = "none";
+  domAuthPage.style.display = "none";
+  domCreateTokenPage.style.display = "none";
+  domSettingsPage.style.display = "none";
+  domCollections.style.display = "none";
+  domViewNFT.style.display = "none";
+
+  // Remove active
+  domSendBtn.classList.remove('active');
+  domDashboardBtn.classList.remove('active');
+  domReceiveBtn.classList.remove('active');
+  dom2FABtn.classList.remove('active');
+  domCreateTokenBtn.classList.remove('active');
+
+  // Add active
+  domNFTCollectionsBtn.classList.add('active');
+
+  // Show
+  domHeader.style.display = "block";
+  domViewCollection.style.display = "block";
+  renderCollections();
+  renderNFTs();
+}
+
+
+function switchToCollections() {
+  // Hide
+  domSendPage.style.display = "none";
+  domDashboardPage.style.display = "none";
+  domLoginPage.style.display = "none";
+  domReceivePage.style.display = "none";
+  domStakingPage.style.display = "none";
+  domAuthPage.style.display = "none";
+  domCreateTokenPage.style.display = "none";
+  domSettingsPage.style.display = "none";
+  domViewCollection.style.display = "none";
+  domViewNFT.style.display = "none";
+
+  // Show
+  domHeader.style.display = "block";
+  domCollections.style.display = "block";
+
+  // Remove active
+  domSendBtn.classList.remove('active');
+  domDashboardBtn.classList.remove('active');
+  domReceiveBtn.classList.remove('active');
+  dom2FABtn.classList.remove('active');
+  domCreateTokenBtn.classList.remove('active');
+
+  // Add active
+  domNFTCollectionsBtn.classList.add('active');
+}
+
+
+function switchToViewNFT(strID) {
+  // Hide
+  domSendPage.style.display = "none";
+  domDashboardPage.style.display = "none";
+  domLoginPage.style.display = "none";
+  domReceivePage.style.display = "none";
+  domStakingPage.style.display = "none";
+  domAuthPage.style.display = "none";
+  domCreateTokenPage.style.display = "none";
+  domSettingsPage.style.display = "none";
+  domViewCollection.style.display = "none";
+  domCollections.style.display = "none";
+
+  // Show
+  domHeader.style.display = "block";
+  domViewNFT.style.display = "block";
+
+  // Render
+  renderDetailedNFT(strID);
 }

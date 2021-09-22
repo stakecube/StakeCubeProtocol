@@ -168,6 +168,12 @@
                 Receive
               </a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" id="collectionsBtn" onclick="switchToViewCollection()">
+                <i class="fas fa-gifts"></i>
+                NFTs
+              </a>
+            </li>
             <li class="nav-item" id="2faBtnMenu">
               <a class="nav-link" href="#" id="2faBtn" onclick="switchToAuth()">
                 <i class="fas fa-fingerprint" style="margin-right: 5px;"></i>
@@ -223,6 +229,7 @@
     let domScpTokenPoSReward;
     let domScpTokenMinAge;
     let domScpTokenDeployBtn;
+    let domNFTCollectionsBtn;
     let domDashboardPage;
     let domSendPage;
     let domReceivePage;
@@ -230,6 +237,20 @@
     let domStakingPage;
     let domSettingsPage;
     let domCreateTokenPage;
+    let domViewCollection;
+    let domCollections;
+    let domCollectionsName;
+    let domCollectionsList;
+    let domViewNFT;
+    let domNFTList;
+    let domNftDetailTitle;
+    let domNftDetailImg;
+    let domNftDetailID;
+    let domNftDetailName;
+    let domNftDetailImageID;
+    let domNftDetailOwner;
+    let domNftDetailActivity;
+    let domNftDetailActions;
 
     let domPass1Visibility;
 
@@ -506,6 +527,11 @@
         // Fetch SCC Deltas (a list of changes on this address)
         if (!isFullnode || isFullnode && getSyncPercentage() >= 99.99)
           renderActivity();
+        // Render the NFT Elements, if the NFTs tab is active
+        if (domNFTCollectionsBtn.className.includes('active')) {
+          renderCollections();
+          renderNFTs();
+        }
       }
 
       return nBalance;
@@ -562,6 +588,115 @@
       } else {
         domActivityList.innerHTML = "<center style='margin-top:30px;'><p>You have no activity!</p></center>";
       }
+    }
+
+    function renderCollections() {
+      // Prep render cache
+      let strRendering = '';
+      // Get the current Collections source (full-node or lightwallet sources)
+      const arrColls = isFullnode ? NFT.getCollectionPtr() : [];
+      // Loop all SCP-4-like Collections and append each to the display table
+      for (const cColl of arrColls) {
+        // Calculate the supply (All existing NFTs that have not been burned)
+        const nCardSupply = cColl.nfts.filter(a => a.owner !== null).length;
+        // Construct the render structure
+        strRendering += `
+                <tr>
+                  <td>${formatName(cColl.collectionName, 36)}</td>
+                  <td>${nCardSupply.toLocaleString('en-GB')}</td>
+                  <td>${cColl.maxMints}</td>
+                  <td><span class="subtext">${cColl.protected ? 'Yes' : 'No'}</span></td>
+                  <td style="padding-top: 11px;"><i class="far fa-eye" style="cursor: pointer;" onclick="switchToViewCollection(${cColl.index});renderNFTs(${cColl.index});"></i></td>
+                </tr>`;
+      }
+      // Draw the cache-constructed HTML
+      domCollectionsList.innerHTML = strRendering;
+    }
+
+    let nSelectedNFTRender = -1;
+    function renderNFTs(nContract) {
+      if (typeof nContract !== 'number') nContract = nSelectedNFTRender;
+      nSelectedNFTRender = nContract;
+      // Prep render cache
+      let strRendering = '';
+      // Check if we're rendering all our NFTs, or a specific contract's NFTs
+      if (nContract === -1) {
+        // Set title
+        domCollectionsName.innerText = 'My NFTs';
+        // Rendering all owned NFTs
+        const arrNFTs = NFT.getAllNFTsByAccount(WALLET.getActiveWallet().getPubkey());
+        if (arrNFTs.length) {
+          for (const cNFT of arrNFTs) {
+            strRendering += `
+              <div class="col-3">
+                <div class="card card-prop mb-3 nftCard" style="background: url(https://cloudflare-ipfs.com/ipfs/${cNFT.imgUrl}) no-repeat center;">
+                  <div class="card-body refresh-button" onclick="switchToViewNFT('${cNFT.nft}')">
+                    <span class="badge nftname">${formatName(cNFT.name, 26)}</span>
+                  </div>
+                </div>
+              </div>`;
+          }
+        } else {
+          strRendering = `
+            <center style="margin-top: 17.5vh;">
+              <h4>You have no NFTs!</h4>
+              <br>
+              <button type="button" class="btn btn-theme btn-sm" onclick="switchToReceive()">Receive</button>
+              or
+              <button type="button" class="btn btn-theme btn-sm" onclick="switchToCreateToken()">Create your own</button>
+            </center>`;
+        }
+      } else {
+        // Rendering NFTs from a contract
+        const cColl = NFT.getCollection(nContract);
+        // Set title
+        domCollectionsName.innerText = formatName(cColl.collectionName, 28);
+        // Construct the render structure
+        for (const cNFT of cColl.nfts.filter(a => a.owner !== null)) {
+          strRendering += `
+            <div class="col-3">
+              <div class="card card-prop mb-3 nftCard" style="background: url(https://cloudflare-ipfs.com/ipfs/${cNFT.imgUrl}) no-repeat center;">
+                <div class="card-body refresh-button" onclick="switchToViewNFT('${cNFT.id}')">
+                  <span class="badge nftname">${formatName(cNFT.name, 26)}</span>
+                </div>
+              </div>
+            </div>`;
+        }
+      }
+      // Draw the cache-constructed HTML
+      domNFTList.innerHTML = strRendering;
+    }
+
+    function renderDetailedNFT(strID) {
+      // Find the NFT
+      const cNFT = isFullnode ? NFT.getNFTbyId(strID) : {};
+      // Render all elements
+      domNftDetailTitle.innerText = cNFT.name;
+      domNftDetailImg.src = 'https://cloudflare-ipfs.com/ipfs/' + cNFT.imgUrl;
+      domNftDetailID.innerText = cNFT.nft;
+      domNftDetailName.innerText = cNFT.name;
+      domNftDetailImageID.innerText = cNFT.imgUrl;
+      domNftDetailOwner.innerText = cNFT.owner;
+      // Pre-render activity
+      let strRendering = '';
+      // Deep-clone and reverse the activity list
+      const arrActivity = JSON.parse(JSON.stringify(cNFT.activity)).reverse();
+      for (const cActivity of arrActivity) {
+        strRendering += `
+          <tr>
+            <td>${formatName(cActivity.tx, 6)}</td>
+            <td><span class="badge" style="background-color:#c36666;text-transform:capitalize;">${cActivity.type}</span></td>
+            <td>${cActivity.from !== null ? formatName(cActivity.from, 6) : 'Mint'}</td>
+            <td>${cActivity.to !== null ? formatName(cActivity.to, 6) : 'Burn'}</td>
+            <td>${cActivity.block.toLocaleString('en-GB')}</td>
+          </tr>`;
+      }
+      // Render the details page
+      domNftDetailActivity.innerHTML = strRendering;
+      // Render the action buttons, if owned by us
+      domNftDetailActions.style.display = cNFT.owner !== WALLET.getActiveWallet().getPubkey() ? 'none' : 'block';
+      // Select the NFT
+      cSelectedNFT = cNFT;
     }
 
     function setActivityView(viewSCP) {
@@ -1146,6 +1281,12 @@
       domStakingPage = document.getElementById('stakingPage');
       domSettingsPage = document.getElementById('settingsPage');
       domCreateTokenPage = document.getElementById('createTokenPage');
+      domViewCollection = document.getElementById('viewCollection');
+      domCollections = document.getElementById('NFTCollections');
+      domCollectionsName = document.getElementById('collectionName');
+      domCollectionsList = document.getElementById('collectionsList');
+      domViewNFT = document.getElementById('viewNFT');
+      domNFTList = document.getElementById('nftList');
       domAuthDisplay = document.getElementById('authDisplay');
       domAuthImport = document.getElementById('authImport');
       domAuthTitle = document.getElementById('authTitle');
@@ -1175,6 +1316,15 @@
       domScpTokenPoSReward = document.getElementById("scpTokenPoSReward");
       domScpTokenMinAge = document.getElementById("scpTokenMinAge");
       domScpTokenDeployBtn = document.getElementById("scpTokenDeployBtn");
+      domNFTCollectionsBtn = document.getElementById("collectionsBtn");
+      domNftDetailTitle = document.getElementById('nftDetailTitle');
+      domNftDetailImg = document.getElementById('nftDetailImg');
+      domNftDetailID = document.getElementById('nftDetailID');
+      domNftDetailName = document.getElementById('nftDetailName');
+      domNftDetailImageID = document.getElementById('nftDetailImageID');
+      domNftDetailOwner = document.getElementById('nftDetailOwner');
+      domNftDetailActivity = document.getElementById('nftDetailActivity');
+      domNftDetailActions = document.getElementById('nftDetailActions');
       dom2FAMenu = document.getElementById("2faBtnMenu");
       domStakingTitle = document.getElementById("stakingTitle");
       domStakingSubtitle = document.getElementById("stakingSubtitle");
@@ -1950,6 +2100,250 @@
         </div>
       </div>
     </div>
+
+    <div class="container-fluid marketing pt-navbar" id="viewCollection">
+      <div class="container-fluid">
+        
+        <h4 class="mb-5 theme-color-secondary font-weight-bold" id="collectionName">My NFTs</h4>
+
+        <div class="float-end" style="margin-top:-75px;">
+          <button type="button" class="btn btn-theme btn-sm" onclick="switchToCollections();">Explore All Collections</button>
+        </div>
+
+        <div class="row d-flex justify-content-center" id="nftList"></div>
+      </div>
+    </div>
+
+
+
+    <div class="container-fluid marketing pt-navbar" id="NFTCollections">
+      <div class="container">
+        <h4 class="mb-5 theme-color-secondary font-weight-bold">NFT Collections</h4>
+
+        <div class="float-end" style="margin-top:-75px;">
+          <button type="button" class="btn btn-theme btn-sm" onclick="switchToViewCollection();renderNFTs(-1);">My NFTs</button>
+        </div>
+        
+        <div class="card card-prop mb-4">
+          <div class="card-body">
+            <div class="card-title font-gray font-weight-bold">Collections</div>
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Supply</th>
+                  <th scope="col">Max Supply</th>
+                  <th scope="col">Protected</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="collectionsList"></tbody>
+            </table>
+
+          </div>    
+        </div>
+
+
+      </div>
+    </div>
+
+
+
+    <div class="container-fluid marketing pt-navbar" id="viewNFT">
+      <div class="container">
+        <h4 id="nftDetailTitle" class="mb-5 theme-color-secondary font-weight-bold"></h4>
+        <div class="float-end" style="margin-top:-75px;">
+          <button type="button" class="btn btn-theme btn-sm" onclick="switchToViewCollection();renderNFTs();">Back</button>
+        </div>
+
+        <div class="row">
+          <div class="col-4">
+            <img id="nftDetailImg" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Stray_kitten_Rambo002.jpg/1200px-Stray_kitten_Rambo002.jpg" style="width:100%; border-radius: 10px;">
+            <div id="nftDetailActions" class="card card-prop mt-4">
+              <div class="card-body" style="padding-top: 9px;">
+                <div class="card-title font-gray font-weight-bold">Actions</div>
+                <div class="row">
+                  <div class="col-6" style="padding-right: 3px;">
+                    <button type="button" id="nftTransferModal" class="btn btn-theme btn-sm w-100" data-bs-toggle="modal" data-bs-target="#sendNftModal">Transfer</button>
+                  </div>
+                  <div class="col-6" style="padding-left: 3px;">
+                    <button type="button" class="btn btn-theme btn-sm w-100" style="background-color:#e08080;" data-bs-toggle="modal" data-bs-target="#burnNftModal">Burn</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-8">
+            <div class="card card-prop mb-4">
+              <div class="card-body">
+                <div class="card-title font-gray font-weight-bold">Details</div>
+
+                <div style="font-size:12px;">
+                  <div class="row">
+                    <div class="col">
+                      <span class="ls-1">ID</span>
+                      <br>
+                      <code id="nftDetailID" class="kbd"></code>
+                    </div>
+                    <div class="col-3">
+                      <span class="ls-1">NAME</span>
+                      <br>
+                      <p id="nftDetailName"></p>
+                    </div>
+                  </div><br>
+
+                  <span class="ls-1">IMAGE IPFS ID</span><br>
+                  <span id="nftDetailImageID" class="kbd"></span><br><br>
+
+                  <span class="ls-1">OWNER ADDRESS</span><br>
+                  <code id="nftDetailOwner" class="kbd"></code>
+                </div>
+              </div>
+            </div>
+
+            <div class="card card-prop mb-4">
+              <div class="card-body">
+                <div class="card-title font-gray font-weight-bold">Activity</div>
+
+                <table class="table table-hover" style="font-size:13px;">
+                  <thead>
+                    <tr>
+                      <th scope="col">TX</th>
+                      <th scope="col">Type</th>
+                      <th scope="col">From</th>
+                      <th scope="col">To</th>
+                      <th scope="col">Block</th>
+                    </tr>
+                  </thead>
+                  <tbody id="nftDetailActivity"></tbody>
+                </table>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <script>
+      let cSelectedNFT;
+      function sendNftGUI() {
+        const strTo = document.getElementById('sendAddressNft').value.trim();
+        // Verify the address
+        if (!strTo || strTo.length !== 34 || !strTo.startsWith("s")) {
+          return M.toast({html: 'Please enter a valid address!', displayLength: 2000});
+        }
+        // Prepare wallet data
+        const strAddr = WALLET.getActiveWallet().getPubkey();
+        const strPrivkey = WALLET.getActiveWallet().getPrivkey();
+        // Construct the transaction
+        const cTx = WALLET.sccjs.tx.transaction();
+        // Add input
+        const cUTXO = WALLET.getCoinsToSpend(2000, true, strAddr)[0];
+        if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
+        cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
+        // SCP output
+        const fIndexed = UPGRADES.isTokenIndexingActive(isFullnode ? nCacheHeight : cachedBlockCount);
+        const idContract = fIndexed ? 'id' + cSelectedNFT.collectionIndex : cSelectedNFT.collection;
+        cTx.addoutputburn(0.00000001, idContract + ' transfer ' + strTo + ' ' + cSelectedNFT.nft);
+        // Fee & Change output
+        const nFee = WALLET.getFee(cTx.serialize().length);
+        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
+        cTx.addoutput(strAddr, nChange);
+        // Broadcast
+        cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
+          WALLET.broadcastTx(strSignedTx).then(strTXID => {
+            M.toast({html: 'NFT Sent!', displayLength: 1250});
+            cUTXO.spent = true;
+            getUnspentTransactions();
+            // Move user back to their NFTs page
+            switchToViewCollection();
+            renderNFTs();
+          });
+        });
+      }
+
+      function burnNftGUI() {
+        // Prepare wallet data
+        const strAddr = WALLET.getActiveWallet().getPubkey();
+        const strPrivkey = WALLET.getActiveWallet().getPrivkey();
+        // Construct the transaction
+        const cTx = WALLET.sccjs.tx.transaction();
+        // Add input
+        const cUTXO = WALLET.getCoinsToSpend(2000, true, strAddr)[0];
+        if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
+        cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
+        // SCP output
+        const fIndexed = UPGRADES.isTokenIndexingActive(isFullnode ? nCacheHeight : cachedBlockCount);
+        const idContract = fIndexed ? 'id' + cSelectedNFT.collectionIndex : cSelectedNFT.collection;
+        cTx.addoutputburn(0.00000001, idContract + ' destroy ' + cSelectedNFT.nft);
+        // Fee & Change output
+        const nFee = WALLET.getFee(cTx.serialize().length);
+        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
+        cTx.addoutput(strAddr, nChange);
+        // Broadcast
+        cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
+          WALLET.broadcastTx(strSignedTx).then(strTXID => {
+            M.toast({html: 'NFT Burned!', displayLength: 1500});
+            cUTXO.spent = true;
+            getUnspentTransactions();
+            // Move user back to their NFTs page
+            switchToViewCollection();
+            renderNFTs();
+          });
+        });
+      }
+    </script>
+
+    <div class="modal fade" id="sendNftModal" tabindex="-1" aria-labelledby="sendNftModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="sendNftModalLabel">Send your NFT</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="col-md" style="margin: 20px 0;">
+              <div class="omrs-input-group" style="width:100%;">
+                <label class="omrs-input-underlined">
+                  <input required id="sendAddressNft" style="text-align: center;" type="text">
+                  <span class="omrs-input-label">Recipient Address</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="sendNftGUI()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="burnNftModal" tabindex="-1" aria-labelledby="burnNftModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="burnNftModalLabel">Burn your NFT</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="col-md" style="margin: 20px 0;text-align: center;">
+              <h5 style="font-weight: bold; ">Are you sure you want to burn your NFT?</h5>
+              <p>This action is irreversible! </p>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal" onclick="burnNftGUI()">Burn</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
     <i id="themeButton" onclick="loadNextTheme();" class="fas fa-sun" style="position: fixed; bottom: 10px; left: 10px; color: black; opacity: 0.5; cursor: pointer;"></i>
   </main>
 

@@ -470,7 +470,8 @@ async function createCollection(req, res) {
             'rawTx': strSignedTx
         });
     } catch(e) {
-        console.error("Network error on API '" + strModule + "/createcollection'");
+        console.error("Network error on API '" + strModule +
+                      "/createcollection'");
         console.error(e);
         return res.status(400).send('Internal API Error');
     }
