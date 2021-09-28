@@ -449,6 +449,7 @@ div.omrs-input-group {
   background-size: cover!important;
   border: 1px solid #0c63e4;
   box-shadow: 0 0 3px 3px #084298;
+  width: 12em;
 }
 
 .nftname {

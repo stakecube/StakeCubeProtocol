@@ -199,6 +199,7 @@
     'use strict';
     // GUI module imports
     const { clipboard } = require('electron');
+    const { dialog } = require('electron').remote;
     let authenticator = require("otplib").authenticator;
 
     // WALLET STATE DATA
@@ -228,8 +229,13 @@
     let domScpTokenSupply;
     let domScpTokenPoSReward;
     let domScpTokenMinAge;
+    let domScpCollectionName;
+    let domScpCollectionMaxMints;
+    let domScpCollectionProtected;
     let domScpTokenDeployBtn;
+    let domScpTokenDeployArea;
     let domNFTCollectionsBtn;
+    let domNFTBurnBtn;
     let domDashboardPage;
     let domSendPage;
     let domReceivePage;
@@ -237,6 +243,7 @@
     let domStakingPage;
     let domSettingsPage;
     let domCreateTokenPage;
+    let domCreateNftPage;
     let domViewCollection;
     let domCollections;
     let domCollectionsName;
@@ -606,17 +613,20 @@
                   <td>${nCardSupply.toLocaleString('en-GB')}</td>
                   <td>${cColl.maxMints}</td>
                   <td><span class="subtext">${cColl.protected ? 'Yes' : 'No'}</span></td>
-                  <td style="padding-top: 11px;"><i class="far fa-eye" style="cursor: pointer;" onclick="switchToViewCollection(${cColl.index});renderNFTs(${cColl.index});"></i></td>
+                  <td style="padding-top: 11px;">
+                    <i class="far fa-eye" style="cursor: pointer;" onclick="switchToViewCollection();renderNFTs(${cColl.index});"></i>
+                    ${(cColl.creator === WALLET.getActiveWallet().getPubkey() && cColl.mints < cColl.maxMints)  ? '<i class="fas fa-plus" style="cursor: pointer; margin-left: 10px;" onclick="nSelectedCollection=' + cColl.index + ';switchToNftCreator();"></i>' : ''}
+                  </td>
                 </tr>`;
       }
       // Draw the cache-constructed HTML
       domCollectionsList.innerHTML = strRendering;
     }
 
-    let nSelectedNFTRender = -1;
+    let nSelectedCollection = -1;
     function renderNFTs(nContract) {
-      if (typeof nContract !== 'number') nContract = nSelectedNFTRender;
-      nSelectedNFTRender = nContract;
+      if (typeof nContract !== 'number') nContract = nSelectedCollection;
+      nSelectedCollection = nContract;
       // Prep render cache
       let strRendering = '';
       // Check if we're rendering all our NFTs, or a specific contract's NFTs
@@ -643,7 +653,7 @@
               <br>
               <button type="button" class="btn btn-theme btn-sm" onclick="switchToReceive()">Receive</button>
               or
-              <button type="button" class="btn btn-theme btn-sm" onclick="switchToCreateToken()">Create your own</button>
+              <button type="button" class="btn btn-theme btn-sm" onclick="switchToCreateToken('4')">Create your own</button>
             </center>`;
         }
       } else {
@@ -668,8 +678,11 @@
     }
 
     function renderDetailedNFT(strID) {
-      // Find the NFT
+      // Find the NFT and Collection
       const cNFT = isFullnode ? NFT.getNFTbyId(strID) : {};
+      const cColl = isFullnode ? NFT.getCollection(cNFT.collectionIndex) : {};
+      // Cache the ownership status
+      const fOwned = cNFT.owner === WALLET.getActiveWallet().getPubkey();
       // Render all elements
       domNftDetailTitle.innerText = cNFT.name;
       domNftDetailImg.src = 'https://cloudflare-ipfs.com/ipfs/' + cNFT.imgUrl;
@@ -694,7 +707,17 @@
       // Render the details page
       domNftDetailActivity.innerHTML = strRendering;
       // Render the action buttons, if owned by us
-      domNftDetailActions.style.display = cNFT.owner !== WALLET.getActiveWallet().getPubkey() ? 'none' : 'block';
+      domNftDetailActions.style.display = fOwned ? 'block' : 'none';
+      // Gray-out the 'burn' button if this collection is protected
+      if (fOwned && cColl.protected) {
+        domNFTBurnBtn.style.opacity = 0.4;
+        domNFTBurnBtn.style.cursor = 'default';
+        domNFTBurnBtn.setAttribute('data-bs-toggle', '');
+      } else {
+        domNFTBurnBtn.style.opacity = 1;
+        domNFTBurnBtn.style.cursor = 'pointer';
+        domNFTBurnBtn.setAttribute('data-bs-toggle', 'modal');
+      }
       // Select the NFT
       cSelectedNFT = cNFT;
     }
@@ -1281,6 +1304,7 @@
       domStakingPage = document.getElementById('stakingPage');
       domSettingsPage = document.getElementById('settingsPage');
       domCreateTokenPage = document.getElementById('createTokenPage');
+      domCreateNftPage = document.getElementById('createNftPage');
       domViewCollection = document.getElementById('viewCollection');
       domCollections = document.getElementById('NFTCollections');
       domCollectionsName = document.getElementById('collectionName');
@@ -1305,6 +1329,8 @@
       domActivitySCC = document.getElementById("domActivitySCC");
       domActivitySCP = document.getElementById("domActivitySCP");
       domClaimAllBtn = document.getElementById("domClaimAllBtn");
+      domScpTokenDeployArea = document.getElementById('scpTokenDeployArea');
+      domNFTBurnBtn = document.getElementById('nftBurnBtn');
       domSendBtn = document.getElementById("sendBtn");
       domReceiveBtn = document.getElementById("receiveBtn");
       dom2FABtn = document.getElementById("2faBtn");
@@ -1315,6 +1341,9 @@
       domScpTokenSupply = document.getElementById("scpTokenSupply");
       domScpTokenPoSReward = document.getElementById("scpTokenPoSReward");
       domScpTokenMinAge = document.getElementById("scpTokenMinAge");
+      domScpCollectionName = document.getElementById('scpCollectionName');
+      domScpCollectionMaxMints = document.getElementById('scpCollectionMaxMints');
+      domScpCollectionProtected = document.getElementById('scpCollectionProtected');
       domScpTokenDeployBtn = document.getElementById("scpTokenDeployBtn");
       domNFTCollectionsBtn = document.getElementById("collectionsBtn");
       domNftDetailTitle = document.getElementById('nftDetailTitle');
@@ -1834,17 +1863,26 @@
               <script>
                 let nDeploymentVer = 0;
                 function changeTokenType(obj) {
+                  domScpTokenDeployArea.style.display = 'block';
                   document.getElementById('scpTokenSettings').style.display = '';
                   const strDesc = document.getElementById('scpTokenDescription');
                   nDeploymentVer = Number(obj.options[obj.selectedIndex].value);
                   if (obj.options[obj.selectedIndex].value == '1') {
                     document.getElementById('scp2TokenSettings').style.display = 'none';
                     document.getElementById('scp2TokenSettings2').style.display = 'none';
+                    document.getElementById('scp4TokenSettings').style.display = 'none';
                     strDesc.innerText = 'SCP-1 is a minimalistic issuer-minted token, featuring on-demand issuer minting, burns from anyone, and a max supply cap for barebones security.';
                   } else if (obj.options[obj.selectedIndex].value == '2') {
                     strDesc.innerText = 'SCP-2 is an advanced SCP-1 variant, with trustworthy issuance based on fair and fractional PoS, incentivising users to hold for long periods.';
                     document.getElementById('scp2TokenSettings').style.display = 'flex';
                     document.getElementById('scp2TokenSettings2').style.display = 'flex';
+                    document.getElementById('scp4TokenSettings').style.display = 'none';
+                  } else if (obj.options[obj.selectedIndex].value == '4') {
+                    strDesc.innerText = 'SCP-4 is an NFT Standard which allows deploying "Collections" with NFT max-mints, burn protection and IPFS image enforcement.';
+                    document.getElementById('scpTokenSettings').style.display = 'none';
+                    document.getElementById('scp2TokenSettings').style.display = 'none';
+                    document.getElementById('scp2TokenSettings2').style.display = 'none';
+                    document.getElementById('scp4TokenSettings').style.display = 'flex';
                   }
 
                   // Force a re-check of the params
@@ -1856,43 +1894,47 @@
                     // Reset the warning error
                     domScpTokenErrors.innerHTML = "";
                     let isComplete = true;
-                    // Name
-                    if (domScpTokenName.value.length) {
-                        // Remove all whitespace
-                        domScpTokenName.value = domScpTokenName.value.replace(/ /g, '').trim();
-                        // Limit to 25 characters
-                        if (domScpTokenName.value.length > 25) domScpTokenName.value = domScpTokenName.value.substr(0, 25);
-                    } else {
-                        isComplete = false;
-                    }
 
-                    // Ticker
-                    if (domScpTokenTicker.value.length) {
-                        // Remove all whitespace
-                        domScpTokenTicker.value = domScpTokenTicker.value.replace(/ /g, '').trim();
-                        // Limit to 6 characters
-                        if (domScpTokenTicker.value.length > 6) domScpTokenTicker.value = domScpTokenTicker.value.substr(0, 6);
-                    } else {
-                        isComplete = false;
-                    }
+                    // SCP-1 CHECKS
+                    if (nDeploymentVer === 1 || nDeploymentVer === 2) {
+                      // Name
+                      if (domScpTokenName.value.length) {
+                          // Swap spaces for artificial whitespace unicodes
+                          domScpTokenName.value = domScpTokenName.value.replace(/ /g, ' ');
+                          // Limit to 25 characters
+                          if (domScpTokenName.value.length > 25) domScpTokenName.value = domScpTokenName.value.substr(0, 25);
+                      } else {
+                          isComplete = false;
+                      }
 
-                    // Supply
-                    if (domScpTokenSupply.value.length) {
-                        // Remove all whitespace
-                        domScpTokenSupply.value = domScpTokenSupply.value.replace(/ /g, '').trim();
-                        const nSupply = Number(domScpTokenSupply.value * COIN);
-                        // Supply must be 1 coin minimum
-                        if (nSupply < COIN) {
-                            domScpTokenErrors.innerHTML += 'Supply: Minimum is 1!<br>';
-                            isComplete = false;
-                        }
-                        // Do not allow supplies larger than the safe integer
-                        if (!Number.isSafeInteger(nSupply)) {
-                            domScpTokenErrors.innerHTML += 'Supply: Max supply is ' + (Math.floor((Number.MAX_SAFE_INTEGER / COIN) / 1000000)).toLocaleString('en-GB', { maximumFractionDigits: 0 }) + 'm!<br>';
-                            isComplete = false;
-                        }
-                    } else {
-                        isComplete = false;
+                      // Ticker
+                      if (domScpTokenTicker.value.length) {
+                          // Remove all whitespace
+                          domScpTokenTicker.value = domScpTokenTicker.value.replace(/ /g, '').trim();
+                          // Limit to 6 characters
+                          if (domScpTokenTicker.value.length > 6) domScpTokenTicker.value = domScpTokenTicker.value.substr(0, 6);
+                      } else {
+                          isComplete = false;
+                      }
+
+                      // Supply
+                      if (domScpTokenSupply.value.length) {
+                          // Remove all whitespace
+                          domScpTokenSupply.value = domScpTokenSupply.value.replace(/ /g, '').trim();
+                          const nSupply = Number(domScpTokenSupply.value * COIN);
+                          // Supply must be 1 coin minimum
+                          if (nSupply < COIN) {
+                              domScpTokenErrors.innerHTML += 'Supply: Minimum is 1!<br>';
+                              isComplete = false;
+                          }
+                          // Do not allow supplies larger than the safe integer
+                          if (!Number.isSafeInteger(nSupply)) {
+                              domScpTokenErrors.innerHTML += 'Supply: Max supply is ' + (Math.floor((Number.MAX_SAFE_INTEGER / COIN) / 1000000)).toLocaleString('en-GB', { maximumFractionDigits: 0 }) + 'm!<br>';
+                              isComplete = false;
+                          }
+                      } else {
+                          isComplete = false;
+                      }
                     }
                     
                     // SCP-2 CHECKS
@@ -1952,6 +1994,43 @@
                         }
                     }
 
+                    // SCP-4 CHECKS
+                    if (nDeploymentVer === 4) {
+                        // Name
+                        if (domScpCollectionName.value.length) {
+                            // Swap spaces for artificial whitespace unicodes
+                            domScpCollectionName.value = domScpCollectionName.value.replace(/ /g, ' ');
+                            // Limit to 25 characters
+                            if (domScpCollectionName.value.length > 25) domScpCollectionName.value = domScpCollectionName.value.substr(0, 25);
+                        } else {
+                            isComplete = false;
+                        }
+
+                        // Max Mints
+                        if (domScpCollectionMaxMints.value.length) {
+                            // Remove all whitespace
+                            domScpCollectionMaxMints.value = domScpCollectionMaxMints.value.replace(/ /g, '').trim();
+                            const nMaxMints = Number(domScpCollectionMaxMints.value);
+                            // Max Mints must be an integer
+                            if (!Number.isInteger(nMaxMints)) {
+                                domScpTokenErrors.innerHTML += 'Max Mints: Must be an integer!<br>';
+                                isComplete = false;
+                            }
+                            // Max Mints must be larger than 0, or -1 for unlimited
+                            if (nMaxMints < 1 && nMaxMints !== -1) {
+                                domScpTokenErrors.innerHTML += 'Max Mints: Must be atleast 1 mint! (Or -1 for unlimited)<br>';
+                                isComplete = false;
+                            }
+                            // Max Mints must be a safe integer
+                            if (Number.isInteger(nMaxMints) && !Number.isSafeInteger(nMaxMints)) {
+                                domScpTokenErrors.innerHTML += 'Max Mints: Too large to be safe!<br>';
+                                isComplete = false;
+                            }
+                        } else {
+                            isComplete = false;
+                        }
+                    }
+
                     // Apply any error messages, if they exist
                     if (domScpTokenErrors.innerHTML.length) {
                         document.getElementById('scpTokenErrorsWidget').style.display = '';
@@ -1998,6 +2077,16 @@
                         arrParams.push(domScpTokenMinAge.value);
                     }
 
+                    // SCP-4 Spec
+                    if (nDeploymentVer === 4) {
+                        // Collection Name
+                        arrParams.push(domScpCollectionName.value);
+                        // Max Mints
+                        arrParams.push(domScpCollectionMaxMints.value);
+                        // Protected
+                        arrParams.push(domScpCollectionProtected.checked ? '1' : '0');
+                    }
+
                     if (arrParams.length > 1)
                         deploySCP(nDeploymentVer, arrParams);
                 }
@@ -2007,10 +2096,11 @@
                 <i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i><b id="scpTokenErrors"></b>
               </div>
 
-              <select class="form-select" oninput="changeTokenType(this)" style="margin-bottom: 20px;">
+              <select id="scpDeploySelector" class="form-select" oninput="changeTokenType(this)" style="margin-bottom: 20px;">
                 <option selected disabled>Token type</option>
                 <option value="1">SCP-1</option>
                 <option value="2">SCP-2</option>
+                <option value="4">SCP-4</option>
               </select>
 
               <div class="col-md-12">
@@ -2020,9 +2110,10 @@
                     </p>
                 </div>
               </div>
+              
+              <hr style="color: #bcc4d2;">
 
               <div id="scpTokenSettings" style="display: none;">
-                <hr style="color: #bcc4d2;">
                 <div class="row">
                   <div class="col-md-6">
                     <div class="omrs-input-group" style="width:100%;">
@@ -2090,11 +2181,51 @@
                     </div>
                   </div>
                 </div>
-                <center>
-                  <button id="scpTokenDeployBtn" onclick="guiDeploySCP()" disabled style="margin-top: 10px;" class="btn btn-theme btn-layout">Create token</button>
-                  <p style="margin-top: 20px;opacity: 0.35;">Deploying an SCP Token requires a fixed deployment fee of 10 SCC!</p>
-                </center>
               </div>
+
+              <div id="scp4TokenSettings" style="display: none;">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="omrs-input-group" style="width:100%;">
+                      <label class="omrs-input-underlined">
+                        <input id="scpCollectionName" oninput="checkDeployerInput()" required type="text">
+                        <span class="omrs-input-label">Collection Name</span>
+                        <span class="omrs-input-hover" onmouseover="showTooltip('collectionNameTip')"
+                        onmouseout="hideTooltip('collectionNameTip')"><i class="fas fa-question-circle tooltip-questionmark"></i></span>
+                      <span class="omrs-input-message" id="collectionNameTip" style="z-index: -1000;">The public name of your NFT Collection, displayed on SCP Wallet, SC Marketplace, Explorers, etc.</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="omrs-input-group" style="width:100%;">
+                      <label class="omrs-input-underlined">
+                        <input id="scpCollectionMaxMints" oninput="checkDeployerInput()" required type="text">
+                        <span class="omrs-input-label">Max Mints</span>
+                        <span class="omrs-input-hover" onmouseover="showTooltip('collectionMaxMintsTip')"
+                        onmouseout="hideTooltip('collectionMaxMintsTip')"><i class="fas fa-question-circle tooltip-questionmark"></i></span>
+                      <span class="omrs-input-message" id="collectionMaxMintsTip" style="z-index: -1000;">Maximum NFT mints allowed, use -1 for unlimited minting.</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="row" style="margin-bottom: 1em;">
+                    <div class="col" style="text-align: center;padding-right: 0px;">
+                      <span>Protected</span>
+                      <div class="form-check form-switch" style="width: 100%;display: flex;padding-left: 4px;margin-top: 5px;">
+                        <input class="form-check-input darkBorder" type="checkbox" value="" id="scpCollectionProtected" checked="true" style="margin-left: auto;margin-right: auto;">
+                      </div>
+                      <span style="font-size:12px;color:#97a1b1;">Disabling this will allow NFTs in this Collection to be burned by it's holders.</span>
+                    </div>
+                  </div>
+                  <hr style="color: #bcc4d2;">
+                </div>
+              </div>
+
+              <center id="scpTokenDeployArea" style="display: none;">
+                <button id="scpTokenDeployBtn" onclick="guiDeploySCP()" disabled style="margin-top: 10px;" class="btn btn-theme btn-layout">Create token</button>
+                <p style="margin-top: 20px;opacity: 0.35;">Deploying an SCP Token requires a fixed deployment fee of 10 SCC!</p>
+              </center>
             </div>
           </div>
         </div>
@@ -2167,7 +2298,7 @@
                     <button type="button" id="nftTransferModal" class="btn btn-theme btn-sm w-100" data-bs-toggle="modal" data-bs-target="#sendNftModal">Transfer</button>
                   </div>
                   <div class="col-6" style="padding-left: 3px;">
-                    <button type="button" class="btn btn-theme btn-sm w-100" style="background-color:#e08080;" data-bs-toggle="modal" data-bs-target="#burnNftModal">Burn</button>
+                    <button type="button" id="nftBurnBtn" class="btn btn-theme btn-sm w-100" style="background-color:#e08080;" data-bs-toggle="modal" data-bs-target="#burnNftModal">Burn</button>
                   </div>
                 </div>
               </div>
@@ -2225,6 +2356,174 @@
 
       </div>
     </div>
+    <script>
+      function switchToNftCreator() {
+        closeAllTabs();
+        domCreateNftPage.style.display = 'block';
+      }
+
+      let bRawImageBuf;
+      async function uploadImageDialog() {
+        const ret = await dialog.showOpenDialog({
+          'title': 'Select an Image for your NFT',
+          'filters': [
+            { name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif'] }
+          ],
+          'properties': [
+            'openFile',
+            'treatPackageAsDirectory'
+          ]
+        });
+ 
+        if (ret === undefined || ret.canceled || !ret.filePaths.length) return false;
+        // Update UI
+        const domPreview = document.getElementById('nftPreviewImg');
+        domPreview.style['background-image'] = 'url(file:///' + ret.filePaths[0].split('\\').join('/') + ')';
+        domPreview.style['background-repeat'] = 'no-repeat';
+        domPreview.style['background-position'] = 'center';
+        // Return file buffer
+        bRawImageBuf = DB.fs.readFileSync(ret.filePaths[0]);
+        checkNftInput();
+        return await bRawImageBuf;
+      }
+
+      let nLastImageLen = 0;
+      let strLastImageCID = '';
+      async function nftUpload() {
+        // Cannot deploy if the button is disabled (due to unsatisfied inputs)
+        if (document.getElementById('scpNftDeployBtn').hasAttribute('disabled')) return;
+        try {
+          const fAlreadyUploaded = bRawImageBuf.length === nLastImageLen;
+          const cRetIPFS = !fAlreadyUploaded ? JSON.parse(await NET.uploadToIPFS(bRawImageBuf)) : undefined;
+          if ((fAlreadyUploaded && strLastImageCID) || (cRetIPFS && cRetIPFS.ok && cRetIPFS.value.cid.length)) {
+            console.log('NFT Uploader: ' + (fAlreadyUploaded ?
+                                           'Using cached CID' :
+                                           'Uploaded new image (' + bRawImageBuf.length + 'b) to IPFS'));
+            // Save the image byte length (this will be used to prevent re-uploads of the same image)
+            nLastImageLen = bRawImageBuf.length;
+            // Grab the IPFS CID and NFT Name
+            const strCID = fAlreadyUploaded ? strLastImageCID : cRetIPFS.value.cid;
+            strLastImageCID = strCID;
+            const strName = document.getElementById('scpNftName').value;
+            // Prepare wallet
+            const strAddr = WALLET.getActiveWallet().getPubkey();
+            const cCollection = isFullnode ? NFT.getCollection(nSelectedCollection) : {};
+            console.log("Constructing SCP-" + cCollection.version + " NFT mint TX!");
+            // Contruct SCP transaction
+            const cTx = WALLET.sccjs.tx.transaction();
+            // Add input
+            const cUTXO = WALLET.getCoinsToSpend(2000, true, strAddr)[0];
+            if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
+            cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
+            // SCP output
+            cTx.addoutputburn(0.00000001, cCollection.contract + ' mint ' + strName + ' ' + strCID);
+            // Fee & Change output
+            const nFee = WALLET.getFee(cTx.serialize().length);
+            const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
+            cTx.addoutput(strAddr, nChange);
+            // Broadcast
+            cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
+              WALLET.broadcastTx(strSignedTx).then(strTXID => {
+                M.toast({html: 'NFT Deploying! Please wait for a block confirmation!', displayLength: 3000});
+                cUTXO.spent = true;
+                if (isFullnodePtr()) {
+                  getMempoolActivity(strAddr).then(arrRes => cachedActivityIS = arrRes);
+                } else {
+                  NET.getMempoolActivityLight(strAddr).then(strRes => {
+                    cachedActivityIS = JSON.parse(strRes);
+                  });
+                  getUnspentTransactions();
+                }
+              });
+            });
+          } else {
+            return M.toast({html: 'IPFS Upload failed, retry later!', displayLength: 3000});
+          }
+        } catch (e) {
+          console.log(e);
+          return M.toast({html: 'Failed to reach IPFS Node, retry later!', displayLength: 3000});
+        }
+      }
+
+      function checkNftInput() {
+        let isComplete = true;
+
+        // Name
+        const nftName = document.getElementById('scpNftName');
+        if (nftName.value) {
+          // Swap spaces for artificial whitespace unicodes
+          nftName.value = nftName.value.replace(/ /g, ' ');
+          // Limit to 25 characters
+          if (nftName.value.length > 25) nftName.value = nftName.value.substr(0, 25);
+          // Set the display name
+          document.getElementById('nftCreatorName').innerText = nftName.value;
+        } else {
+          isComplete = false;
+        }
+
+        // Image
+        if (!bRawImageBuf || !bRawImageBuf.length) {
+          isComplete = false;
+        }
+
+        if (isComplete) {
+          document.getElementById('scpNftDeployBtn').removeAttribute('disabled');
+        } else {
+          document.getElementById('scpNftDeployBtn').setAttribute('disabled', '');
+        }
+      }
+    </script>
+
+    <div class="container marketing pt-navbar" id="createNftPage">
+      <h4 class="mb-5 theme-color-secondary font-weight-bold">Create NFT</h4>
+    
+      <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+          <div class="card card-prop mb-4">
+            <div class="card-body">
+              <div class="card-title font-gray font-weight-bold">NFT information</div>
+
+              <div class="alert alert-danger-custom" style="font-size:13px; display: none;" id="scpTokenErrorsWidget">
+                <i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i><b id="scpTokenErrors"></b>
+              </div>
+
+              <hr style="color: #bcc4d2;">
+
+              <div class="row">
+                <div class="col-md">
+                  <div class="omrs-input-group" style="width: 50%;margin-left: auto;margin-right: auto;min-width: 250px;">
+                    <label class="omrs-input-underlined">
+                      <input id="scpNftName" oninput="checkNftInput()" required type="text">
+                      <span class="omrs-input-label">Name</span>
+                      <span class="omrs-input-hover" onmouseover="showTooltip('nftNameTip')"
+                        onmouseout="hideTooltip('nftNameTip')"><i
+                          class="fas fa-question-circle tooltip-questionmark"></i></span>
+                      <span class="omrs-input-message" id="nftNameTip" style="z-index: -1000;">The public name of your
+                        NFT, displayed on SCP Wallet, Explorers, etc.</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md">
+                  <div class="col-3" style="width: 100%;">
+                    <div class="card card-prop nftCard" id="nftPreviewImg" onclick="uploadImageDialog()" style="background-color: #08429838 !important;height: 250px;margin-left: auto;margin-right: auto;width: 175px;">
+                      <div class="card-body refresh-button">
+                        <span id="nftCreatorName" class="badge nftname">Click to edit image</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <center>
+                <button id="scpNftDeployBtn" onclick="nftUpload()" disabled="" style="margin-top: 10px;" class="btn btn-theme btn-layout">Create NFT</button>
+              </center>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    
 
     <script>
       let cSelectedNFT;

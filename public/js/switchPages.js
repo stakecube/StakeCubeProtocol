@@ -1,18 +1,23 @@
 'use strict';
 
-function switchToLogin() {
-  // Hide
-  domHeader.style.display = "none";
+function closeAllTabs() {
   domDashboardPage.style.display = "none";
   domReceivePage.style.display = "none";
-  domSendPage.style.display = "none";
+  domSendPage.style.display = "none ";
+  domLoginPage.style.display = "none";
   domAuthPage.style.display = "none";
   domStakingPage.style.display = "none";
   domSettingsPage.style.display = "none";
   domCreateTokenPage.style.display = "none";
+  domCreateNftPage.style.display = "none";
   domViewCollection.style.display = "none";
   domCollections.style.display = "none";
   domViewNFT.style.display = "none";
+}
+
+function switchToLogin() {
+  // Hide
+  closeAllTabs();
 
   // Show
   domLoginPage.style.display = "block";
@@ -23,16 +28,7 @@ function switchToLogin() {
 
 function switchToSend() {
   // Hide
-  domDashboardPage.style.display = "none";
-  domReceivePage.style.display = "none";
-  domLoginPage.style.display = "none";
-  domAuthPage.style.display = "none";
-  domStakingPage.style.display = "none";
-  domSettingsPage.style.display = "none";
-  domCreateTokenPage.style.display = "none";
-  domViewCollection.style.display = "none";
-  domCollections.style.display = "none";
-  domViewNFT.style.display = "none";
+  closeAllTabs();
 
   // Show
   domSendPage.style.display = "block";
@@ -60,16 +56,7 @@ function switchToSend() {
 
 function switchToDashboard() {
   // Hide
-  domSendPage.style.display = "none";
-  domReceivePage.style.display = "none";
-  domLoginPage.style.display = "none";
-  domAuthPage.style.display = "none";
-  domStakingPage.style.display = "none";
-  domSettingsPage.style.display = "none";
-  domCreateTokenPage.style.display = "none";
-  domViewCollection.style.display = "none";
-  domCollections.style.display = "none";
-  domViewNFT.style.display = "none";
+  closeAllTabs();
 
   // Show
   domDashboardPage.style.display = "block";
@@ -90,16 +77,7 @@ function switchToDashboard() {
 let hasSetupRecvQR = false;
 function switchToReceive() {
   // Hide
-  domSendPage.style.display = "none";
-  domDashboardPage.style.display = "none";
-  domLoginPage.style.display = "none";
-  domAuthPage.style.display = "none";
-  domStakingPage.style.display = "none";
-  domSettingsPage.style.display = "none";
-  domCreateTokenPage.style.display = "none";
-  domViewCollection.style.display = "none";
-  domCollections.style.display = "none";
-  domViewNFT.style.display = "none";
+  closeAllTabs();
 
   // Show
   domReceivePage.style.display = "block";
@@ -127,16 +105,7 @@ function switchToReceive() {
 
 function switchToAuth() {
   // Hide
-  domSendPage.style.display = "none";
-  domDashboardPage.style.display = "none";
-  domLoginPage.style.display = "none";
-  domReceivePage.style.display = "none";
-  domStakingPage.style.display = "none";
-  domSettingsPage.style.display = "none";
-  domCreateTokenPage.style.display = "none";
-  domViewCollection.style.display = "none";
-  domCollections.style.display = "none";
-  domViewNFT.style.display = "none";
+  closeAllTabs();
 
   // Show
   domAuthPage.style.display = "block";
@@ -155,15 +124,7 @@ function switchToAuth() {
 
 function switchToStaking(contract) {
   // Hide
-  domSendPage.style.display = "none";
-  domDashboardPage.style.display = "none";
-  domLoginPage.style.display = "none";
-  domReceivePage.style.display = "none";
-  domSettingsPage.style.display = "none";
-  domCreateTokenPage.style.display = "none";
-  domViewCollection.style.display = "none";
-  domCollections.style.display = "none";
-  domViewNFT.style.display = "none";
+  closeAllTabs();
 
   // Show
   domStakingPage.style.display = "block";
@@ -175,16 +136,7 @@ function switchToStaking(contract) {
 
 function switchToSettings() {
   // Hide
-  domSendPage.style.display = "none";
-  domDashboardPage.style.display = "none";
-  domLoginPage.style.display = "none";
-  domReceivePage.style.display = "none";
-  domStakingPage.style.display = "none";
-  domAuthPage.style.display = "none";
-  domCreateTokenPage.style.display = "none";
-  domViewCollection.style.display = "none";
-  domCollections.style.display = "none";
-  domViewNFT.style.display = "none";
+  closeAllTabs();
 
   // Show
   domHeader.style.display = "block";
@@ -197,22 +149,21 @@ function switchToSettings() {
   domCreateTokenBtn.classList.remove('active');
 }
 
-function switchToCreateToken() {
+function switchToCreateToken(strToken = false) {
   // Hide
-  domSendPage.style.display = "none";
-  domDashboardPage.style.display = "none";
-  domLoginPage.style.display = "none";
-  domReceivePage.style.display = "none";
-  domStakingPage.style.display = "none";
-  domAuthPage.style.display = "none";
-  domSettingsPage.style.display = "none";
-  domViewCollection.style.display = "none";
-  domCollections.style.display = "none";
-  domViewNFT.style.display = "none";
+  closeAllTabs();
 
   // Show
   domHeader.style.display = "block";
   domCreateTokenPage.style.display = "block";
+
+  // Pre-select a token, if one is given
+  if (strToken !== false) {
+    const domSelector = document.getElementById('scpDeploySelector');
+    domSelector.value = strToken;
+    // Emulate a manual input change
+    changeTokenType(domSelector);
+  }
 
   // Remove active
   domSendBtn.classList.remove('active');
@@ -227,16 +178,7 @@ function switchToCreateToken() {
 
 function switchToViewCollection() {
   // Hide
-  domSendPage.style.display = "none";
-  domDashboardPage.style.display = "none";
-  domLoginPage.style.display = "none";
-  domReceivePage.style.display = "none";
-  domStakingPage.style.display = "none";
-  domAuthPage.style.display = "none";
-  domCreateTokenPage.style.display = "none";
-  domSettingsPage.style.display = "none";
-  domCollections.style.display = "none";
-  domViewNFT.style.display = "none";
+  closeAllTabs();
 
   // Remove active
   domSendBtn.classList.remove('active');
@@ -258,16 +200,7 @@ function switchToViewCollection() {
 
 function switchToCollections() {
   // Hide
-  domSendPage.style.display = "none";
-  domDashboardPage.style.display = "none";
-  domLoginPage.style.display = "none";
-  domReceivePage.style.display = "none";
-  domStakingPage.style.display = "none";
-  domAuthPage.style.display = "none";
-  domCreateTokenPage.style.display = "none";
-  domSettingsPage.style.display = "none";
-  domViewCollection.style.display = "none";
-  domViewNFT.style.display = "none";
+  closeAllTabs();
 
   // Show
   domHeader.style.display = "block";
@@ -287,16 +220,7 @@ function switchToCollections() {
 
 function switchToViewNFT(strID) {
   // Hide
-  domSendPage.style.display = "none";
-  domDashboardPage.style.display = "none";
-  domLoginPage.style.display = "none";
-  domReceivePage.style.display = "none";
-  domStakingPage.style.display = "none";
-  domAuthPage.style.display = "none";
-  domCreateTokenPage.style.display = "none";
-  domSettingsPage.style.display = "none";
-  domViewCollection.style.display = "none";
-  domCollections.style.display = "none";
+  closeAllTabs();
 
   // Show
   domHeader.style.display = "block";
