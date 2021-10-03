@@ -40,7 +40,7 @@ function init(app, context) {
     app.get(strRoute + 'createcollection/:address/:name/:maxmints/:protected',
         cController.createCollection);
     // Mints a new NFT within a specified collection
-    app.get(strRoute + 'mintnft/:address/:contract/:name/:image_url',
+    app.get(strRoute + 'mintnft/:address/:contract/:name/:ipfscid',
         cController.mintNFT);
     // Burns an NFT (by ID) from our account
     app.get(strRoute + 'burnnft/:address/:contract/:id',

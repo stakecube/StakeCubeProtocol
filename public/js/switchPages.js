@@ -1,15 +1,23 @@
 'use strict';
 
-function switchToLogin() {
-  // Hide
-  domHeader.style.display = "none";
+function closeAllTabs() {
   domDashboardPage.style.display = "none";
   domReceivePage.style.display = "none";
-  domSendPage.style.display = "none";
+  domSendPage.style.display = "none ";
+  domLoginPage.style.display = "none";
   domAuthPage.style.display = "none";
   domStakingPage.style.display = "none";
   domSettingsPage.style.display = "none";
   domCreateTokenPage.style.display = "none";
+  domCreateNftPage.style.display = "none";
+  domViewCollection.style.display = "none";
+  domCollections.style.display = "none";
+  domViewNFT.style.display = "none";
+}
+
+function switchToLogin() {
+  // Hide
+  closeAllTabs();
 
   // Show
   domLoginPage.style.display = "block";
@@ -20,13 +28,7 @@ function switchToLogin() {
 
 function switchToSend() {
   // Hide
-  domDashboardPage.style.display = "none";
-  domReceivePage.style.display = "none";
-  domLoginPage.style.display = "none";
-  domAuthPage.style.display = "none";
-  domStakingPage.style.display = "none";
-  domSettingsPage.style.display = "none";
-  domCreateTokenPage.style.display = "none";
+  closeAllTabs();
 
   // Show
   domSendPage.style.display = "block";
@@ -38,6 +40,7 @@ function switchToSend() {
   domReceiveBtn.classList.remove('active');
   dom2FABtn.classList.remove('active');
   domCreateTokenBtn.classList.remove('active');
+  domNFTCollectionsBtn.classList.remove('active');
 
   // Add active
   domSendBtn.classList.add('active');
@@ -53,13 +56,7 @@ function switchToSend() {
 
 function switchToDashboard() {
   // Hide
-  domSendPage.style.display = "none";
-  domReceivePage.style.display = "none";
-  domLoginPage.style.display = "none";
-  domAuthPage.style.display = "none";
-  domStakingPage.style.display = "none";
-  domSettingsPage.style.display = "none";
-  domCreateTokenPage.style.display = "none";
+  closeAllTabs();
 
   // Show
   domDashboardPage.style.display = "block";
@@ -71,6 +68,7 @@ function switchToDashboard() {
   domReceiveBtn.classList.remove('active');
   dom2FABtn.classList.remove('active');
   domCreateTokenBtn.classList.remove('active');
+  domNFTCollectionsBtn.classList.remove('active');
 
   // Add active
   domDashboardBtn.classList.add('active');
@@ -79,13 +77,7 @@ function switchToDashboard() {
 let hasSetupRecvQR = false;
 function switchToReceive() {
   // Hide
-  domSendPage.style.display = "none";
-  domDashboardPage.style.display = "none";
-  domLoginPage.style.display = "none";
-  domAuthPage.style.display = "none";
-  domStakingPage.style.display = "none";
-  domSettingsPage.style.display = "none";
-  domCreateTokenPage.style.display = "none";
+  closeAllTabs();
 
   // Show
   domReceivePage.style.display = "block";
@@ -105,6 +97,7 @@ function switchToReceive() {
   domDashboardBtn.classList.remove('active');
   dom2FABtn.classList.remove('active');
   domCreateTokenBtn.classList.remove('active');
+  domNFTCollectionsBtn.classList.remove('active');
 
   // Add active
   domReceiveBtn.classList.add('active');
@@ -112,13 +105,7 @@ function switchToReceive() {
 
 function switchToAuth() {
   // Hide
-  domSendPage.style.display = "none";
-  domDashboardPage.style.display = "none";
-  domLoginPage.style.display = "none";
-  domReceivePage.style.display = "none";
-  domStakingPage.style.display = "none";
-  domSettingsPage.style.display = "none";
-  domCreateTokenPage.style.display = "none";
+  closeAllTabs();
 
   // Show
   domAuthPage.style.display = "block";
@@ -129,6 +116,7 @@ function switchToAuth() {
   domDashboardBtn.classList.remove('active');
   domReceiveBtn.classList.remove('active');
   domCreateTokenBtn.classList.remove('active');
+  domNFTCollectionsBtn.classList.remove('active');
 
   // Add active
   dom2FABtn.classList.add('active');
@@ -136,12 +124,7 @@ function switchToAuth() {
 
 function switchToStaking(contract) {
   // Hide
-  domSendPage.style.display = "none";
-  domDashboardPage.style.display = "none";
-  domLoginPage.style.display = "none";
-  domReceivePage.style.display = "none";
-  domSettingsPage.style.display = "none";
-  domCreateTokenPage.style.display = "none";
+  closeAllTabs();
 
   // Show
   domStakingPage.style.display = "block";
@@ -153,13 +136,7 @@ function switchToStaking(contract) {
 
 function switchToSettings() {
   // Hide
-  domSendPage.style.display = "none";
-  domDashboardPage.style.display = "none";
-  domLoginPage.style.display = "none";
-  domReceivePage.style.display = "none";
-  domStakingPage.style.display = "none";
-  domAuthPage.style.display = "none";
-  domCreateTokenPage.style.display = "none";
+  closeAllTabs();
 
   // Show
   domHeader.style.display = "block";
@@ -172,26 +149,83 @@ function switchToSettings() {
   domCreateTokenBtn.classList.remove('active');
 }
 
-function switchToCreateToken() {
+function switchToCreateToken(strToken = false) {
   // Hide
-  domSendPage.style.display = "none";
-  domDashboardPage.style.display = "none";
-  domLoginPage.style.display = "none";
-  domReceivePage.style.display = "none";
-  domStakingPage.style.display = "none";
-  domAuthPage.style.display = "none";
-  domSettingsPage.style.display = "none";
+  closeAllTabs();
 
   // Show
   domHeader.style.display = "block";
   domCreateTokenPage.style.display = "block";
+
+  // Pre-select a token, if one is given
+  if (strToken !== false) {
+    const domSelector = document.getElementById('scpDeploySelector');
+    domSelector.value = strToken;
+    // Emulate a manual input change
+    changeTokenType(domSelector);
+  }
 
   // Remove active
   domSendBtn.classList.remove('active');
   domDashboardBtn.classList.remove('active');
   domReceiveBtn.classList.remove('active');
   dom2FABtn.classList.remove('active');
+  domNFTCollectionsBtn.classList.remove('active');
 
   // Add active
   domCreateTokenBtn.classList.add('active');
+}
+
+function switchToViewCollection() {
+  // Hide
+  closeAllTabs();
+
+  // Remove active
+  domSendBtn.classList.remove('active');
+  domDashboardBtn.classList.remove('active');
+  domReceiveBtn.classList.remove('active');
+  dom2FABtn.classList.remove('active');
+  domCreateTokenBtn.classList.remove('active');
+
+  // Add active
+  domNFTCollectionsBtn.classList.add('active');
+
+  // Show
+  domHeader.style.display = "block";
+  domViewCollection.style.display = "block";
+  renderCollections();
+  renderNFTs();
+}
+
+
+function switchToCollections() {
+  // Hide
+  closeAllTabs();
+
+  // Show
+  domHeader.style.display = "block";
+  domCollections.style.display = "block";
+
+  // Remove active
+  domSendBtn.classList.remove('active');
+  domDashboardBtn.classList.remove('active');
+  domReceiveBtn.classList.remove('active');
+  dom2FABtn.classList.remove('active');
+  domCreateTokenBtn.classList.remove('active');
+
+  // Add active
+  domNFTCollectionsBtn.classList.add('active');
+}
+
+
+function switchToViewNFT(strID) {
+  // Hide
+  closeAllTabs();
+
+  // Show
+  domHeader.style.display = "block";
+  domViewNFT.style.display = "block";
+
+  // Render
+  renderDetailedNFT(strID);
 }

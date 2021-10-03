@@ -470,7 +470,8 @@ async function createCollection(req, res) {
             'rawTx': strSignedTx
         });
     } catch(e) {
-        console.error("Network error on API '" + strModule + "/createcollection'");
+        console.error("Network error on API '" + strModule +
+                      "/createcollection'");
         console.error(e);
         return res.status(400).send('Internal API Error');
     }
@@ -492,14 +493,14 @@ async function mintNFT(req, res) {
     if (!req.params.name) {
         return res.status(400).send('Missing "name" parameter!');
     }
-    if (!req.params.image_url) {
-        return res.status(400).send('Missing "image_url" parameter!');
+    if (!req.params.ipfscid) {
+        return res.status(400).send('Missing "ipfscid" parameter!');
     }
 
     const strAddr = req.params.address;
     const strContract = req.params.contract;
     const strName = req.params.name;
-    const strImageUrl = req.params.image_url;
+    const strIpfsCID = req.params.ipfscid;
     try {
         // Ensure the collection contract exists
         const cCollection = ptrNFT.getCollection(strContract);
@@ -542,7 +543,7 @@ async function mintNFT(req, res) {
         cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         // SCP output
         cTx.addoutputburn(0.00000001,
-            strContract + ' mint ' + strName + ' ' + strImageUrl);
+            strContract + ' mint ' + strName + ' ' + strIpfsCID);
         // Fee & Change output
         const nFee = ptrWALLET.getFee(cTx.serialize().length);
         const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);

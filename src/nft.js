@@ -159,7 +159,7 @@ function addCollection(collection = SCP4) {
 }
 
 function getCollectionPtr() {
-    // Return the full list of NFTs
+    // Return the full list of Collections
     return stateCollections;
 }
 

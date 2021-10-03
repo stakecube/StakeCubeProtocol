@@ -34,7 +34,7 @@ const nUpgradeBlock2_tokenIndexing = nUpgradeBlock1_minStake;
 // ... NFT 'collections', these collections have properties such as:
 // ... 'name', 'max supply', 'protected', these properties apply to all
 // ... NFTs that exist within the given collection.
-const nUpgradeBlock3_scp4 = 0; // TODO: SET SCP-4 UPGRADE HEIGHT BEFORE RELEASE!
+const nUpgradeBlock3_scp4 = 238730;
 
 function isMinStakeActive(height = Number) {
     return height >= nUpgradeBlock1_minStake;

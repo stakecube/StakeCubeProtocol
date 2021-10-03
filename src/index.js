@@ -606,14 +606,17 @@ async function processState(newMsg, tx) {
                 check5 = Number(arrParams[5]);
                 check4 = (check4 > 1 && Number.isSafeInteger(check4)); // SCP-2 inflation
                 check5 = (check5 > 1 && Number.isSafeInteger(check5)); // SCP-2 minimum age (in blocks) to stake
-                if (check1 && check2 && check3 && check4 && check5) sCheck = true;
+                if (check1 && check2 && check3 && check4 && check5) {
+                    sCheck = true;
+                }
                 break;
             case 3: // Not defined yet
                 break;
             case 4: // SCP-4 NFT
                 check1 = arrParams[1].length > 0;
                 check2 = Number(arrParams[2]);
-                check2 = (check2 === -1 || (check2 > 0 && Number.isSafeInteger(check2))); // SCP-4 max mints
+                check2 = (check2 === -1 || (check2 > 0 &&
+                                            Number.isSafeInteger(check2))); // SCP-4 max mints
                 if (check1 && check2) sCheck = true;
                 break;
             }
@@ -662,7 +665,8 @@ async function processState(newMsg, tx) {
 
                             TOKENS.addToken(newContract);
                         }
-                        if (nVersion === 4 && UPGRADES.isScp4Active(nCacheHeight)) {
+                        const fV4Active = UPGRADES.isScp4Active(nCacheHeight);
+                        if (nVersion === 4 && fV4Active) {
                             // Protected (bool flag)
                             // NFTs in protected Collections can **not** be burned / destroyed by owners
                             // Setting it to false/0 allows creating SCP-4 contracts with destructable NFTs
@@ -686,13 +690,14 @@ async function processState(newMsg, tx) {
                         }
 
                         if (newContract) {
-                            console.log('New SCP-' + nVersion + ' contract created!');
+                            console.log('New SCP-' + nVersion +
+                                        ' contract created!');
                             console.log(newContract);
                         }
                     } else {
                         console.warn('An attempt to create a new SCP-' +
-                                     nVersion + ' contract has failed, invalid ' +
-                                     'fee output!');
+                                     nVersion + ' contract has failed, ' +
+                                     'invalid fee output!');
                     }
                 } catch(e) {
                     console.warn('An attempt to create a new SCP-' +
@@ -887,7 +892,7 @@ async function processState(newMsg, tx) {
                 if (arrParams[1] === 'mint') {
                     /*
                         param 2 = NAME (string)
-                        param 3 = IMAGE_URL (string) // IPFS recommended
+                        param 3 = IPFS_ID (string)
                     */
                     const check3 = arrParams[2] && arrParams[2].length > 1;
                     const check4 = arrParams[3] && arrParams[3].length > 1; // TODO: Improve _url_ validation
@@ -918,11 +923,11 @@ async function processState(newMsg, tx) {
                             }
                         } else {
                             console.warn('An attempt by a non-issuer to mint' +
-                                          ' SCP-' + cCollection.version + ' NFT' +
-                                          ' failed! (Issuer: ' +
-                                          cCollection.creator.substr(0, 5) + '... ' +
-                                          'Caller: ' + addrCaller.substr(0, 5) +
-                                          '...)');
+                                          ' SCP-' + cCollection.version +
+                                          ' NFT failed! (Issuer: ' +
+                                          cCollection.creator.substr(0, 5) +
+                                          '... Caller: ' +
+                                          addrCaller.substr(0, 5) + '...)');
                         }
                     } else {
                         console.warn('An attempt to mint SCP-' +
@@ -986,7 +991,7 @@ async function processState(newMsg, tx) {
                         const fSafe = await isCallAuthorized(tx, addrCaller);
                         if (fSafe) {
                             // Authentication successful, destroy NFT!
-                            cCollection.destroy(addrCaller, arrParams[0],
+                            cCollection.destroy(addrCaller, idContract,
                                 arrParams[2], tx);
                         } else {
                             console.warn('An attempt to destroy SCP-' +

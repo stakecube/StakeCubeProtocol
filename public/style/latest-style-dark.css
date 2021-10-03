@@ -428,3 +428,67 @@ div.omrs-input-group {
   background-color: #fff0;
   color: #8c8c8c;
 }
+
+.badge {
+  color: white;
+}
+
+.subtext {
+  color: white;
+  font-size: 0.75em;
+  font-weight: 700;
+  padding: .35em .65em;
+}
+
+.table {
+  color: #d2d2d2;
+}
+
+.nftCard {
+  height: 275px;
+  background-size: cover!important;
+  border: 1px solid #0c63e4;
+  box-shadow: 0 0 3px 3px #084298;
+  width: 12em;
+}
+
+.nftname {
+  margin-left: -16.5px;
+  border-top-left-radius: 0px;
+  border-bottom-left-radius: 0px;
+  background-color: #0c63e4;
+  color: white;
+}
+
+.ls-1 {
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.kbd {
+  background-color: #f1f1f1;
+  border-radius: 4px;
+  font-family: var(--bs-font-monospace);
+  font-size: .875em;
+  padding: 3px 4px;
+  color: #c74f97;
+  line-height: 22px;
+}
+
+.modal-content {
+  background: linear-gradient(90deg, rgba(3, 23, 52, 0.97), rgba(6, 56, 123, 0.97) 100%);
+  border-style: solid;
+  border-color: #084298;
+}
+
+.modal-header {
+  border-bottom: initial !important;
+}
+
+.modal-footer {
+  border-top: initial !important;
+}
+
+.btn-close {
+  filter: invert(1);
+}
