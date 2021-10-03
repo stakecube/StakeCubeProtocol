@@ -892,7 +892,7 @@ async function processState(newMsg, tx) {
                 if (arrParams[1] === 'mint') {
                     /*
                         param 2 = NAME (string)
-                        param 3 = IMAGE_URL (string) // IPFS recommended
+                        param 3 = IPFS_ID (string)
                     */
                     const check3 = arrParams[2] && arrParams[2].length > 1;
                     const check4 = arrParams[3] && arrParams[3].length > 1; // TODO: Improve _url_ validation

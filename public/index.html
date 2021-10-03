@@ -606,16 +606,18 @@
       for (const cColl of arrColls) {
         // Calculate the supply (All existing NFTs that have not been burned)
         const nCardSupply = cColl.nfts.filter(a => a.owner !== null).length;
+        // Calculate if minting additional NFTs is possible
+        const fCanMint = (cColl.creator === WALLET.getActiveWallet().getPubkey() && ((cColl.mints < cColl.maxMints) || cColl.maxMints === -1));
         // Construct the render structure
         strRendering += `
                 <tr>
                   <td>${formatName(cColl.collectionName, 36)}</td>
                   <td>${nCardSupply.toLocaleString('en-GB')}</td>
-                  <td>${cColl.maxMints}</td>
+                  <td>${cColl.maxMints === -1 ? 'Unlimited' : cColl.maxMints.toLocaleString('en-GB')}</td>
                   <td><span class="subtext">${cColl.protected ? 'Yes' : 'No'}</span></td>
                   <td style="padding-top: 11px;">
                     <i class="far fa-eye" style="cursor: pointer;" onclick="switchToViewCollection();renderNFTs(${cColl.index});"></i>
-                    ${(cColl.creator === WALLET.getActiveWallet().getPubkey() && cColl.mints < cColl.maxMints)  ? '<i class="fas fa-plus" style="cursor: pointer; margin-left: 10px;" onclick="nSelectedCollection=' + cColl.index + ';switchToNftCreator();"></i>' : ''}
+                    ${fCanMint ? '<i class="fas fa-plus" style="cursor: pointer; margin-left: 10px;" onclick="nSelectedCollection=' + cColl.index + ';switchToNftCreator();"></i>' : ''}
                   </td>
                 </tr>`;
       }
