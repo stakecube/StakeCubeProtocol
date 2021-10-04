@@ -14,14 +14,13 @@
 */
 
 // Modules
-let DB, disk;
+let disk;
 
 // Pointers
 let arrStatePtr = [];
 
-function init(context, d) {
-    DB = context;
-    disk = d;
+function init(context) {
+    disk = context;
 }
 
 function setStateMsgPtr(ptr) {
@@ -40,7 +39,9 @@ async function getSyncAssist() {
     const arrBlks = await disk.readSCP('snap.sync', true);
     // Always keep ascending order
     if (Array.isArray(arrBlks)) {
-        arrBlks.sort((a, b) => { return a - b });
+        arrBlks.sort((a, b) => {
+            return a - b;
+        });
     }
     return arrBlks;
 }

@@ -421,7 +421,8 @@ async function getMsgsFromChain(nBlocksTotal, rescanPossible = false) {
                 continue;
             } else if (i > nBestSyncBlk) {
                 fSyncAssist = false;
-                console.log('Sync Assist finished, resuming regular synchronization.');
+                console.log('Sync Assist finished, resuming regular ' +
+                            'synchronization.');
             }
         }
         // Optimization note:
@@ -1062,7 +1063,7 @@ setInterval(async () => {
             // If we have a blocks cache, only try scanning the last ~20 blocks for changes.
             // Note: Rescans will definitely happen here, so make sure we skip them by signalling so.
                 await getMsgsFromChain(20, true);
-            // Save our Sync Assist file to use for fast-restart (or easy export) purposes
+                // Save our Sync Assist file to use for fast-restart (or easy export) purposes
                 await DB.createSyncAssistSnap();
             }
         } catch(e) {

@@ -119,7 +119,7 @@ async function init(forceCorePath = false, retry = false) {
     }
 
     // Initialize the StateDB
-    statedb.init(exports, disk);
+    statedb.init(disk);
 
     // Set SCC Core datadir path
     disk.setPath(pathSCC, true);
