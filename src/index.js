@@ -390,21 +390,46 @@ const chainHashesCache = [];
 let nCacheScannedBlks = 0;
 let currentScanBlock = null;
 async function getMsgsFromChain(nBlocksTotal, rescanPossible = false) {
+    // Set the Sync Assist state pointer
+    DB.state.setStateMsgPtr(chainMessages);
     isScanningBlocks = true;
     currentScanBlock = null;
+    // Check for a Sync Assist file
+    const arrSyncBlks = await DB.getSyncAssistSnap();
+    let fSyncAssist = !rescanPossible &&
+                      arrSyncBlks && Array.isArray(arrSyncBlks);
+    const nBestSyncBlk = fSyncAssist ? arrSyncBlks[arrSyncBlks.length - 1] : 0;
     let nBestBlock = await rpcMain.call('getbestblockhash');
     nBestBlock = await rpcMain.call('getblock', nBestBlock);
     const nStartBlock = nBestBlock.height - nBlocksTotal;
     console.log('Scanning block range ' + nStartBlock + ' to ' +
                 nBestBlock.height + ' (Total: ' + nBlocksTotal + ')');
+    if (fSyncAssist) {
+        console.log('Sync Assist enabled! Scanning ' + arrSyncBlks.length +
+                    ' assisted blocks!');
+    }
     let i; const len = nBestBlock.height + 1;
     for (i = nStartBlock; i < len; i++) {
+        if (fSyncAssist && !rescanPossible) {
+            // If the current block height is NOT logged in Sync Assist, and the current block height
+            // ... is smaller than the highest Sync Assist block, skip it!
+            if (!arrSyncBlks.includes(i) && i <= nBestSyncBlk) {
+                // Emulate a block tick
+                nCacheHeight = i;
+                nCacheScannedBlks++;
+                TOKENS.setBlockHeight(nCacheHeight);
+                continue;
+            } else if (i > nBestSyncBlk) {
+                fSyncAssist = false;
+                console.log('Sync Assist finished, resuming regular synchronization.');
+            }
+        }
         // Optimization note:
         // If we've started a new scan, clear currentScanBlock and pull the fresh block data from RPC
         // ... if we're doing a long scan, we cache the last block and rely on 'nextblockhash' for
         // ... faster querying, as it removes the need to call 'getblockhash' on every loop tick
         let currentScanHash = null;
-        if (isNil(currentScanBlock)) {
+        if (fSyncAssist || isNil(currentScanBlock)) {
             currentScanHash = await rpcMain.call('getblockhash', i);
         } else {
             currentScanHash = currentScanBlock.nextblockhash;
@@ -446,10 +471,9 @@ async function getMsgsFromBlock(blk) {
         // Cache this message and block
         chainMessages.push({
             'msg': txRes.msg,
-            'time': blk.time,
+            'height': blk.height,
             'tx': cTx
         });
-        console.log('Message found! (' + txRes.msg + ')');
     }
     return true;
 }
@@ -1038,9 +1062,12 @@ setInterval(async () => {
             // If we have a blocks cache, only try scanning the last ~20 blocks for changes.
             // Note: Rescans will definitely happen here, so make sure we skip them by signalling so.
                 await getMsgsFromChain(20, true);
+            // Save our Sync Assist file to use for fast-restart (or easy export) purposes
+                await DB.createSyncAssistSnap();
             }
         } catch(e) {
             console.warn('CSP: Unable to scan blocks, retrying...');
+            console.log(e);
             isScanningBlocks = false;
         }
     }

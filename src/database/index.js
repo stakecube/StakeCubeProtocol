@@ -15,16 +15,19 @@ const path = require('path');
 let appdata;
 let disk;
 let conf;
+let statedb;
 try {
     // GUI
     appdata = require('../src/database/appdata.js');
     disk = require('../src/database/disk.js');
     conf = require('../src/database/config.js');
+    statedb = require('../src/database/state.js');
 } catch(e) {
     // Terminal
     appdata = require('./appdata.js');
     disk = require('./disk.js');
     conf = require('./config.js');
+    statedb = require('./state.js');
 }
 
 // SCC Core data directory
@@ -52,6 +55,16 @@ async function getWallet() {
 // Saves data to the wallet DB
 async function setWallet(data) {
     return await disk.writeSCP('wallet.json', data, true);
+}
+
+// Create a new sync-assist snapshot
+async function createSyncAssistSnap() {
+    return await statedb.setSyncAssist();
+}
+
+// Load the current Sync Assist snapshot, if any exists
+async function getSyncAssistSnap() {
+    return await statedb.getSyncAssist();
 }
 
 // Initialize the DB, config, and paths for SCC & SCP
@@ -105,6 +118,9 @@ async function init(forceCorePath = false, retry = false) {
         }
     }
 
+    // Initialize the StateDB
+    statedb.init(exports, disk);
+
     // Set SCC Core datadir path
     disk.setPath(pathSCC, true);
 
@@ -130,9 +146,12 @@ try {
     exports.join = path.join;
     exports.path = path;
     exports.getConfigValue = conf.getConfigValue;
+    exports.state = statedb;
     // Funcs
     exports.appdata = appdata;
     exports.getWallet = getWallet;
     exports.setWallet = setWallet;
+    exports.createSyncAssistSnap = createSyncAssistSnap;
+    exports.getSyncAssistSnap = getSyncAssistSnap;
     exports.init = init;
 } catch(e) {}
