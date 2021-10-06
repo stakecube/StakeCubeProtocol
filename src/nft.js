@@ -24,7 +24,7 @@ class SCP4 {
         this.collectionName = collectionName;
         this.mints = 0;
         this.maxMints = maxMints; // -1 = infinity
-        this.protected = collectionProtected; // Default: true
+        this.protected = collectionProtected;
         this.creator = creator;
         this.nfts = nfts;
         if (typeof this.nfts !== 'object') this.nfts = [];
@@ -163,6 +163,17 @@ function getCollectionPtr() {
     return stateCollections;
 }
 
+function getAllCollectionHeaders() {
+    const arrCollHeaders = [];
+    // Loop all collections, deep clone, and strip all NFT data
+    for (const cColl of stateCollections) {
+        const cClone = JSON.parse(JSON.stringify(cColl));
+        delete cClone.nfts;
+        arrCollHeaders.push(cClone);
+    }
+    return arrCollHeaders;
+}
+
 function getCollection(query) {
     // (Indexed ID only!) Fetch a NFT by it's Index ID
     if (typeof query === 'number') return stateCollections[query];
@@ -250,6 +261,7 @@ function getNFTbyId(query) {
 exports.SCP4 = SCP4;
 // Funcs
 exports.getCollectionPtr = getCollectionPtr;
+exports.getAllCollectionHeaders = getAllCollectionHeaders;
 exports.addCollection = addCollection;
 exports.getCollection = getCollection;
 exports.getNFTptr = getNFTptr;
