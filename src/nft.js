@@ -169,6 +169,8 @@ function getAllCollectionHeaders() {
     for (const cColl of stateCollections) {
         const cClone = JSON.parse(JSON.stringify(cColl));
         delete cClone.nfts;
+        cClone.totalNFTs = cColl.nfts.length;
+        cClone.burnedNFTs = cColl.nfts.filter(a => a.owner === null).length;
         arrCollHeaders.push(cClone);
     }
     return arrCollHeaders;

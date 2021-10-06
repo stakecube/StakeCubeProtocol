@@ -280,8 +280,8 @@ Example: `curl -X GET "https://stakecubecoin.net/web3/scp/tokens/getallcollectio
     "version": 4,
     "contract": "02f08b8cfc938a901ac939243bd091e48a650475d5d2f78baacef5f7c1cb899c",
     "collectionName": "test",
-    "mints": 3,
-    "maxMints": 1,
+    "mints": 1,
+    "maxMints": 4,
     "protected": false,
     "creator": "sDpkbWCCyh1zvAUHiJKGKr3h11ciaui3mP",
     "nfts": [
@@ -342,10 +342,12 @@ Example: `curl -X GET "https://stakecubecoin.net/web3/scp/tokens/getallcollectio
     "version": 4,
     "contract": "02f08b8cfc938a901ac939243bd091e48a650475d5d2f78baacef5f7c1cb899c",
     "collectionName": "test",
-    "mints": 3,
-    "maxMints": 1,
+    "mints": 1,
+    "maxMints": 4,
     "protected": false,
-    "creator": "sDpkbWCCyh1zvAUHiJKGKr3h11ciaui3mP"
+    "creator": "sDpkbWCCyh1zvAUHiJKGKr3h11ciaui3mP",
+    "totalNFTs": 1,
+    "burnedNFTs": 0
   }
 ]
 ```
