@@ -317,6 +317,44 @@ Example: `curl -X GET "https://stakecubecoin.net/web3/scp/tokens/getallcollectio
 
 ---
 
+**Get All Collection Headers (SCP-4)**
+
+Returns the headers of all SCP-4 Collections, the 'header' is considered the full collection metadata, minus all NFT data. Use this for exploring Collections without the burden of additional NFT data.
+
+```bash
+GET /api/v1/tokens/getallcollectionheaders
+```
+
+Example: `curl -X GET "https://stakecubecoin.net/web3/scp/tokens/getallcollectionheaders"`
+
+**Fullnode required**: YES
+
+**Parameters**: NONE
+
+<details>
+<summary><strong>Example Response</strong></summary>
+<p>
+
+```json
+[
+  {
+    "index": 0,
+    "version": 4,
+    "contract": "02f08b8cfc938a901ac939243bd091e48a650475d5d2f78baacef5f7c1cb899c",
+    "collectionName": "test",
+    "mints": 3,
+    "maxMints": 1,
+    "protected": false,
+    "creator": "sDpkbWCCyh1zvAUHiJKGKr3h11ciaui3mP"
+  }
+]
+```
+
+</p>
+</details>
+
+---
+
 **Get Single Collection**
 
 Returns the complete 'state' of a single SCP-4 Collection with its metadata, NFTs and activity.
