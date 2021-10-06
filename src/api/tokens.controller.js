@@ -116,6 +116,16 @@ async function getAllCollections(req, res) {
     res.json(ptrNFT.getCollectionPtr());
 }
 
+async function getAllCollectionHeaders(req, res) {
+    if (!cPerms.isModuleAllowed(strModule)) {
+        return disabledError(res);
+    }
+    if (!ptrIsFullnode()) {
+        return fullnodeError(res);
+    }
+    res.json(ptrNFT.getAllCollectionHeaders());
+}
+
 function getCollection(req, res) {
     if (!cPerms.isModuleAllowed(strModule)) {
         return disabledError(res);
@@ -188,6 +198,7 @@ exports.getTokensByAccount = getTokensByAccount;
 exports.getStakingStatus = getStakingStatus;
 // SCP-4
 exports.getAllCollections = getAllCollections;
+exports.getAllCollectionHeaders = getAllCollectionHeaders;
 exports.getCollection = getCollection;
 exports.getNFTsByAccount = getNFTsByAccount;
 exports.getNFTbyID = getNFTbyID;
