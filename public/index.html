@@ -204,6 +204,8 @@
 
     // WALLET STATE DATA
     let cachedTokens = [];
+    let cachedOwnedNFTs = [];
+    let cachedCollections = [];
     let cachedBlockCount = 0;
     let cachedActivity = [];
     let cachedActivityIS = [];
@@ -468,10 +470,12 @@
 
         // --- Update SCP token balances
         // Fetch all tokens owned by our account (strPubkey)
-        if (isFullnode)
+        if (isFullnode) {
           cachedTokens = TOKENS.getTokensByAccount(strPubkey);
-        else
+        } else {
           getTokensByAccountLight(strPubkey);
+          fetchNFTsByAddress(strPubkey);
+        }
         // Loop all tokens, construct an updated GUI for the Dashboard
         let dashboardTokens = document.getElementById("dashboardTokens");
         let sendTokensSelector = document.getElementById('sendingCoin');
@@ -536,8 +540,25 @@
           renderActivity();
         // Render the NFT Elements, if the NFTs tab is active
         if (domNFTCollectionsBtn.className.includes('active')) {
-          renderCollections();
-          renderNFTs();
+          if (isFullnode) {
+            renderCollections();
+            renderNFTs();
+          } else {
+            NET.getLightCollectionHeaders().then(collRes => {
+              // Add to cache if we don't already have any
+              collRes = JSON.parse(collRes);
+              collRes.map(addCachedCollection);
+              
+              renderCollections();
+              if (nSelectedCollection !== -1) {
+                // Specific contract selected, so load the full NFT supply details of the collection
+                fetchNFTs(getCachedCollection(nSelectedCollection));
+                renderNFTs();
+              } else {
+                renderNFTs();
+              }
+            });
+          }
         }
       }
 
@@ -601,11 +622,13 @@
       // Prep render cache
       let strRendering = '';
       // Get the current Collections source (full-node or lightwallet sources)
-      const arrColls = isFullnode ? NFT.getCollectionPtr() : [];
+      const arrColls = isFullnode ? NFT.getCollectionPtr() : cachedCollections;
       // Loop all SCP-4-like Collections and append each to the display table
       for (const cColl of arrColls) {
         // Calculate the supply (All existing NFTs that have not been burned)
-        const nCardSupply = cColl.nfts.filter(a => a.owner !== null).length;
+        const nCardSupply = isFullnode ?
+                              cColl.nfts.filter(a => a.owner !== null).length :
+                              cColl.totalNFTs - cColl.burnedNFTs;
         // Calculate if minting additional NFTs is possible
         const fCanMint = (cColl.creator === WALLET.getActiveWallet().getPubkey() && ((cColl.mints < cColl.maxMints) || cColl.maxMints === -1));
         // Construct the render structure
@@ -626,7 +649,7 @@
     }
 
     let nSelectedCollection = -1;
-    function renderNFTs(nContract) {
+    async function renderNFTs(nContract) {
       if (typeof nContract !== 'number') nContract = nSelectedCollection;
       nSelectedCollection = nContract;
       // Prep render cache
@@ -636,7 +659,10 @@
         // Set title
         domCollectionsName.innerText = 'My NFTs';
         // Rendering all owned NFTs
-        const arrNFTs = NFT.getAllNFTsByAccount(WALLET.getActiveWallet().getPubkey());
+        const arrNFTs = isFullnode ?
+                          NFT.getAllNFTsByAccount(WALLET.getActiveWallet().getPubkey()) :
+                          cachedOwnedNFTs;
+        if (!arrNFTs.length && !isFullnode) (await fetchNFTsByAddress()).map(arrNFTs.push);
         if (arrNFTs.length) {
           for (const cNFT of arrNFTs) {
             strRendering += `
@@ -660,10 +686,11 @@
         }
       } else {
         // Rendering NFTs from a contract
-        const cColl = NFT.getCollection(nContract);
+        const cColl = isFullnode ? NFT.getCollection(nContract) : getCachedCollection(nContract);
         // Set title
         domCollectionsName.innerText = formatName(cColl.collectionName, 28);
         // Construct the render structure
+        if (!cColl.nfts && !isFullnode) await fetchNFTs(cColl);
         for (const cNFT of cColl.nfts.filter(a => a.owner !== null)) {
           strRendering += `
             <div class="col-3">
@@ -681,17 +708,18 @@
 
     function renderDetailedNFT(strID) {
       // Find the NFT and Collection
-      const cNFT = isFullnode ? NFT.getNFTbyId(strID) : {};
-      const cColl = isFullnode ? NFT.getCollection(cNFT.collectionIndex) : {};
+      const cNFT = isFullnode ? NFT.getNFTbyId(strID) : getCachedNFT(strID);
+      const cColl = isFullnode ? NFT.getCollection(cNFT.collectionIndex) : getCachedCollection(cNFT.collectionIndex);
       // Cache the ownership status
-      const fOwned = cNFT.owner === WALLET.getActiveWallet().getPubkey();
+      const strAddr = WALLET.getActiveWallet().getPubkey();
+      const fOwned = cNFT.owner ? cNFT.owner === strAddr : true;
       // Render all elements
       domNftDetailTitle.innerText = cNFT.name;
       domNftDetailImg.src = 'https://cloudflare-ipfs.com/ipfs/' + cNFT.imgUrl;
-      domNftDetailID.innerText = cNFT.nft;
+      domNftDetailID.innerText = cNFT.nft || cNFT.id;
       domNftDetailName.innerText = cNFT.name;
       domNftDetailImageID.innerText = cNFT.imgUrl;
-      domNftDetailOwner.innerText = cNFT.owner;
+      domNftDetailOwner.innerText = cNFT.owner || strAddr;
       // Pre-render activity
       let strRendering = '';
       // Deep-clone and reverse the activity list
@@ -743,8 +771,65 @@
       return cToken.account || false;
     }
 
+    function getCachedCollection(query) {
+      const cColl = cachedCollections.find(a => a.contract === query || a.index === query);
+      return cColl || false;
+    }
+    
+    function addCachedCollection(cNewColl) {
+      // Try to find an existing one
+      const cColl = getCachedCollection(cNewColl.contract);
+      if (!cColl) {
+        cachedCollections.push(cNewColl);
+      } else {
+        // Copy most data over from the new collection
+        for (const key of Object.keys(cNewColl)) {
+          if (key === 'nfts') {
+            // NFTs need more care, so we only copy them over if our current set doesn't match!
+            if (!cColl.nfts || (cNewColl.nfts.length !== cColl.nfts.length))
+              cColl.nfts = cNewColl.nfts;
+          } else {
+            cColl[key] = cNewColl[key];
+          }
+        }
+      }
+      return true;
+    }
+
+    function getCachedNFT(query) {
+      // First, check if the query matches a self-owned NFT
+      let cNFT = cachedOwnedNFTs.find(a => a.nft === query);
+      // If not, we'll scan all other known NFTs for a match
+      if (!cNFT) {
+        for (const cColl of cachedCollections) {
+          if (cColl.nfts && cColl.nfts.length) {
+            cNFT = cColl.nfts.find(a => a.id === query);
+            if (cNFT) break;
+          }
+        }
+      }
+      return cNFT;
+    }
+
     function isScpTx(strTx) {
-      return cachedActivity.findIndex(a => a.id === strTx) !== -1;
+      return cachedActivity.findIndex(a => a.id === strTx) !== -1 || // SCP(1-2) transactions
+             cachedOwnedNFTs.findIndex(a => a.nft === strTx) !== -1; // SCP-4 NFT deployments
+    }
+
+    async function fetchNFTs(cColl) {
+      // Sync NFTs from the lightwallet server
+      const cCollRes = JSON.parse(await NET.getLightCollection(cColl.contract));
+      if (!cCollRes.error)
+        addCachedCollection(cCollRes);
+      return getCachedCollection(cColl.index);
+    }
+
+    async function fetchNFTsByAddress(strAddr = WALLET.getActiveWallet().getPubkey()) {
+      // Sync addr-specific NFTs from the lightwallet server
+      const arrNFTsRes = JSON.parse(await NET.getLightNFTsByAccount(strAddr));
+      if (!arrNFTsRes.error)
+        cachedOwnedNFTs = arrNFTsRes;
+      return cachedOwnedNFTs;
     }
 
     function sendTransactionGUI() {
@@ -2270,7 +2355,16 @@
                   <th scope="col">Actions</th>
                 </tr>
               </thead>
-              <tbody id="collectionsList"></tbody>
+              
+              <tbody id="collectionsList">
+                <tr>
+                  <td>Loading...</td>
+                  <td>...</td>
+                  <td>...</td>
+                  <td><span class="subtext">...</span></td>
+                  <td style="padding-top: 11px;">...</td>
+                </tr>
+              </tbody>
             </table>
 
           </div>    
@@ -2291,7 +2385,7 @@
 
         <div class="row">
           <div class="col-4">
-            <img id="nftDetailImg" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Stray_kitten_Rambo002.jpg/1200px-Stray_kitten_Rambo002.jpg" style="width:100%; border-radius: 10px;">
+            <img id="nftDetailImg" style="width:100%; border-radius: 10px;">
             <div id="nftDetailActions" class="card card-prop mt-4">
               <div class="card-body" style="padding-top: 9px;">
                 <div class="card-title font-gray font-weight-bold">Actions</div>
@@ -2409,7 +2503,7 @@
             const strName = document.getElementById('scpNftName').value;
             // Prepare wallet
             const strAddr = WALLET.getActiveWallet().getPubkey();
-            const cCollection = isFullnode ? NFT.getCollection(nSelectedCollection) : {};
+            const cCollection = isFullnode ? NFT.getCollection(nSelectedCollection) : getCachedCollection(nSelectedCollection);
             console.log("Constructing SCP-" + cCollection.version + " NFT mint TX!");
             // Contruct SCP transaction
             const cTx = WALLET.sccjs.tx.transaction();
