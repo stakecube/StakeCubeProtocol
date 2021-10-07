@@ -39,7 +39,7 @@ function init(app, context) {
     // Get All Collections
     app.get(strRoute + 'getallcollections',
         cController.getAllCollections);
-    
+
     // Get All Collection Headers
     app.get(strRoute + 'getallcollectionheaders',
         cController.getAllCollectionHeaders);
