@@ -466,12 +466,12 @@ div.omrs-input-group {
 }
 
 .kbd {
-  background-color: #f1f1f1;
+  background-color: #000000;
   border-radius: 4px;
   font-family: var(--bs-font-monospace);
   font-size: .875em;
   padding: 3px 4px;
-  color: #c74f97;
+  color: #569bff;
   line-height: 22px;
 }
 
