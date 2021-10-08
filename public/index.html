@@ -255,7 +255,7 @@
     let domNftDetailTitle;
     let domNftDetailImg;
     let domNftDetailID;
-    let domNftDetailName;
+    let domNftDetailCollection;
     let domNftDetailImageID;
     let domNftDetailOwner;
     let domNftDetailActivity;
@@ -634,7 +634,7 @@
         // Construct the render structure
         strRendering += `
                 <tr>
-                  <td>${formatName(cColl.collectionName, 36)}</td>
+                  <td>${formatName(cColl.collectionName, 40)}</td>
                   <td>${nCardSupply.toLocaleString('en-GB')}</td>
                   <td>${cColl.maxMints === -1 ? 'Unlimited' : cColl.maxMints.toLocaleString('en-GB')}</td>
                   <td><span class="subtext">${cColl.protected ? 'Yes' : 'No'}</span></td>
@@ -688,7 +688,7 @@
         // Rendering NFTs from a contract
         const cColl = isFullnode ? NFT.getCollection(nContract) : getCachedCollection(nContract);
         // Set title
-        domCollectionsName.innerText = formatName(cColl.collectionName, 28);
+        domCollectionsName.innerText = formatName(cColl.collectionName, 40);
         // Construct the render structure
         if (!cColl.nfts && !isFullnode) await fetchNFTs(cColl);
         for (const cNFT of cColl.nfts.filter(a => a.owner !== null)) {
@@ -717,7 +717,7 @@
       domNftDetailTitle.innerText = cNFT.name;
       domNftDetailImg.src = 'https://cloudflare-ipfs.com/ipfs/' + cNFT.imgUrl;
       domNftDetailID.innerText = cNFT.nft || cNFT.id;
-      domNftDetailName.innerText = cNFT.name;
+      domNftDetailCollection.setAttribute('onclick', 'switchToViewCollection();renderNFTs(' + cColl.index + ');');
       domNftDetailImageID.innerText = cNFT.imgUrl;
       domNftDetailOwner.innerText = cNFT.owner || strAddr;
       // Pre-render activity
@@ -1430,7 +1430,7 @@
       domNftDetailTitle = document.getElementById('nftDetailTitle');
       domNftDetailImg = document.getElementById('nftDetailImg');
       domNftDetailID = document.getElementById('nftDetailID');
-      domNftDetailName = document.getElementById('nftDetailName');
+      domNftDetailCollection = document.getElementById('nftDetailCollection');
       domNftDetailImageID = document.getElementById('nftDetailImageID');
       domNftDetailOwner = document.getElementById('nftDetailOwner');
       domNftDetailActivity = document.getElementById('nftDetailActivity');
@@ -2081,8 +2081,8 @@
                         if (domScpCollectionName.value.length) {
                             // Swap spaces for artificial whitespace unicodes
                             domScpCollectionName.value = domScpCollectionName.value.replace(/ /g, ' ');
-                            // Limit to 25 characters
-                            if (domScpCollectionName.value.length > 25) domScpCollectionName.value = domScpCollectionName.value.substr(0, 25);
+                            // Limit to 40 characters
+                            if (domScpCollectionName.value.length > 40) domScpCollectionName.value = domScpCollectionName.value.substr(0, 40);
                         } else {
                             isComplete = false;
                         }
@@ -2266,7 +2266,7 @@
 
               <div id="scp4TokenSettings" style="display: none;">
                 <div class="row">
-                  <div class="col-md-6">
+                  <div class="col-md-8">
                     <div class="omrs-input-group" style="width:100%;">
                       <label class="omrs-input-underlined">
                         <input id="scpCollectionName" oninput="checkDeployerInput()" required type="text">
@@ -2278,14 +2278,14 @@
                     </div>
                   </div>
 
-                  <div class="col-md-6">
+                  <div class="col-md">
                     <div class="omrs-input-group" style="width:100%;">
                       <label class="omrs-input-underlined">
                         <input id="scpCollectionMaxMints" oninput="checkDeployerInput()" required type="text">
                         <span class="omrs-input-label">Max Mints</span>
                         <span class="omrs-input-hover" onmouseover="showTooltip('collectionMaxMintsTip')"
                         onmouseout="hideTooltip('collectionMaxMintsTip')"><i class="fas fa-question-circle tooltip-questionmark"></i></span>
-                      <span class="omrs-input-message" id="collectionMaxMintsTip" style="z-index: -1000;">Maximum NFT mints allowed, use -1 for unlimited minting.</span>
+                      <span class="omrs-input-message" id="collectionMaxMintsTip" style="z-index: -1000;">Maximum NFT mints allowed.<br><br>Use -1 for unlimited minting.</span>
                       </label>
                     </div>
                   </div>
@@ -2374,6 +2374,7 @@
       <div class="container">
         <h4 id="nftDetailTitle" class="mb-5 theme-color-secondary font-weight-bold"></h4>
         <div class="float-end" style="margin-top:-75px;">
+          <button type="button" id="nftDetailCollection" class="btn btn-theme btn-sm" onclick="switchToViewCollection();renderNFTs();" style="margin-right:1em;">Visit Collection</button>
           <button type="button" class="btn btn-theme btn-sm" onclick="switchToViewCollection();renderNFTs();">Back</button>
         </div>
 
@@ -2406,14 +2407,9 @@
                       <br>
                       <code id="nftDetailID" class="kbd"></code>
                     </div>
-                    <div class="col-3">
-                      <span class="ls-1">NAME</span>
-                      <br>
-                      <p id="nftDetailName"></p>
-                    </div>
                   </div><br>
 
-                  <span class="ls-1">IMAGE IPFS ID</span><br>
+                  <span class="ls-1">IPFS CID</span><br>
                   <span id="nftDetailImageID" class="kbd"></span><br><br>
 
                   <span class="ls-1">OWNER ADDRESS</span><br>
