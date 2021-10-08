@@ -784,13 +784,7 @@
       } else {
         // Copy most data over from the new collection
         for (const key of Object.keys(cNewColl)) {
-          if (key === 'nfts') {
-            // NFTs need more care, so we only copy them over if our current set doesn't match!
-            if (!cColl.nfts || (cNewColl.nfts.length !== cColl.nfts.length))
-              cColl.nfts = cNewColl.nfts;
-          } else {
-            cColl[key] = cNewColl[key];
-          }
+          cColl[key] = cNewColl[key];
         }
       }
       return true;
