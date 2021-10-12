@@ -763,12 +763,12 @@
 
     function getCachedToken(query) {
       const cToken = cachedTokens.find(a => a.token.contract === query);
-      return cToken.token || false;
+      return typeof cToken !== 'undefined' ? cToken.token : false;
     }
 
     function getCachedAccount(ctoken) {
       const cToken = cachedTokens.find(a => a.token.contract === ctoken.contract);
-      return cToken.account || false;
+      return typeof cToken !== 'undefined' ? cToken.account : false;
     }
 
     function getCachedCollection(query) {
@@ -1010,7 +1010,7 @@
         for (const param of params) {
           if (typeof param === 'string') {
             if (param.length === 0)  return M.toast({html: 'No empty strings allowed!', displayLength: 3000});
-            if (param.length > 24)   return M.toast({html: 'No strings over 24 chars allowed!', displayLength: 4000});
+            if (param.length > 100)  return M.toast({html: 'No strings over 100 chars allowed!', displayLength: 4000});
             if (param.includes(' ')) return M.toast({html: 'No spaces allowed in SCP strings!', displayLength: 4000});
           } else
           if (typeof param === 'number') {
@@ -1067,7 +1067,6 @@
             addMockActivity("received", amount, cToken);
           WALLET.broadcastTx(strSignedTx).then(strTXID => {
             cUTXO.spent = true;
-            const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
             if (isFullnodePtr()) {
               getMempoolActivity(strAddr).then(arrRes => cachedActivityIS = arrRes);
             } else {
@@ -1103,7 +1102,6 @@
             addMockActivity("sent", amount, cToken);
           WALLET.broadcastTx(strSignedTx).then(strTXID => {
             cUTXO.spent = true;
-            const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
             if (isFullnodePtr()) {
               getMempoolActivity(strAddr).then(arrRes => cachedActivityIS = arrRes);
             } else {
