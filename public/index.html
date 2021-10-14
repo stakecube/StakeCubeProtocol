@@ -650,6 +650,7 @@
     }
 
     let nSelectedCollection = -1;
+    let strLastNFTRender = '';
     async function renderNFTs(nContract) {
       if (typeof nContract !== 'number') nContract = nSelectedCollection;
       nSelectedCollection = nContract;
@@ -672,7 +673,7 @@
               <div class="col-3">
                 <div class="card card-prop mb-3 nftCard" style="background: url(https://cloudflare-ipfs.com/ipfs/${cNFT.imgUrl}) no-repeat center;">
                   <div class="card-body refresh-button" onclick="switchToViewNFT('${cNFT.nft}')">
-                    <span class="badge nftname">${formatName(cNFT.name, 26)}</span>
+                    <span class="badge nftname" title="${formatName(cNFT.name, 40)}">${formatName(cNFT.name, 26)}</span>
                   </div>
                 </div>
               </div>`;
@@ -703,16 +704,20 @@
         for (const cNFT of cColl.nfts.filter(a => a.owner !== null)) {
           strRendering += `
             <div class="col-3">
-              <div class="card card-prop mb-3 nftCard" style="background: url(https://cloudflare-ipfs.com/ipfs/${cNFT.imgUrl}) no-repeat center;">
+              <div class="card card-prop mb-3 nftCard" style="background: url(https://cloudflare-ipfs.com/ipfs/${cNFT.imgUrl}) no-repeat center;${cNFT.owner !== strAddr ? `opacity:0.5;` : ``}">
                 <div class="card-body refresh-button" onclick="switchToViewNFT('${cNFT.id}')">
-                  <span class="badge nftname">${formatName(cNFT.name, 26)}</span>
+                  <span class="badge nftname" title="${formatName(cNFT.name, 40)}">${formatName(cNFT.name, 21)}</span>
+                  ${cNFT.owner === strAddr ? `<i class="far fa-check-circle" style="position:absolute;right:0.75em;top:1.15em;color:#13c372eb!important;" title="You own this NFT!"></i>` : ``}
                 </div>
               </div>
             </div>`;
         }
       }
-      // Draw the cache-constructed HTML
+      // For performance and user sanity: Only render if the structure has changed
+      if (strRendering === strLastNFTRender) return;
+      // Draw and cache the cache-constructed HTML
       domNFTList.innerHTML = strRendering;
+      strLastNFTRender = strRendering;
     }
 
     function renderDetailedNFT(strID) {

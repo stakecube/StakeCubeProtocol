@@ -343,10 +343,16 @@ div.omrs-input-group {
 
 .nftCard {
   height: 275px;
-  width: 12em;
   background-size: cover!important;
   border: 1px solid #c5c6d0;
   box-shadow: 0 0 3px 1px #c5c6d0;
+  width: 12em;
+  transition-timing-function: ease-in-out;
+  transition-duration: 0.125s;
+}
+
+.nftCard:hover {
+  opacity: 1 !important;
 }
 
 .nftname {

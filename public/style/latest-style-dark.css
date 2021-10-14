@@ -450,6 +450,12 @@ div.omrs-input-group {
   border: 1px solid #0c63e4;
   box-shadow: 0 0 3px 3px #084298;
   width: 12em;
+  transition-timing-function: ease-in-out;
+  transition-duration: 0.125s;
+}
+
+.nftCard:hover {
+  opacity: 1 !important;
 }
 
 .nftname {
