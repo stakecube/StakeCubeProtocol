@@ -246,6 +246,7 @@
     let domSettingsPage;
     let domCreateTokenPage;
     let domCreateNftPage;
+    let domScpNftMintBtn;
     let domViewCollection;
     let domCollections;
     let domCollectionsName;
@@ -658,6 +659,8 @@
       if (nContract === -1) {
         // Set title
         domCollectionsName.innerText = 'My NFTs';
+        // Hide the mint button
+        domScpNftMintBtn.style.display = 'none';
         // Rendering all owned NFTs
         const arrNFTs = isFullnode ?
                           NFT.getAllNFTsByAccount(WALLET.getActiveWallet().getPubkey()) :
@@ -689,8 +692,14 @@
         const cColl = isFullnode ? NFT.getCollection(nContract) : getCachedCollection(nContract);
         // Set title
         domCollectionsName.innerText = formatName(cColl.collectionName, 40);
-        // Construct the render structure
+        // Cache the minting status
+        const strAddr = WALLET.getActiveWallet().getPubkey();
+        const fCanMint = cColl.creator === strAddr && (cColl.maxMints === -1 || cColl.mints < cColl.maxMints);
+        // Set the minting button, if eligible
+        domScpNftMintBtn.style.display = fCanMint ? 'inline-block' : 'none';
+        // Ensure we have sufficient cache for more advanced data
         if (!cColl.nfts && !isFullnode) await fetchNFTs(cColl);
+        // Construct the render structure
         for (const cNFT of cColl.nfts.filter(a => a.owner !== null)) {
           strRendering += `
             <div class="col-3">
@@ -1384,6 +1393,7 @@
       domSettingsPage = document.getElementById('settingsPage');
       domCreateTokenPage = document.getElementById('createTokenPage');
       domCreateNftPage = document.getElementById('createNftPage');
+      domScpNftMintBtn = document.getElementById('scpNftMintBtn');
       domViewCollection = document.getElementById('viewCollection');
       domCollections = document.getElementById('NFTCollections');
       domCollectionsName = document.getElementById('collectionName');
@@ -2317,7 +2327,8 @@
         <h4 class="mb-5 theme-color-secondary font-weight-bold" id="collectionName">My NFTs</h4>
 
         <div class="float-end" style="margin-top:-75px;">
-          <button type="button" class="btn btn-theme btn-sm" onclick="switchToCollections();">Explore All Collections</button>
+          <button type="button" id="scpNftMintBtn" class="btn btn-theme btn-sm" style="margin-right:0.5em;" onclick="switchToNftCreator()">Mint NFT</button>
+          <button type="button" class="btn btn-theme btn-sm" onclick="switchToCollections()">Explore All Collections</button>
         </div>
 
         <div class="row d-flex justify-content-center" id="nftList"></div>
@@ -2560,6 +2571,10 @@
 
     <div class="container marketing pt-navbar" id="createNftPage">
       <h4 class="mb-5 theme-color-secondary font-weight-bold">Create NFT</h4>
+      
+      <div class="float-end" style="margin-top:-75px;">
+        <button type="button" class="btn btn-theme btn-sm" onclick="switchToViewCollection()">Visit Collection</button>
+      </div>
     
       <div class="row">
         <div class="col-lg-8 offset-lg-2">
