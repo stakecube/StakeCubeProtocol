@@ -215,6 +215,7 @@ function switchToCollections() {
 
   // Add active
   domNFTCollectionsBtn.classList.add('active');
+  renderCollections();
   getBalance(true);
 }
 

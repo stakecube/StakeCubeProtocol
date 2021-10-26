@@ -87,12 +87,13 @@ class Wallet {
 }
 
 class UTXO {
-    constructor(address, id, vout, script, sats, spent = false) {
+    constructor(address, id, vout, script, sats, spent = false, vin = []) {
         this.address = address;
         this.id = id;
         this.vout = vout;
         this.script = script;
         this.sats = sats;
+        this.vin = vin;
         // UTXOs are assumed to be unspent by default
         this.spent = spent;
         this.mempool = false;
@@ -177,7 +178,7 @@ function deepCloneUTXO(utxo = new UTXO()) {
         utxo.address,
         utxo.id, utxo.vout,
         utxo.script, utxo.sats,
-        utxo.spent);
+        utxo.spent, utxo.vin);
     cNewUTXO.mempool = utxo.mempool;
     return cNewUTXO;
 }
@@ -188,10 +189,10 @@ function getUTXO(id, vout) {
 }
 
 // Adds a new UTXO to the wallet, if not already added
-function addUTXO(address, id, vout, script, sats, spent = false) {
+function addUTXO(address, id, vout, script, sats, spent = false, vin = []) {
     if (getUTXO(id, vout)) return false;
     // Our wallet doesn't contain this UTXO, add it!
-    arrUTXOs.push(new UTXO(address, id, vout, script, sats, spent));
+    arrUTXOs.push(new UTXO(address, id, vout, script, sats, spent, vin));
 }
 
 // Removes a new UTXO to the wallet, if it exists
@@ -230,6 +231,8 @@ function mergeUTXOs(arrNewUTXOs, strAddr) {
             removeUTXO(cUTXO.id, cUTXO.vout);
         }
     }
+    // Ensure we don't have any spent UTXOs missed
+    checkSpentUTXOs();
     return true;
 }
 
@@ -252,14 +255,19 @@ async function refreshUTXOs(strAddr = String()) {
     }
 
     // Step 2 --- Mempool Sync
-    const arrMempool = [];
-    await refreshMempoolUTXOs(arrUTXOList, arrMempool);
+    await refreshMempoolUTXOs(arrUTXOList);
 
     // Merge our newly fetched UTXO set with our known in-wallet set
     mergeUTXOs(arrUTXOList, strAddr);
 
-    // Identify and mark all spent VINs from our wallet in the mempool
-    for (const rawTX of arrMempool) {
+    // Finished!
+    return true;
+}
+
+// Checks and marks spent UTXOs
+function checkSpentUTXOs() {
+    // Identify and mark all spent VINs from our wallet (mempool + on-chain)
+    for (const rawTX of arrUTXOs) {
         // Search for all spent VINs for our wallet, and mark them as spent
         for (const rawVin of rawTX.vin) {
             const spentVout = getUTXO(rawVin.txid, rawVin.vout);
@@ -269,13 +277,11 @@ async function refreshUTXOs(strAddr = String()) {
             }
         }
     }
-
-    // Finished!
     return true;
 }
 
 // Fetches, parses and merges mempool UTXOs for all local addresses from our data source(s)
-async function refreshMempoolUTXOs(arrUTXOList, arrMempool) {
+async function refreshMempoolUTXOs(arrUTXOList) {
     try {
         const rawMempool = ptrIsHeadless()
             ? await ptrGetFullMempool()
@@ -297,14 +303,14 @@ async function refreshMempoolUTXOs(arrUTXOList, arrMempool) {
                         rawTX.txid,
                         rawVout.n,
                         rawVout.scriptPubKey.hex,
-                        rawVout.valueSat);
+                        rawVout.valueSat,
+                        false,
+                        rawTX.vin);
                     cUTXO.mempool = true;
                     arrUTXOList.push(cUTXO);
                 }
             }
         }
-        // Set the mempool pointer to allow for external spent-VIN linkage
-        arrMempool = rawMempool;
         return true;
     } catch(e) {
         console.error('Wallet: Unable to sync Mempool data!');
@@ -397,6 +403,7 @@ exports.addUTXO = addUTXO;
 exports.removeUTXO = removeUTXO;
 exports.mergeUTXOs = mergeUTXOs;
 exports.refreshUTXOs = refreshUTXOs;
+exports.checkSpentUTXOs = checkSpentUTXOs;
 exports.broadcastTx = broadcastTx;
 exports.getIncomingUTXOs = getIncomingUTXOs;
 exports.getAvailableUTXOs = getAvailableUTXOs;
