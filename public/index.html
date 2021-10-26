@@ -36,8 +36,8 @@
       <div class="verticalalign" style="padding-top: 5%;">
         <div class="vertical-center color-white">
           <center>
-            <img src="imgs/logo.svg" style="height:50px;">
-            <i id="versionLogin" style="position: static;color: white;opacity: 0.6;font-size: small;cursor: default;letter-spacing: 1px;"></i>
+            <img id="loginLogo" src="imgs/sc-dark-bg.svg" style="height:50px;">
+            <span id="versionLogin" style="position: static;color: white;opacity: 0.325;font-size: small;cursor: default;letter-spacing: 1px;margin-left: 1px;"></span>
             <br><br>
           </center>
           <div class="container">
@@ -85,10 +85,10 @@
                         });
                       </script>
 
-                      <table class="mb-0" border="0">
+                      <table class="mb-0" style="border:0;margin-top:15px;">
                         <tr class="info">
                           <td>
-                            <i class="fas fa-info-circle" style="margin-right: 10px;"></i>
+                            <i class="fas fa-info-circle" style="margin-right: 10px;margin-top: 4px;"></i>
                           </td>
                           <td>
                             Please remember to write down your password, if you lose it, StakeCube cannot recover your funds!
@@ -140,8 +140,8 @@
     <nav class="navbar navbar-expand-md navbar-dark fixed-top navbar-colour font-weight-bold">
       <div class="container-fluid">
         <a class="navbar-brand" href="#">
-          <img onclick="switchToDashboard()" src="imgs/logo.svg" height="30">
-          <i id="version" style="position: relative;color: white;opacity: 0.4;font-size: x-small;cursor: default;letter-spacing: 1px;bottom: -1px;"></i>
+          <img onclick="switchToDashboard()" src="imgs/sc-dark-bg.svg" height="30">
+          <span id="version" style="position: relative;color: white;opacity: 0.4;font-size: x-small;cursor: default;letter-spacing: 1px;bottom: 3px;"></span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
           aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
@@ -151,37 +151,31 @@
           <ul class="navbar-nav me-auto mb-2 mb-md-0">
             <li class="nav-item">
               <a class="nav-link active" id="dashboardBtn" aria-current="page" href="#" onclick="switchToDashboard()">
-                <i class="fas fa-tachometer-alt" style="margin-right: 5px;"></i>
                 Dashboard
               </a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="#" id="sendBtn" onclick="switchToSend()">
-                <i class="fas fa-paper-plane" style="margin-right: 5px;"></i>
                 Send
               </a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="#" id="receiveBtn" onclick="switchToReceive()">
-                <i class="fas fa-money-check" style="margin-right: 5px;"></i>
                 Receive
               </a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="#" id="collectionsBtn" onclick="switchToViewCollection();renderNFTs(-1)">
-                <i class="fas fa-gifts"></i>
                 NFTs
               </a>
             </li>
             <li class="nav-item" id="2faBtnMenu">
               <a class="nav-link" href="#" id="2faBtn" onclick="switchToAuth()">
-                <i class="fas fa-fingerprint" style="margin-right: 5px;"></i>
                 2FA
               </a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="#" id="createTokenBtn" onclick="switchToCreateToken()">
-                <i class="fas fa-tools" style="margin-right: 5px;"></i>
                 Create token
               </a>
             </li>
@@ -569,7 +563,7 @@
         // Loop all tokens, construct an updated GUI for the Dashboard
         let dashboardTokens = document.getElementById("dashboardTokens");
         let sendTokensSelector = document.getElementById('sendingCoin');
-        sendTokensSelector.innerHTML = '<option value="scc" data-thumbnail="imgs/circular-logo.png">StakeCubeCoin (SCC)</option>';
+        sendTokensSelector.innerHTML = '<option value="scc" data-thumbnail="imgs/circular-logo.svg">StakeCubeCoin (SCC)</option>';
         dashboardTokens.innerHTML = '';
         if (chainHashesCache.length === 0 && isFullnode) {
           dashboardTokens.innerHTML += '<center style=\'margin-top:30px;\'><p>Loading SCP</p></center>';
@@ -599,8 +593,8 @@
                 stakingStyle = '';
               }
             }
-            strDashTokens += '<div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px; max-height: 32px;' + stakingStyle + '" ' + stakingButton + '><img src="imgs/circular-logo.png" style="width:32px; height:32px; margin-right: 10px"><div class="d-inline-flex flex-column lh-sm" style="position: relative; top: -7px"><span>'+ formatName(cToken.token.ticker, 8) +'</span><span style="opacity: 0.75;font-size:0.75em;">SCP-' + cToken.token.version + '</span></div><span class="float-end theme-color-secondary">' + nBal.toLocaleString('en-GB', { maximumFractionDigits: (nBal > 1 ? 2 : 8) }) + stakingText + '</span></div>';
-            strSendTokens += '<option value="scptoken-' + cToken.token.contract + '" data-thumbnail="imgs/circular-logo.png">' + formatName(cToken.token.name, 10) + ' (' + cToken.token.ticker + ')</option>';
+            strDashTokens += '<div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px; max-height: 32px;' + stakingStyle + '" ' + stakingButton + '><img src="imgs/circular-logo.svg" style="width:32px; height:32px; margin-right: 10px"><div class="d-inline-flex flex-column lh-sm" style="position: relative; top: -7px"><span>'+ formatName(cToken.token.ticker, 8) +'</span><span style="opacity: 0.75;font-size:0.75em;">SCP-' + cToken.token.version + '</span></div><span class="float-end theme-color-secondary">' + nBal.toLocaleString('en-GB', { maximumFractionDigits: (nBal > 1 ? 2 : 8) }) + stakingText + '</span></div>';
+            strSendTokens += '<option value="scptoken-' + cToken.token.contract + '" data-thumbnail="imgs/circular-logo.svg">' + formatName(cToken.token.name, 10) + ' (' + cToken.token.ticker + ')</option>';
           }
           dashboardTokens.innerHTML += strDashTokens;
           sendTokensSelector.innerHTML += strSendTokens;
@@ -1837,7 +1831,7 @@
                 <div class="col-sm-12">
                   <select id="sendingCoin" class="vodiapicker">
                     <option value="" data-thumbnail="imgs/i.png" disabled selected hidden>-</option>
-                    <option value="scc" data-thumbnail="imgs/circular-logo.png">StakeCubeCoin (SCC)</option>
+                    <option value="scc" data-thumbnail="imgs/circular-logo.svg">StakeCubeCoin (SCC)</option>
                   </select>
                   <p>Select Token:</p>
                   <div class="lang-select">

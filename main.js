@@ -86,8 +86,8 @@ function createWindow() {
             'nodeIntegration': true
         },
         // MacOS: png, others: ico
-        'icon': 'public/imgs/sc-logo.' + (platform() === 'darwin' ? 'png' : 'ico'),
-        'backgroundColor': '#f4f6f8'
+        'icon': 'public/imgs/scp.' + (platform() === 'darwin' ? 'png' : 'ico'),
+        'backgroundColor': '#202225'
     });
 
     // disable default menu
