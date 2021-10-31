@@ -21,11 +21,23 @@ input {
   background-color: transparent;
 }
 
+.mb-5 {
+  margin-bottom: 1.5rem!important;
+}
+
+.container {
+  margin-top: 10px;
+}
+
 .navbar-colour {
   background-color: #141517;
   border-bottom-style: solid;
   border-color: #1dffb4;
   border-width: 1px;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+  margin-left: 10px;
 }
 
 .navbar-dark .navbar-nav .nav-link.active, .navbar-dark .navbar-nav .show>.nav-link {

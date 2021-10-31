@@ -140,7 +140,7 @@
     <nav class="navbar navbar-expand-md navbar-dark fixed-top navbar-colour font-weight-bold">
       <div class="container-fluid">
         <a class="navbar-brand" href="#">
-          <img onclick="switchToDashboard()" src="imgs/sc-dark-bg.svg" height="30">
+          <img onclick="switchToDashboard()" src="imgs/sc-dark-bg.svg" style="height:45px;">
           <span id="version" style="position: relative;color: white;opacity: 0.4;font-size: x-small;cursor: default;letter-spacing: 1px;bottom: 3px;"></span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
@@ -709,13 +709,16 @@
       }
     }
 
-    function renderCollections() {
+    let strCollSearch = '';
+    function renderCollections(strSearch = strCollSearch) {
+      strCollSearch = strSearch;
       // Prep render cache
       let strRendering = '';
       // Get the current Collections source (full-node or lightwallet sources)
       const arrColls = isFullnode ? NFT.getCollectionPtr() : getCachedCollections();
       // Loop all SCP-4-like Collections and append each to the display table
       for (const cColl of arrColls) {
+        if (strCollSearch.length && !(cColl.collectionName.toLowerCase().includes(strCollSearch) || cColl.creator.toLowerCase().includes(strCollSearch) || strCollSearch.includes(cColl.contract))) continue;
         // Calculate the supply (All existing NFTs that have not been burned)
         const nCardSupply = isFullnode ?
                               cColl.nfts.filter(a => a.owner !== null).length :
@@ -727,7 +730,7 @@
                 <tr>
                   <td>${formatName(cColl.collectionName, 40)}</td>
                   <td>${nCardSupply.toLocaleString('en-GB')}</td>
-                  <td>${cColl.maxMints === -1 ? 'Unlimited' : (cColl.maxMints - cColl.burnedNFTs).toLocaleString('en-GB')}</td>
+                  <td title="${cColl.maxMints > 0 ? (cColl.maxMints - cColl.burnedNFTs).toLocaleString('en-GB') : "This collection has no NFT cap"}">${cColl.maxMints === -1 ? 'Unlimited' : formatAmount(cColl.maxMints - cColl.burnedNFTs)}</td>
                   <td><span class="subtext">${cColl.protected ? 'Yes' : 'No'}</span></td>
                   <td style="padding-top: 11px;">
                     <i class="far fa-eye" style="cursor: pointer;" onclick="switchToViewCollection();renderNFTs(${cColl.index});"></i>
@@ -742,12 +745,15 @@
     let nSelectedCollection = -1;
     let strLastNFTRender = '';
     let strLastNftID = '';
-    async function renderNFTs(nContract) {
+    let strLastNftSearch = '';
+    async function renderNFTs(nContract, strSearch = strLastNftSearch) {
       if (typeof nContract !== 'number') nContract = nSelectedCollection;
       nSelectedCollection = nContract;
+      strLastNftSearch = strSearch;
       // Cache our address and refresh mempool activity
       const strAddr = WALLET.getActiveWallet().getPubkey();
       getMempoolActivity(strAddr, true);
+      const domSearchbar = document.getElementById('nftSearch');
       // Prep render cache
       let strRendering = '';
       // Check if we're rendering all our NFTs, or a specific contract's NFTs
@@ -765,6 +771,7 @@
         if (!arrNFTs.length && !isFullnode) (await fetchNFTsByAddress()).map(arrNFTs.push);
         if (arrNFTs.length) {
           for (const cNFT of arrNFTs) {
+            if (strLastNftSearch.length && !(cNFT.name.toLowerCase().includes(strLastNftSearch) || strLastNftSearch.includes(cNFT.nft) || strLastNftSearch.includes(cNFT.collection) || strLastNftSearch.includes(cNFT.imgUrl))) continue;
             strRendering += `
               <div class="col-3">
                 <div class="card card-prop mb-3 nftCard" style="background: url(https://cloudflare-ipfs.com/ipfs/${cNFT.imgUrl}) no-repeat center;">
@@ -774,6 +781,7 @@
                 </div>
               </div>`;
           }
+          domSearchbar.style.display = 'block';
         } else {
           strRendering = `
             <center style="margin-top: 17.5vh;">
@@ -784,6 +792,7 @@
               <button type="button" class="btn btn-theme btn-sm" onclick="switchToCreateToken('4')">Create your own</button>
             </center>`;
         }
+        domSearchbar.style.display = 'none';
       } else {
         // Rendering NFTs from a contract
         const cColl = isFullnode ? NFT.getCollection(nContract) : getCachedCollection(nContract);
@@ -798,6 +807,7 @@
         // Construct the render structure
         if (cColl.nfts.length) {
           for (const cNFT of cColl.nfts.filter(a => a.owner !== null)) {
+            if (strLastNftSearch.length && !(cNFT.name.toLowerCase().includes(strLastNftSearch) || cNFT.owner.toLowerCase().includes(strLastNftSearch) || strLastNftSearch.includes(cNFT.id) || strLastNftSearch.includes(cNFT.imgUrl))) continue;
             strRendering += `
               <div class="col-3">
                 <div class="card card-prop mb-3 nftCard" style="background: url(https://cloudflare-ipfs.com/ipfs/${cNFT.imgUrl}) no-repeat center;${cNFT.owner !== strAddr ? `opacity:0.5;` : ``}">
@@ -808,6 +818,7 @@
                 </div>
               </div>`;
           }
+          domSearchbar.style.display = 'block';
         } else {
           if (fCanMint) {
             strRendering = `
@@ -820,6 +831,7 @@
                   '<button type="button" class="btn btn-theme btn-sm" onclick="switchToNftCreator()">Mint the first NFT</button>'
                 }
               </center>`;
+            domSearchbar.style.display = 'none';
           } else {
             strRendering = `
               <center style="margin-top: 17.5vh;">
@@ -827,6 +839,7 @@
                 <br>
                 <p style="opacity:0.75">Check back in a while, maybe the creator will have minted cool stuff!</p>
               </center>`;
+            domSearchbar.style.display = 'none';
           }
         }
       }
@@ -1525,6 +1538,14 @@
 
     function formatName(name, limit) {
       return (name.length > limit ? name.substr(0, limit) + "…" : name).trim();
+    }
+
+    function formatAmount(n) {
+      if      (n >= 1000000000000000) return (n / 1000000000000000).toLocaleString('en-GB', {maximumFractionDigits: 2}) + "Q";
+      else if (n >= 1000000000000) return (n / 1000000000000).toLocaleString('en-GB', {maximumFractionDigits: 2}) + "T";
+      else if (n >= 1000000000) return (n / 1000000000).toLocaleString('en-GB', {maximumFractionDigits: 2}) + "B";
+      else if (n >= 1000000) return (n / 1000000).toLocaleString('en-GB', {maximumFractionDigits: 2}) + "M";
+      else return n.toLocaleString('en-GB', {maximumFractionDigits: 8});
     }
 
     function percentOf(partial, full) {
@@ -2527,13 +2548,21 @@
     </div>
 
     <div class="container-fluid marketing pt-navbar" id="viewCollection">
-      <div class="container-fluid">
+      <div class="container-fluid" style="margin-top: 10px;">
 
         <h4 class="mb-5 theme-color-secondary font-weight-bold" id="collectionName">My NFTs</h4>
 
-        <div class="float-end" style="margin-top:-75px;">
+        <div class="float-end" style="margin-top:-50px;">
           <button type="button" id="scpNftMintBtn" class="btn btn-theme btn-sm" style="margin-right:0.5em;" onclick="switchToNftCreator()">Mint NFT</button>
           <button type="button" class="btn btn-theme btn-sm" onclick="switchToCollections()">Explore All Collections</button>
+        </div>
+
+        <div id="nftSearch" class="omrs-input-group" style="min-width: 50%;margin-left: auto;margin-right: auto;max-width: 100%;">
+          <label class="omrs-input-underlined">
+            <input oninput="renderNFTs(nSelectedCollection, this.value.replace(/ /g, ' ').toLowerCase())" required="" type="text">
+            <span class="omrs-input-label">Search (name, contract or creator)</span>
+            <span class="omrs-input-hover"><i class="fas fa-search tooltip-questionmark"></i></span>
+          </label>
         </div>
 
         <div class="row d-flex justify-content-center" id="nftList"></div>
@@ -2546,8 +2575,16 @@
       <div class="container">
         <h4 class="mb-5 theme-color-secondary font-weight-bold">NFT Collections</h4>
 
-        <div class="float-end" style="margin-top:-75px;">
+        <div class="float-end" style="margin-top:-50px;">
           <button type="button" class="btn btn-theme btn-sm" onclick="switchToViewCollection();renderNFTs(-1);">My NFTs</button>
+        </div>
+
+        <div class="omrs-input-group" style="min-width: 50%;margin-left: auto;margin-right: auto;max-width: 100%;">
+          <label class="omrs-input-underlined">
+            <input id="collectionSearch" oninput="renderCollections(this.value.replace(/ /g, ' ').toLowerCase())" required="" type="text">
+            <span class="omrs-input-label">Search (name, contract or creator)</span>
+            <span class="omrs-input-hover"><i class="fas fa-search tooltip-questionmark"></i></span>
+          </label>
         </div>
 
         <div class="card card-prop mb-4">
@@ -2587,7 +2624,7 @@
     <div class="container-fluid marketing pt-navbar" id="viewNFT">
       <div class="container">
         <h4 id="nftDetailTitle" class="mb-5 theme-color-secondary font-weight-bold"></h4>
-        <div class="float-end" style="margin-top:-75px;">
+        <div class="float-end" style="margin-top:-50px;">
           <button type="button" id="nftDetailCollection" class="btn btn-theme btn-sm" onclick="switchToViewCollection();renderNFTs();" style="margin-right:1em;">Visit Collection</button>
           <button type="button" class="btn btn-theme btn-sm" onclick="switchToViewCollection();renderNFTs();">Back</button>
         </div>
@@ -2827,7 +2864,7 @@
     <div class="container marketing pt-navbar" id="createNftPage">
       <h4 class="mb-5 theme-color-secondary font-weight-bold">Create NFT</h4>
       
-      <div class="float-end" style="margin-top:-75px;">
+      <div class="float-end" style="margin-top:-50px;">
         <button type="button" class="btn btn-theme btn-sm" onclick="switchToViewCollection()">Visit Collection</button>
       </div>
     
