@@ -791,8 +791,8 @@
               or
               <button type="button" class="btn btn-theme btn-sm" onclick="switchToCreateToken('4')">Create your own</button>
             </center>`;
+          domSearchbar.style.display = 'none';
         }
-        domSearchbar.style.display = 'none';
       } else {
         // Rendering NFTs from a contract
         const cColl = isFullnode ? NFT.getCollection(nContract) : getCachedCollection(nContract);
