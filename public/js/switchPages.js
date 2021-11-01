@@ -193,7 +193,7 @@ function switchToViewCollection() {
   // Show
   domHeader.style.display = "block";
   domViewCollection.style.display = "block";
-  renderCollections();
+  getBalance(true);
   renderNFTs();
 }
 
@@ -215,6 +215,8 @@ function switchToCollections() {
 
   // Add active
   domNFTCollectionsBtn.classList.add('active');
+  renderCollections();
+  getBalance(true);
 }
 
 

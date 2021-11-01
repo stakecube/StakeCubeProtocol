@@ -36,8 +36,8 @@
       <div class="verticalalign" style="padding-top: 5%;">
         <div class="vertical-center color-white">
           <center>
-            <img src="imgs/logo.svg" style="height:50px;">
-            <i id="versionLogin" style="position: static;color: white;opacity: 0.6;font-size: small;cursor: default;letter-spacing: 1px;"></i>
+            <img id="loginLogo" src="imgs/sc-dark-bg.svg" style="height:50px;">
+            <span id="versionLogin" style="position: static;color: white;opacity: 0.325;font-size: small;cursor: default;letter-spacing: 1px;margin-left: 1px;"></span>
             <br><br>
           </center>
           <div class="container">
@@ -85,10 +85,10 @@
                         });
                       </script>
 
-                      <table class="mb-0" border="0">
+                      <table class="mb-0" style="border:0;margin-top:15px;">
                         <tr class="info">
                           <td>
-                            <i class="fas fa-info-circle" style="margin-right: 10px;"></i>
+                            <i class="fas fa-info-circle" style="margin-right: 10px;margin-top: 4px;"></i>
                           </td>
                           <td>
                             Please remember to write down your password, if you lose it, StakeCube cannot recover your funds!
@@ -129,7 +129,6 @@
               M.toast({html: '<a style="cursor: pointer;" onclick="openExternalURL(\'https://github.com/stakecube/StakeCubeProtocol/releases/latest\')">An update is available!</a>', displayLength: 30000});
             }, 3 * 1000);
           }
-          console.log("Login successful!");
         } else {
           M.toast({html: 'Incorrect Password!', displayLength: 2000});
         }
@@ -141,8 +140,8 @@
     <nav class="navbar navbar-expand-md navbar-dark fixed-top navbar-colour font-weight-bold">
       <div class="container-fluid">
         <a class="navbar-brand" href="#">
-          <img onclick="switchToDashboard()" src="imgs/logo.svg" height="30">
-          <i id="version" style="position: relative;color: white;opacity: 0.4;font-size: x-small;cursor: default;letter-spacing: 1px;bottom: -1px;"></i>
+          <img onclick="switchToDashboard()" src="imgs/sc-dark-bg.svg" style="height:45px;">
+          <span id="version" style="position: relative;color: white;opacity: 0.4;font-size: x-small;cursor: default;letter-spacing: 1px;bottom: 3px;"></span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
           aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
@@ -152,37 +151,31 @@
           <ul class="navbar-nav me-auto mb-2 mb-md-0">
             <li class="nav-item">
               <a class="nav-link active" id="dashboardBtn" aria-current="page" href="#" onclick="switchToDashboard()">
-                <i class="fas fa-tachometer-alt" style="margin-right: 5px;"></i>
                 Dashboard
               </a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="#" id="sendBtn" onclick="switchToSend()">
-                <i class="fas fa-paper-plane" style="margin-right: 5px;"></i>
                 Send
               </a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="#" id="receiveBtn" onclick="switchToReceive()">
-                <i class="fas fa-money-check" style="margin-right: 5px;"></i>
                 Receive
               </a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#" id="collectionsBtn" onclick="switchToViewCollection()">
-                <i class="fas fa-gifts"></i>
+              <a class="nav-link" href="#" id="collectionsBtn" onclick="switchToViewCollection();renderNFTs(-1)">
                 NFTs
               </a>
             </li>
             <li class="nav-item" id="2faBtnMenu">
               <a class="nav-link" href="#" id="2faBtn" onclick="switchToAuth()">
-                <i class="fas fa-fingerprint" style="margin-right: 5px;"></i>
                 2FA
               </a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="#" id="createTokenBtn" onclick="switchToCreateToken()">
-                <i class="fas fa-tools" style="margin-right: 5px;"></i>
                 Create token
               </a>
             </li>
@@ -204,9 +197,12 @@
 
     // WALLET STATE DATA
     let cachedTokens = [];
+    let cachedOwnedNFTs = [];
+    let cachedCollections = [];
     let cachedBlockCount = 0;
     let cachedActivity = [];
     let cachedActivityIS = [];
+    let cachedCollectionsIS = []; 
     let cachedCoinDeltas = [];
 
     // Statistical / Informational data
@@ -236,6 +232,7 @@
     let domScpTokenDeployArea;
     let domNFTCollectionsBtn;
     let domNFTBurnBtn;
+    let domNFTTransferBtn;
     let domDashboardPage;
     let domSendPage;
     let domReceivePage;
@@ -244,6 +241,7 @@
     let domSettingsPage;
     let domCreateTokenPage;
     let domCreateNftPage;
+    let domScpNftMintBtn;
     let domViewCollection;
     let domCollections;
     let domCollectionsName;
@@ -253,11 +251,13 @@
     let domNftDetailTitle;
     let domNftDetailImg;
     let domNftDetailID;
-    let domNftDetailName;
+    let domNftDetailCollection;
     let domNftDetailImageID;
     let domNftDetailOwner;
     let domNftDetailActivity;
     let domNftDetailActions;
+    let domNftMintOpts;
+    let domNftMintProgress;
 
     let domPass1Visibility;
 
@@ -339,11 +339,14 @@
       cachedActivityIS.push(cActivity);
     }
 
-    async function getMempoolActivity(account = false) {
-      const arrFullMempool = await getFullMempool();
+    let cachedMempool = [];
+    async function getMempoolActivity(account = false, cache = false) {
+      if (!cache)
+        cachedMempool = isFullnode ? await getFullMempool() : (JSON.parse(await NET.getMempoolLight()));
       const arrActivity = [];
+      cachedCollectionsIS = [];
       // Loop all mempool TXs
-      for (const cTX of arrFullMempool) {
+      for (const cTX of cachedMempool) {
           // Loop all TX vouts
           for (const cVout of cTX.vout) {
               if (!cVout.scriptPubKey) continue;
@@ -360,10 +363,93 @@
                   let isUsingIndex = false;
                   if (UPGRADES.isTokenIndexingActive(isFullnodePtr() ? nCacheHeight : cachedBlockCount)) {
                       isUsingIndex = strOp.startsWith('id');
-                      arrOp[0] = Number(arrOp[0].substr(2));
+                      if (isUsingIndex)
+                        arrOp[0] = Number(arrOp[0].substr(2));
+                  }
+                  // Let's check if this is a token deployment or creation
+                  if (!isUsingIndex && arrOp[0].startsWith("SCPCREATE")) {
+                    // SCP-4 Collections
+                    if (arrOp[0].endsWith("4")) {
+                      const cColl = new NFT.SCP4(cTX.txid, arrOp[1], Number(arrOp[2]), Number(arrOp[3]), WALLET.getActiveWallet().getPubkey());
+                      cColl.totalNFTs = 0;
+                      cColl.burnedNFTs = 0;
+                      cColl.index = cachedCollections[cachedCollections.length - 1].index + 1 + (cachedCollectionsIS.length ? cachedCollectionsIS.length : 0);
+                      cColl.mempool = true;
+                      cachedCollectionsIS.push(cColl);
+                    }
+                  } else {
+                    // This may be an SCP-4 NFT action, let's try to find the Collection
+                    const cColl = getCachedCollection(arrOp[0]);
+                    if (cColl) {
+                      // Found the collection, determine the action
+                      if (arrOp[1] === 'mint') {
+                        // If we don't have this NFT, then add it to the collection cache
+                        if (!cColl.nfts || !cColl.nfts.length) cColl.nfts = [];
+                        if (!cColl.nfts.find(a => a.id === cTX.txid)) {
+                          const cNFT = {
+                            'id': cTX.txid,
+                            'name': arrOp[2],
+                            'imgUrl': arrOp[3],
+                            'owner': WALLET.getActiveWallet().getPubkey(),
+                            'mempool': true,
+                            'activity': [{
+                                'tx': cTX.txid,
+                                'type': 'mint',
+                                'from': null,
+                                'to': WALLET.getActiveWallet().getPubkey(),
+                                'block': (cTX.instantlock ? '⚡ C' : 'Unc') + 'onfirmed'
+                            }]
+                          }
+                          cColl.nfts.push(cNFT);
+                        }
+                      } else if (arrOp[1] === 'transfer') {
+                        // If we don't have this NFT, try to refresh the collection cache
+                        if (!cColl.nfts || !cColl.nfts.length) {
+                          cColl.nfts = [];
+                          await fetchNFTs(cColl);
+                        }
+                        const cExistingNFT = cColl.nfts.find(a => a.id === arrOp[3]);
+                        if (cExistingNFT) {
+                          // NFT exists, so add the activity, if that also doesn't exist!
+                          if (!cExistingNFT.activity.find(a => a.tx === cTX.txid)) {
+                            cExistingNFT.owner = arrOp[2];
+                            cExistingNFT.mempool = true;
+                            cExistingNFT.activity.push({
+                                'tx': cTX.txid,
+                                'type': 'transfer',
+                                'from': cTX.vout[1].scriptPubKey.addresses[0],
+                                'to': arrOp[2],
+                                'block': (cTX.instantlock ? '⚡ C' : 'Unc') + 'onfirmed'
+                            });
+                          }
+                        }
+                        if (cExistingNFT && cExistingNFT.owner === WALLET.getActiveWallet().getPubkey()) {
+                          const cOwnedNFT = cachedOwnedNFTs.find(a => a.nft === cExistingNFT.id);
+                          if (!cOwnedNFT) {
+                            const cNewNFT = {
+                                'nft': cExistingNFT.id,
+                                'name': cExistingNFT.name,
+                                'imgUrl': cExistingNFT.imgUrl,
+                                'collection': cColl.contract,
+                                'collectionIndex': cColl.index,
+                                'collectionName': cColl.collectionName,
+                                'activity': cExistingNFT.activity
+                            }
+                            cNewNFT.activity.push({
+                                'tx': cTX.txid,
+                                'type': 'transfer',
+                                'from': cTX.vout[1].scriptPubKey.addresses[0],
+                                'to': arrOp[2],
+                                'block': (cTX.instantlock ? '⚡ C' : 'Unc') + 'onfirmed'
+                            });
+                            cachedOwnedNFTs.push(cNewNFT);
+                          }
+                        }
+                      }
+                    }
                   }
                   // If one of these flags are enabled, this is highly likely a normal token event
-                  if (isLongData || isUsingIndex) {
+                  if (isFullnode && (isLongData || isUsingIndex)) {
                       // Ensure the token is valid and exists
                       const cToken = isFullnode ? TOKENS.getToken(arrOp[0]) : getCachedToken(arrOp[0]);
                       if (!cToken || cToken.error || cToken.supply <= 0) continue;
@@ -468,14 +554,16 @@
 
         // --- Update SCP token balances
         // Fetch all tokens owned by our account (strPubkey)
-        if (isFullnode)
+        if (isFullnode) {
           cachedTokens = TOKENS.getTokensByAccount(strPubkey);
-        else
+        } else {
           getTokensByAccountLight(strPubkey);
+          fetchNFTsByAddress(strPubkey);
+        }
         // Loop all tokens, construct an updated GUI for the Dashboard
         let dashboardTokens = document.getElementById("dashboardTokens");
         let sendTokensSelector = document.getElementById('sendingCoin');
-        sendTokensSelector.innerHTML = '<option value="scc" data-thumbnail="imgs/circular-logo.png">StakeCubeCoin (SCC)</option>';
+        sendTokensSelector.innerHTML = '<option value="scc" data-thumbnail="imgs/circular-logo.svg">StakeCubeCoin (SCC)</option>';
         dashboardTokens.innerHTML = '';
         if (chainHashesCache.length === 0 && isFullnode) {
           dashboardTokens.innerHTML += '<center style=\'margin-top:30px;\'><p>Loading SCP</p></center>';
@@ -505,8 +593,8 @@
                 stakingStyle = '';
               }
             }
-            strDashTokens += '<div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px; max-height: 32px;' + stakingStyle + '" ' + stakingButton + '><img src="imgs/circular-logo.png" style="width:32px; height:32px; margin-right: 10px"><div class="d-inline-flex flex-column lh-sm" style="position: relative; top: -7px"><span>'+ formatName(cToken.token.ticker, 8) +'</span><span style="opacity: 0.75;font-size:0.75em;">SCP-' + cToken.token.version + '</span></div><span class="float-end theme-color-secondary">' + nBal.toLocaleString('en-GB', { maximumFractionDigits: (nBal > 1 ? 2 : 8) }) + stakingText + '</span></div>';
-            strSendTokens += '<option value="scptoken-' + cToken.token.contract + '" data-thumbnail="imgs/circular-logo.png">' + formatName(cToken.token.name, 10) + ' (' + cToken.token.ticker + ')</option>';
+            strDashTokens += '<div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px; max-height: 32px;' + stakingStyle + '" ' + stakingButton + '><img src="imgs/circular-logo.svg" style="width:32px; height:32px; margin-right: 10px"><div class="d-inline-flex flex-column lh-sm" style="position: relative; top: -7px"><span>'+ formatName(cToken.token.ticker, 8) +'</span><span style="opacity: 0.75;font-size:0.75em;">SCP-' + cToken.token.version + '</span></div><span class="float-end theme-color-secondary">' + nBal.toLocaleString('en-GB', { maximumFractionDigits: (nBal > 1 ? 2 : 8) }) + stakingText + '</span></div>';
+            strSendTokens += '<option value="scptoken-' + cToken.token.contract + '" data-thumbnail="imgs/circular-logo.svg">' + formatName(cToken.token.name, 10) + ' (' + cToken.token.ticker + ')</option>';
           }
           dashboardTokens.innerHTML += strDashTokens;
           sendTokensSelector.innerHTML += strSendTokens;
@@ -536,8 +624,32 @@
           renderActivity();
         // Render the NFT Elements, if the NFTs tab is active
         if (domNFTCollectionsBtn.className.includes('active')) {
-          renderCollections();
-          renderNFTs();
+          if (isFullnode) {
+            renderCollections();
+            renderNFTs();
+          } else {
+            NET.getLightCollectionHeaders().then(collRes => {
+              // Add to cache if we don't already have any
+              collRes = JSON.parse(collRes);
+              collRes.map(addCachedCollection);
+              
+              renderCollections();
+              if (nSelectedCollection !== -1) {
+                // Specific contract selected, so load the full NFT supply details of the collection
+                fetchNFTs(getCachedCollection(nSelectedCollection));
+                renderNFTs();
+              } else {
+                renderNFTs();
+              }
+            });
+          }
+        } else if (!isFullnode) {
+          // Just load the lighter data if we're tabbed-out, and don't render
+          NET.getLightCollectionHeaders().then(collRes => {
+            // Add to cache if we don't already have any
+            collRes = JSON.parse(collRes);
+            collRes.map(addCachedCollection);
+          });
         }
       }
 
@@ -597,27 +709,32 @@
       }
     }
 
-    function renderCollections() {
+    let strCollSearch = '';
+    function renderCollections(strSearch = strCollSearch) {
+      strCollSearch = strSearch;
       // Prep render cache
       let strRendering = '';
       // Get the current Collections source (full-node or lightwallet sources)
-      const arrColls = isFullnode ? NFT.getCollectionPtr() : [];
+      const arrColls = isFullnode ? NFT.getCollectionPtr() : getCachedCollections();
       // Loop all SCP-4-like Collections and append each to the display table
       for (const cColl of arrColls) {
+        if (strCollSearch.length && !(cColl.collectionName.toLowerCase().includes(strCollSearch) || cColl.creator.toLowerCase().includes(strCollSearch) || strCollSearch.includes(cColl.contract))) continue;
         // Calculate the supply (All existing NFTs that have not been burned)
-        const nCardSupply = cColl.nfts.filter(a => a.owner !== null).length;
+        const nCardSupply = isFullnode ?
+                              cColl.nfts.filter(a => a.owner !== null).length :
+                              cColl.totalNFTs - cColl.burnedNFTs;
         // Calculate if minting additional NFTs is possible
         const fCanMint = (cColl.creator === WALLET.getActiveWallet().getPubkey() && ((cColl.mints < cColl.maxMints) || cColl.maxMints === -1));
         // Construct the render structure
         strRendering += `
                 <tr>
-                  <td>${formatName(cColl.collectionName, 36)}</td>
+                  <td>${formatName(cColl.collectionName, 40)}</td>
                   <td>${nCardSupply.toLocaleString('en-GB')}</td>
-                  <td>${cColl.maxMints === -1 ? 'Unlimited' : cColl.maxMints.toLocaleString('en-GB')}</td>
+                  <td title="${cColl.maxMints > 0 ? (cColl.maxMints - cColl.burnedNFTs).toLocaleString('en-GB') : "This collection has no NFT cap"}">${cColl.maxMints === -1 ? 'Unlimited' : formatAmount(cColl.maxMints - cColl.burnedNFTs)}</td>
                   <td><span class="subtext">${cColl.protected ? 'Yes' : 'No'}</span></td>
                   <td style="padding-top: 11px;">
                     <i class="far fa-eye" style="cursor: pointer;" onclick="switchToViewCollection();renderNFTs(${cColl.index});"></i>
-                    ${fCanMint ? '<i class="fas fa-plus" style="cursor: pointer; margin-left: 10px;" onclick="nSelectedCollection=' + cColl.index + ';switchToNftCreator();"></i>' : ''}
+                    ${fCanMint ? '<i class="fas fa-plus" style="margin-left: 10px;' + (cColl.mempool ? 'opacity:0.4;' : 'cursor: pointer;') + '" ' + (cColl.mempool ? 'title="Collection is confirming, you can mint once fully confirmed!"' : 'onclick="nSelectedCollection=' + cColl.index + ';switchToNftCreator();"') + '></i>' : ''}
                   </td>
                 </tr>`;
       }
@@ -626,28 +743,45 @@
     }
 
     let nSelectedCollection = -1;
-    function renderNFTs(nContract) {
+    let strLastNFTRender = '';
+    let strLastNftID = '';
+    let strLastNftSearch = '';
+    async function renderNFTs(nContract, strSearch = strLastNftSearch) {
       if (typeof nContract !== 'number') nContract = nSelectedCollection;
       nSelectedCollection = nContract;
+      strLastNftSearch = strSearch;
+      // Cache our address and refresh mempool activity
+      const strAddr = WALLET.getActiveWallet().getPubkey();
+      getMempoolActivity(strAddr, true);
+      const domSearchbar = document.getElementById('nftSearch');
       // Prep render cache
       let strRendering = '';
       // Check if we're rendering all our NFTs, or a specific contract's NFTs
       if (nContract === -1) {
+        const strAddr = WALLET.getActiveWallet().getPubkey();
+        getMempoolActivity(strAddr, true);
         // Set title
         domCollectionsName.innerText = 'My NFTs';
+        // Hide the mint button
+        domScpNftMintBtn.style.display = 'none';
         // Rendering all owned NFTs
-        const arrNFTs = NFT.getAllNFTsByAccount(WALLET.getActiveWallet().getPubkey());
+        const arrNFTs = isFullnode ?
+                          NFT.getAllNFTsByAccount(strAddr) :
+                          cachedOwnedNFTs;
+        if (!arrNFTs.length && !isFullnode) (await fetchNFTsByAddress()).map(arrNFTs.push);
         if (arrNFTs.length) {
           for (const cNFT of arrNFTs) {
+            if (strLastNftSearch.length && !(cNFT.name.toLowerCase().includes(strLastNftSearch) || strLastNftSearch.includes(cNFT.nft) || strLastNftSearch.includes(cNFT.collection) || strLastNftSearch.includes(cNFT.imgUrl))) continue;
             strRendering += `
               <div class="col-3">
                 <div class="card card-prop mb-3 nftCard" style="background: url(https://cloudflare-ipfs.com/ipfs/${cNFT.imgUrl}) no-repeat center;">
-                  <div class="card-body refresh-button" onclick="switchToViewNFT('${cNFT.nft}')">
-                    <span class="badge nftname">${formatName(cNFT.name, 26)}</span>
+                  <div id="nft-${cNFT.nft}" class="card-body refresh-button" onclick="switchToViewNFT('${cNFT.nft}')">
+                    <span class="badge nftname" title="${formatName(cNFT.name, 40)}">${formatName(cNFT.name, 26)}</span>
                   </div>
                 </div>
               </div>`;
           }
+          domSearchbar.style.display = 'block';
         } else {
           strRendering = `
             <center style="margin-top: 17.5vh;">
@@ -657,41 +791,102 @@
               or
               <button type="button" class="btn btn-theme btn-sm" onclick="switchToCreateToken('4')">Create your own</button>
             </center>`;
+          domSearchbar.style.display = 'none';
         }
       } else {
         // Rendering NFTs from a contract
-        const cColl = NFT.getCollection(nContract);
+        const cColl = isFullnode ? NFT.getCollection(nContract) : getCachedCollection(nContract);
         // Set title
-        domCollectionsName.innerText = formatName(cColl.collectionName, 28);
+        domCollectionsName.innerText = formatName(cColl.collectionName, 40);
+        // Cache the minting status
+        const fCanMint = cColl.creator === strAddr && (cColl.maxMints === -1 || cColl.mints < cColl.maxMints);
+        // Set the minting button, if eligible
+        domScpNftMintBtn.style.display = (fCanMint && !cColl.mempool) ? 'inline-block' : 'none';
+        // Ensure we have sufficient cache for more advanced data
+        if (!cColl.nfts && !isFullnode) await fetchNFTs(cColl);
         // Construct the render structure
-        for (const cNFT of cColl.nfts.filter(a => a.owner !== null)) {
-          strRendering += `
-            <div class="col-3">
-              <div class="card card-prop mb-3 nftCard" style="background: url(https://cloudflare-ipfs.com/ipfs/${cNFT.imgUrl}) no-repeat center;">
-                <div class="card-body refresh-button" onclick="switchToViewNFT('${cNFT.id}')">
-                  <span class="badge nftname">${formatName(cNFT.name, 26)}</span>
+        if (cColl.nfts.length) {
+          for (const cNFT of cColl.nfts.filter(a => a.owner !== null)) {
+            if (strLastNftSearch.length && !(cNFT.name.toLowerCase().includes(strLastNftSearch) || cNFT.owner.toLowerCase().includes(strLastNftSearch) || strLastNftSearch.includes(cNFT.id) || strLastNftSearch.includes(cNFT.imgUrl))) continue;
+            strRendering += `
+              <div class="col-3">
+                <div class="card card-prop mb-3 nftCard" style="background: url(https://cloudflare-ipfs.com/ipfs/${cNFT.imgUrl}) no-repeat center;${cNFT.owner !== strAddr ? `opacity:0.5;` : ``}">
+                  <div id="nft-${cNFT.id}" class="card-body refresh-button" onclick="switchToViewNFT('${cNFT.id}')">
+                    <span class="badge nftname" title="${formatName(cNFT.name, 40)}">${formatName(cNFT.name, 20)}</span>
+                    ${cNFT.owner === strAddr ? `<i class="far fa-check-circle" style="position:absolute;right:0.75em;top:1.15em;color:#13c372eb!important;" title="You own this NFT!"></i>` : ``}
+                  </div>
                 </div>
-              </div>
-            </div>`;
+              </div>`;
+          }
+          domSearchbar.style.display = 'block';
+        } else {
+          if (fCanMint) {
+            strRendering = `
+              <center style="margin-top: 17.5vh;">
+                <h4>${cColl.mempool ? 'Your collection is confirming!' : 'Your new collection is empty!'}</h4>
+                <br>
+                ${
+                  cColl.mempool ?
+                  '<p style="opacity:0.75">Check back in a couple minutes and this collection should be ready for minting!</p>' :
+                  '<button type="button" class="btn btn-theme btn-sm" onclick="switchToNftCreator()">Mint the first NFT</button>'
+                }
+              </center>`;
+            domSearchbar.style.display = 'none';
+          } else {
+            strRendering = `
+              <center style="margin-top: 17.5vh;">
+                <h4>This collection is empty!</h4>
+                <br>
+                <p style="opacity:0.75">Check back in a while, maybe the creator will have minted cool stuff!</p>
+              </center>`;
+            domSearchbar.style.display = 'none';
+          }
         }
       }
-      // Draw the cache-constructed HTML
+      // For performance and user sanity: Only render if the structure has changed
+      if (strRendering === strLastNFTRender) return scrollToNFT();
+      // Draw and cache the cache-constructed HTML
       domNFTList.innerHTML = strRendering;
+      strLastNFTRender = strRendering;
+      // If we just backed out from an NFT, then scroll to it'd ID, if it exists
+      scrollToNFT();
     }
 
-    function renderDetailedNFT(strID) {
-      // Find the NFT and Collection
-      const cNFT = isFullnode ? NFT.getNFTbyId(strID) : {};
-      const cColl = isFullnode ? NFT.getCollection(cNFT.collectionIndex) : {};
+    function scrollToNFT() {
+      if (strLastNftID && domViewCollection.style.display === "block") {
+        const el = document.getElementById('nft-' + strLastNftID);
+        if (el !== null) {
+           el.scrollIntoView({behavior: "smooth", block: "center", inline: "nearest"});
+           strLastNftID = '';
+        }
+      }
+    }
+
+    async function renderDetailedNFT(strID) {
+      const strAddr = WALLET.getActiveWallet().getPubkey();
+      // Find the NFT and Collection after refreshing mempool cache
+      getMempoolActivity(strAddr, true);
+      const cNFT = isFullnode ? NFT.getNFTbyId(strID) : getCachedNFT(strID);
+      const cColl = isFullnode ? NFT.getCollection(cNFT.collectionIndex) : (typeof cNFT.collectionIndex === 'number' ? getCachedCollection(cNFT.collectionIndex) : getCachedCollectionByNftID(strID));
+      // Refresh the latest cache of this NFT's collection
+      const isCached = domNftDetailID.innerText === strID;
+      if (isCached) {
+        await fetchNFTs(cColl);
+      } else {
+        fetchNFTs(cColl);
+      }
       // Cache the ownership status
-      const fOwned = cNFT.owner === WALLET.getActiveWallet().getPubkey();
+      const fOwned = cNFT.owner ? cNFT.owner === strAddr : true;
       // Render all elements
-      domNftDetailTitle.innerText = cNFT.name;
-      domNftDetailImg.src = 'https://cloudflare-ipfs.com/ipfs/' + cNFT.imgUrl;
-      domNftDetailID.innerText = cNFT.nft;
-      domNftDetailName.innerText = cNFT.name;
-      domNftDetailImageID.innerText = cNFT.imgUrl;
-      domNftDetailOwner.innerText = cNFT.owner;
+      if (!isCached) {
+        domNftDetailTitle.innerText = cNFT.name;
+        domNftDetailImg.src = 'https://cloudflare-ipfs.com/ipfs/' + cNFT.imgUrl;
+        domNftDetailID.innerText = cNFT.nft || cNFT.id;
+        domNftDetailCollection.setAttribute('onclick', 'switchToViewCollection();renderNFTs(' + cColl.index + ');');
+        domNftDetailImageID.innerText = cNFT.imgUrl;
+      }
+      domNftDetailOwner.innerText = cNFT.owner || strAddr;
+      strLastNftID = cNFT.nft || cNFT.id;
       // Pre-render activity
       let strRendering = '';
       // Deep-clone and reverse the activity list
@@ -710,18 +905,46 @@
       domNftDetailActivity.innerHTML = strRendering;
       // Render the action buttons, if owned by us
       domNftDetailActions.style.display = fOwned ? 'block' : 'none';
+      if (cNFT.mempool) {
+        domNFTTransferBtn.style.opacity = 0.4;
+        domNFTTransferBtn.style.cursor = 'default';
+        domNFTTransferBtn.setAttribute('data-bs-toggle', '');
+        domNFTTransferBtn.setAttribute('title', 'This NFT is confirming, it cannot be transfered yet!');
+      } else {
+        domNFTTransferBtn.style.opacity = 1;
+        domNFTTransferBtn.style.cursor = 'pointer';
+        domNFTTransferBtn.setAttribute('data-bs-toggle', 'modal');
+        domNFTTransferBtn.setAttribute('title', 'Transfer your NFT to someone else');
+      }
       // Gray-out the 'burn' button if this collection is protected
       if (fOwned && cColl.protected) {
         domNFTBurnBtn.style.opacity = 0.4;
         domNFTBurnBtn.style.cursor = 'default';
         domNFTBurnBtn.setAttribute('data-bs-toggle', '');
+        domNFTBurnBtn.setAttribute('title', 'This NFT is protected, it cannot be burned!');
+      } else if (fOwned) {
+        if (cNFT.mempool) {
+          // NFT is owned, but confirming
+          domNFTBurnBtn.style.opacity = 0.4;
+          domNFTBurnBtn.style.cursor = 'default';
+          domNFTBurnBtn.setAttribute('data-bs-toggle', '');
+          domNFTBurnBtn.setAttribute('title', 'This NFT is confirming, it cannot be burned yet!');
+        } else {
+          // NFT is owned and confirmed
+          domNFTBurnBtn.style.opacity = 1;
+          domNFTBurnBtn.style.cursor = 'pointer';
+          domNFTBurnBtn.setAttribute('data-bs-toggle', 'modal');
+          domNFTBurnBtn.setAttribute('title', 'Burn (destroy) your NFT');
+        }
       } else {
-        domNFTBurnBtn.style.opacity = 1;
-        domNFTBurnBtn.style.cursor = 'pointer';
-        domNFTBurnBtn.setAttribute('data-bs-toggle', 'modal');
+        // NFT is not owned
+        domNFTBurnBtn.style.opacity = 0.4;
+        domNFTBurnBtn.style.cursor = 'default';
+        domNFTBurnBtn.setAttribute('data-bs-toggle', '');
+        domNFTBurnBtn.setAttribute('title', '');
       }
       // Select the NFT
-      cSelectedNFT = cNFT;
+      cSelectedNFT = getCachedNFT(cNFT.id || cNFT.nft, true);
     }
 
     function setActivityView(viewSCP) {
@@ -735,16 +958,81 @@
 
     function getCachedToken(query) {
       const cToken = cachedTokens.find(a => a.token.contract === query);
-      return cToken.token || false;
+      return typeof cToken !== 'undefined' ? cToken.token : false;
     }
 
     function getCachedAccount(ctoken) {
       const cToken = cachedTokens.find(a => a.token.contract === ctoken.contract);
-      return cToken.account || false;
+      return typeof cToken !== 'undefined' ? cToken.account : false;
+    }
+
+    function getCachedCollection(query) {
+      const cColl = getCachedCollections().find(a => a.contract === query || a.index === query);
+      return cColl || false;
+    }
+    function getCachedCollections() {
+      return cachedCollections.concat(cachedCollectionsIS);
+    }
+    
+    function addCachedCollection(cNewColl) {
+      // Try to find an existing one
+      const cColl = getCachedCollection(cNewColl.contract);
+      if (!cColl) {
+        cachedCollections.push(cNewColl);
+      } else {
+        // Copy most data over from the new collection
+        for (const key of Object.keys(cNewColl)) {
+          cColl[key] = cNewColl[key];
+        }
+      }
+      return true;
+    }
+
+    function getCachedCollectionByNftID(strID) {
+      for (const cColl of getCachedCollections()) {
+        const cNFT = (cColl.nfts && cColl.nfts.length) ? cColl.nfts.find(a => a.id === strID) : false;
+        if (cNFT) return cColl;
+      }
+      return false;
+    }
+
+    function getCachedNFT(query, mine = false) {
+      let cNFT;
+      // First, we'll scan all other known NFTs for a match
+      if (!mine) {
+        for (const cColl of getCachedCollections()) {
+          if (cColl.nfts && cColl.nfts.length) {
+            cNFT = cColl.nfts.find(a => a.id === query);
+            if (cNFT) break;
+          }
+        }
+      }
+      if (!cNFT) {
+        // If not, check if the query matches a self-owned NFT
+        cNFT = cachedOwnedNFTs.find(a => a.nft === query);
+      }
+      return cNFT;
     }
 
     function isScpTx(strTx) {
-      return cachedActivity.findIndex(a => a.id === strTx) !== -1;
+      return cachedActivity.findIndex(a => a.id === strTx) !== -1 || // SCP(1-2) transactions
+             cachedOwnedNFTs.findIndex(a => a.nft === strTx) !== -1; // SCP-4 NFT deployments
+    }
+
+    async function fetchNFTs(cColl) {
+      // Sync NFTs from the lightwallet server
+      const cCollRes = JSON.parse(await NET.getLightCollection(cColl.contract));
+      if (!cCollRes.error)
+        addCachedCollection(cCollRes);
+      return getCachedCollection(cColl.index);
+    }
+
+    async function fetchNFTsByAddress(strAddr = WALLET.getActiveWallet().getPubkey()) {
+      // Sync addr-specific NFTs from the lightwallet server
+      const arrNFTsRes = JSON.parse(await NET.getLightNFTsByAccount(strAddr));
+      if (!arrNFTsRes.error)
+        cachedOwnedNFTs = arrNFTsRes;
+      return cachedOwnedNFTs;
     }
 
     function sendTransactionGUI() {
@@ -863,7 +1151,7 @@
 
     let isClaiming = false;
     async function claimAll() {
-      if (isClaiming) return console.log("Cancelled sequential claim, a claim is already being performed!");
+      if (isClaiming) return;
       isClaiming = true;
       let nClaims = 0;
       const cWallet = WALLET.getActiveWallet();
@@ -918,7 +1206,6 @@
           const strRes = await NET.getMempoolActivityLight(cWallet.getPubkey());
           cachedActivityIS = JSON.parse(strRes);
         }
-        // Notify the user, finished!
         isClaiming = false;
         // Notify the user, finished!
         return M.toast({html: 'Redeemed ' + nClaims + ' rewards!', displayLength: 5000});
@@ -931,7 +1218,7 @@
         for (const param of params) {
           if (typeof param === 'string') {
             if (param.length === 0)  return M.toast({html: 'No empty strings allowed!', displayLength: 3000});
-            if (param.length > 24)   return M.toast({html: 'No strings over 24 chars allowed!', displayLength: 4000});
+            if (param.length > 100)  return M.toast({html: 'No strings over 100 chars allowed!', displayLength: 4000});
             if (param.includes(' ')) return M.toast({html: 'No spaces allowed in SCP strings!', displayLength: 4000});
           } else
           if (typeof param === 'number') {
@@ -946,8 +1233,9 @@
         console.log("Constructing SCP-" + version + " deployment TX");
         const cTx = WALLET.sccjs.tx.transaction();
         // Inputs
+        const strAddr = WALLET.getActiveWallet().getPubkey();
         const nDeployCost = (nDeployFee * COIN) + 1000;
-        const usedUTXOs = WALLET.getCoinsToSpend(nDeployCost, false, WALLET.getActiveWallet().getPubkey());
+        const usedUTXOs = WALLET.getCoinsToSpend(nDeployCost, false, strAddr);
         const nUTXOs = usedUTXOs.reduce((a, b) => {return a + b.sats}, 0);
         for (const cUTXO of usedUTXOs)
           cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
@@ -960,10 +1248,19 @@
         const nFee = WALLET.getFee(cTx.serialize().length);
         const nSpent = (nFee + nDeployFee).toFixed(8);
         const nChange = ((nUTXOs / COIN) - nSpent).toFixed(8);
-        cTx.addoutput(WALLET.getActiveWallet().getPubkey(), nChange);
+        cTx.addoutput(strAddr, nChange);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
-          sendTransaction(strSignedTx, usedUTXOs, 'Deploying! Please wait for the contract to confirm in a block!');
+          WALLET.broadcastTx(strSignedTx).then(strTX => {
+            usedUTXOs.forEach(cUTXO => { cUTXO.spent = true; });
+            // Updates NFTs and other contracts
+            getMempoolActivity(strAddr).then(res => {
+              if (version === 4) {
+                switchToCollections();
+                window.scrollTo(0, document.body.scrollHeight);
+              }
+            });
+          });
         });
     }
 
@@ -988,7 +1285,6 @@
             addMockActivity("received", amount, cToken);
           WALLET.broadcastTx(strSignedTx).then(strTXID => {
             cUTXO.spent = true;
-            const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
             if (isFullnodePtr()) {
               getMempoolActivity(strAddr).then(arrRes => cachedActivityIS = arrRes);
             } else {
@@ -1024,7 +1320,6 @@
             addMockActivity("sent", amount, cToken);
           WALLET.broadcastTx(strSignedTx).then(strTXID => {
             cUTXO.spent = true;
-            const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
             if (isFullnodePtr()) {
               getMempoolActivity(strAddr).then(arrRes => cachedActivityIS = arrRes);
             } else {
@@ -1048,7 +1343,7 @@
       let nSendBalanceDisplay = 0;
       const strCurrency = document.getElementById("sendingCoinVal").value;
       if (strCurrency === "scc") {
-        nSendBalanceDisplay = getBalance(strPubkey);
+        nSendBalanceDisplay = WALLET.getBalance(strPubkey);
       } else {
         const strToken = strCurrency.substr(9);
         const cToken = isFullnode ? TOKENS.getToken(strToken) : getCachedToken(strToken);
@@ -1242,7 +1537,15 @@
     }
 
     function formatName(name, limit) {
-      return (name.length > limit ? name.substr(0, limit) + "…" : name);
+      return (name.length > limit ? name.substr(0, limit) + "…" : name).trim();
+    }
+
+    function formatAmount(n) {
+      if      (n >= 1000000000000000) return (n / 1000000000000000).toLocaleString('en-GB', {maximumFractionDigits: 2}) + "Q";
+      else if (n >= 1000000000000) return (n / 1000000000000).toLocaleString('en-GB', {maximumFractionDigits: 2}) + "T";
+      else if (n >= 1000000000) return (n / 1000000000).toLocaleString('en-GB', {maximumFractionDigits: 2}) + "B";
+      else if (n >= 1000000) return (n / 1000000).toLocaleString('en-GB', {maximumFractionDigits: 2}) + "M";
+      else return n.toLocaleString('en-GB', {maximumFractionDigits: 8});
     }
 
     function percentOf(partial, full) {
@@ -1264,12 +1567,19 @@
       if (strAddr) {
         getUnspentTransactions();
         if (isFullnodePtr()) {
+          // Fetches all activity via fullnode
           getMempoolActivity(strAddr).then(arrRes => cachedActivityIS = arrRes);
         } else {
+          // Fetches SCP-1 and SCP-2 activity
           NET.getMempoolActivityLight(strAddr).then(strRes => {
             cachedActivityIS = JSON.parse(strRes);
           });
-          getUnspentTransactions();
+          // Updates NFTs and other contracts
+          getMempoolActivity(strAddr).then(res => {
+            if (domViewNFT.style.display === "block") {
+              renderDetailedNFT(domNftDetailID.innerText);
+            }
+          });
         }
       }
       // Update Dashboard stats
@@ -1307,6 +1617,7 @@
       domSettingsPage = document.getElementById('settingsPage');
       domCreateTokenPage = document.getElementById('createTokenPage');
       domCreateNftPage = document.getElementById('createNftPage');
+      domScpNftMintBtn = document.getElementById('scpNftMintBtn');
       domViewCollection = document.getElementById('viewCollection');
       domCollections = document.getElementById('NFTCollections');
       domCollectionsName = document.getElementById('collectionName');
@@ -1333,6 +1644,7 @@
       domClaimAllBtn = document.getElementById("domClaimAllBtn");
       domScpTokenDeployArea = document.getElementById('scpTokenDeployArea');
       domNFTBurnBtn = document.getElementById('nftBurnBtn');
+      domNFTTransferBtn = document.getElementById('nftTransferBtn');
       domSendBtn = document.getElementById("sendBtn");
       domReceiveBtn = document.getElementById("receiveBtn");
       dom2FABtn = document.getElementById("2faBtn");
@@ -1351,11 +1663,13 @@
       domNftDetailTitle = document.getElementById('nftDetailTitle');
       domNftDetailImg = document.getElementById('nftDetailImg');
       domNftDetailID = document.getElementById('nftDetailID');
-      domNftDetailName = document.getElementById('nftDetailName');
+      domNftDetailCollection = document.getElementById('nftDetailCollection');
       domNftDetailImageID = document.getElementById('nftDetailImageID');
       domNftDetailOwner = document.getElementById('nftDetailOwner');
       domNftDetailActivity = document.getElementById('nftDetailActivity');
       domNftDetailActions = document.getElementById('nftDetailActions');
+      domNftMintProgress = document.getElementById('nftMintProgress');
+      domNftMintOpts = document.getElementById('nftMintOpts');
       dom2FAMenu = document.getElementById("2faBtnMenu");
       domStakingTitle = document.getElementById("stakingTitle");
       domStakingSubtitle = document.getElementById("stakingSubtitle");
@@ -1403,7 +1717,6 @@
             cWallet.setKeys(null, tmpwifkey);
             // This looks strange, but it's happening for pointer-safety reasons, trust me
             cWallet = WALLET.addWallet(cWallet);
-            console.log(cWallet);
             localStorage.removeItem("tmpwifkey");
             // Encrypt wallet and save it to disk
             encryptWallet(tmppass).then(newEncwif => {
@@ -1539,7 +1852,7 @@
                 <div class="col-sm-12">
                   <select id="sendingCoin" class="vodiapicker">
                     <option value="" data-thumbnail="imgs/i.png" disabled selected hidden>-</option>
-                    <option value="scc" data-thumbnail="imgs/circular-logo.png">StakeCubeCoin (SCC)</option>
+                    <option value="scc" data-thumbnail="imgs/circular-logo.svg">StakeCubeCoin (SCC)</option>
                   </select>
                   <p>Select Token:</p>
                   <div class="lang-select">
@@ -2002,8 +2315,8 @@
                         if (domScpCollectionName.value.length) {
                             // Swap spaces for artificial whitespace unicodes
                             domScpCollectionName.value = domScpCollectionName.value.replace(/ /g, ' ');
-                            // Limit to 25 characters
-                            if (domScpCollectionName.value.length > 25) domScpCollectionName.value = domScpCollectionName.value.substr(0, 25);
+                            // Limit to 40 characters
+                            if (domScpCollectionName.value.length > 40) domScpCollectionName.value = domScpCollectionName.value.substr(0, 40);
                         } else {
                             isComplete = false;
                         }
@@ -2187,7 +2500,7 @@
 
               <div id="scp4TokenSettings" style="display: none;">
                 <div class="row">
-                  <div class="col-md-6">
+                  <div class="col-md-8">
                     <div class="omrs-input-group" style="width:100%;">
                       <label class="omrs-input-underlined">
                         <input id="scpCollectionName" oninput="checkDeployerInput()" required type="text">
@@ -2199,14 +2512,14 @@
                     </div>
                   </div>
 
-                  <div class="col-md-6">
+                  <div class="col-md">
                     <div class="omrs-input-group" style="width:100%;">
                       <label class="omrs-input-underlined">
                         <input id="scpCollectionMaxMints" oninput="checkDeployerInput()" required type="text">
                         <span class="omrs-input-label">Max Mints</span>
                         <span class="omrs-input-hover" onmouseover="showTooltip('collectionMaxMintsTip')"
                         onmouseout="hideTooltip('collectionMaxMintsTip')"><i class="fas fa-question-circle tooltip-questionmark"></i></span>
-                      <span class="omrs-input-message" id="collectionMaxMintsTip" style="z-index: -1000;">Maximum NFT mints allowed, use -1 for unlimited minting.</span>
+                      <span class="omrs-input-message" id="collectionMaxMintsTip" style="z-index: -1000;">Maximum NFT mints allowed.<br><br>Use -1 for unlimited minting.</span>
                       </label>
                     </div>
                   </div>
@@ -2235,12 +2548,21 @@
     </div>
 
     <div class="container-fluid marketing pt-navbar" id="viewCollection">
-      <div class="container-fluid">
-        
+      <div class="container-fluid" style="margin-top: 10px;">
+
         <h4 class="mb-5 theme-color-secondary font-weight-bold" id="collectionName">My NFTs</h4>
 
-        <div class="float-end" style="margin-top:-75px;">
-          <button type="button" class="btn btn-theme btn-sm" onclick="switchToCollections();">Explore All Collections</button>
+        <div class="float-end" style="margin-top:-50px;">
+          <button type="button" id="scpNftMintBtn" class="btn btn-theme btn-sm" style="margin-right:0.5em;" onclick="switchToNftCreator()">Mint NFT</button>
+          <button type="button" class="btn btn-theme btn-sm" onclick="switchToCollections()">Explore All Collections</button>
+        </div>
+
+        <div id="nftSearch" class="omrs-input-group" style="min-width: 50%;margin-left: auto;margin-right: auto;max-width: 100%;">
+          <label class="omrs-input-underlined">
+            <input oninput="renderNFTs(nSelectedCollection, this.value.replace(/ /g, ' ').toLowerCase())" required="" type="text">
+            <span class="omrs-input-label">Search (name, contract or creator)</span>
+            <span class="omrs-input-hover"><i class="fas fa-search tooltip-questionmark"></i></span>
+          </label>
         </div>
 
         <div class="row d-flex justify-content-center" id="nftList"></div>
@@ -2253,10 +2575,18 @@
       <div class="container">
         <h4 class="mb-5 theme-color-secondary font-weight-bold">NFT Collections</h4>
 
-        <div class="float-end" style="margin-top:-75px;">
+        <div class="float-end" style="margin-top:-50px;">
           <button type="button" class="btn btn-theme btn-sm" onclick="switchToViewCollection();renderNFTs(-1);">My NFTs</button>
         </div>
-        
+
+        <div class="omrs-input-group" style="min-width: 50%;margin-left: auto;margin-right: auto;max-width: 100%;">
+          <label class="omrs-input-underlined">
+            <input id="collectionSearch" oninput="renderCollections(this.value.replace(/ /g, ' ').toLowerCase())" required="" type="text">
+            <span class="omrs-input-label">Search (name, contract or creator)</span>
+            <span class="omrs-input-hover"><i class="fas fa-search tooltip-questionmark"></i></span>
+          </label>
+        </div>
+
         <div class="card card-prop mb-4">
           <div class="card-body">
             <div class="card-title font-gray font-weight-bold">Collections</div>
@@ -2265,12 +2595,21 @@
                 <tr>
                   <th scope="col">Name</th>
                   <th scope="col">Supply</th>
-                  <th scope="col">Max Supply</th>
+                  <th scope="col">Max Mints</th>
                   <th scope="col">Protected</th>
                   <th scope="col">Actions</th>
                 </tr>
               </thead>
-              <tbody id="collectionsList"></tbody>
+
+              <tbody id="collectionsList">
+                <tr>
+                  <td>Loading...</td>
+                  <td>...</td>
+                  <td>...</td>
+                  <td><span class="subtext">...</span></td>
+                  <td style="padding-top: 11px;">...</td>
+                </tr>
+              </tbody>
             </table>
 
           </div>    
@@ -2285,19 +2624,20 @@
     <div class="container-fluid marketing pt-navbar" id="viewNFT">
       <div class="container">
         <h4 id="nftDetailTitle" class="mb-5 theme-color-secondary font-weight-bold"></h4>
-        <div class="float-end" style="margin-top:-75px;">
+        <div class="float-end" style="margin-top:-50px;">
+          <button type="button" id="nftDetailCollection" class="btn btn-theme btn-sm" onclick="switchToViewCollection();renderNFTs();" style="margin-right:1em;">Visit Collection</button>
           <button type="button" class="btn btn-theme btn-sm" onclick="switchToViewCollection();renderNFTs();">Back</button>
         </div>
 
         <div class="row">
           <div class="col-4">
-            <img id="nftDetailImg" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Stray_kitten_Rambo002.jpg/1200px-Stray_kitten_Rambo002.jpg" style="width:100%; border-radius: 10px;">
+            <img id="nftDetailImg" style="width:100%; border-radius: 10px;">
             <div id="nftDetailActions" class="card card-prop mt-4">
               <div class="card-body" style="padding-top: 9px;">
                 <div class="card-title font-gray font-weight-bold">Actions</div>
                 <div class="row">
                   <div class="col-6" style="padding-right: 3px;">
-                    <button type="button" id="nftTransferModal" class="btn btn-theme btn-sm w-100" data-bs-toggle="modal" data-bs-target="#sendNftModal">Transfer</button>
+                    <button type="button" id="nftTransferBtn" class="btn btn-theme btn-sm w-100" data-bs-toggle="modal" data-bs-target="#sendNftModal">Transfer</button>
                   </div>
                   <div class="col-6" style="padding-left: 3px;">
                     <button type="button" id="nftBurnBtn" class="btn btn-theme btn-sm w-100" style="background-color:#e08080;" data-bs-toggle="modal" data-bs-target="#burnNftModal">Burn</button>
@@ -2318,14 +2658,9 @@
                       <br>
                       <code id="nftDetailID" class="kbd"></code>
                     </div>
-                    <div class="col-3">
-                      <span class="ls-1">NAME</span>
-                      <br>
-                      <p id="nftDetailName"></p>
-                    </div>
                   </div><br>
 
-                  <span class="ls-1">IMAGE IPFS ID</span><br>
+                  <span class="ls-1">IPFS CID</span><br>
                   <span id="nftDetailImageID" class="kbd"></span><br><br>
 
                   <span class="ls-1">OWNER ADDRESS</span><br>
@@ -2378,13 +2713,17 @@
         });
  
         if (ret === undefined || ret.canceled || !ret.filePaths.length) return false;
+        // Load file into buffer
+        bRawImageBuf = DB.fs.readFileSync(ret.filePaths[0]);
         // Update UI
         const domPreview = document.getElementById('nftPreviewImg');
-        domPreview.style['background-image'] = 'url(file:///' + ret.filePaths[0].split('\\').join('/') + ')';
+        // Figure out what filetype we're working with, for rendering purposes
+        const dotSplit = ret.filePaths[0].split('.');
+        const fileType = dotSplit[dotSplit.length - 1].toLowerCase();
+        // Encode buffer as native base64, remove any formatting lines, inject into renderer
+        domPreview.style['background-image'] = 'url(data:image/' + fileType + ';base64,' + bRawImageBuf.toString('base64').replace(/(\r\n|\n|\r)/gm, '') + ')';
         domPreview.style['background-repeat'] = 'no-repeat';
         domPreview.style['background-position'] = 'center';
-        // Return file buffer
-        bRawImageBuf = DB.fs.readFileSync(ret.filePaths[0]);
         checkNftInput();
         return await bRawImageBuf;
       }
@@ -2394,55 +2733,101 @@
       async function nftUpload() {
         // Cannot deploy if the button is disabled (due to unsatisfied inputs)
         if (document.getElementById('scpNftDeployBtn').hasAttribute('disabled')) return;
+        const intervals = Number(document.getElementById('scpNftDeployQty').value);
+        domNftMintOpts.style.display = 'none';
+        domNftMintProgress.style.display = 'block';
+        const cText = document.getElementById('mintText');
+        cText.innerText = 'Warming Up';
+        await sleep(500);
+        const cProgress = document.getElementById('mintProgress');
+        cProgress.style.width = '10%';
+        await sleep(1000);
         try {
-          const fAlreadyUploaded = bRawImageBuf.length === nLastImageLen;
-          const cRetIPFS = !fAlreadyUploaded ? JSON.parse(await NET.uploadToIPFS(bRawImageBuf)) : undefined;
-          if ((fAlreadyUploaded && strLastImageCID) || (cRetIPFS && cRetIPFS.ok && cRetIPFS.value.cid.length)) {
-            console.log('NFT Uploader: ' + (fAlreadyUploaded ?
-                                           'Using cached CID' :
-                                           'Uploaded new image (' + bRawImageBuf.length + 'b) to IPFS'));
-            // Save the image byte length (this will be used to prevent re-uploads of the same image)
-            nLastImageLen = bRawImageBuf.length;
-            // Grab the IPFS CID and NFT Name
-            const strCID = fAlreadyUploaded ? strLastImageCID : cRetIPFS.value.cid;
-            strLastImageCID = strCID;
-            const strName = document.getElementById('scpNftName').value;
-            // Prepare wallet
-            const strAddr = WALLET.getActiveWallet().getPubkey();
-            const cCollection = isFullnode ? NFT.getCollection(nSelectedCollection) : {};
-            console.log("Constructing SCP-" + cCollection.version + " NFT mint TX!");
-            // Contruct SCP transaction
-            const cTx = WALLET.sccjs.tx.transaction();
-            // Add input
-            const cUTXO = WALLET.getCoinsToSpend(2000, true, strAddr)[0];
-            if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
-            cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
-            // SCP output
-            cTx.addoutputburn(0.00000001, cCollection.contract + ' mint ' + strName + ' ' + strCID);
-            // Fee & Change output
-            const nFee = WALLET.getFee(cTx.serialize().length);
-            const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-            cTx.addoutput(strAddr, nChange);
-            // Broadcast
-            cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
-              WALLET.broadcastTx(strSignedTx).then(strTXID => {
-                M.toast({html: 'NFT Deploying! Please wait for a block confirmation!', displayLength: 3000});
-                cUTXO.spent = true;
-                if (isFullnodePtr()) {
-                  getMempoolActivity(strAddr).then(arrRes => cachedActivityIS = arrRes);
-                } else {
-                  NET.getMempoolActivityLight(strAddr).then(strRes => {
-                    cachedActivityIS = JSON.parse(strRes);
-                  });
-                  getUnspentTransactions();
-                }
+          for (let i = 0; i<intervals; i++) {
+            const fLastMint = i === intervals - 1;
+            const fAlreadyUploaded = bRawImageBuf.length === nLastImageLen;
+            cProgress.style.width = (fAlreadyUploaded ? '50' : '20') + '%';
+            cText.innerText = fAlreadyUploaded ? 'Fetching cached IPFS CID' : 'Uploading image to IPFS';
+            const cRetIPFS = !fAlreadyUploaded ? JSON.parse(await NET.uploadToIPFS(bRawImageBuf)) : undefined;
+            if ((fAlreadyUploaded && strLastImageCID) || (cRetIPFS && cRetIPFS.ok && cRetIPFS.value.cid.length)) {
+              // Prepare the progress text
+              const strInterval = !fLastMint ? ' (' + (i+1) + '/' + intervals + ')' : '';
+              // Fetch the latest UTXOs
+              cProgress.style.width = '70%';
+              cText.innerText = 'Preparing UTXOs' + strInterval;
+              const strAddr = WALLET.getActiveWallet().getPubkey();
+              await WALLET.refreshUTXOs(strAddr);
+              // Construct mint transaction
+              const strName = document.getElementById('scpNftName').value;
+              cProgress.style.width = '80%';
+              cText.innerText = 'Minting "' + formatName(strName, 24) + '"' + strInterval;
+              console.log('NFT Uploader: ' + (fAlreadyUploaded ?
+                                            'Using cached CID' :
+                                            'Uploaded new image (' + bRawImageBuf.length + 'b) to IPFS'));
+              // Save the image byte length (this will be used to prevent re-uploads of the same image)
+              nLastImageLen = bRawImageBuf.length;
+              // Grab the IPFS CID
+              const strCID = fAlreadyUploaded ? strLastImageCID : cRetIPFS.value.cid;
+              strLastImageCID = strCID;
+              // Prepare wallet
+              const cCollection = isFullnode ? NFT.getCollection(nSelectedCollection) : getCachedCollection(nSelectedCollection);
+              console.log("Constructing SCP-" + cCollection.version + " NFT mint TX!");
+              // Contruct SCP transaction
+              const cTx = WALLET.sccjs.tx.transaction();
+              // Add input
+              const cUTXO = WALLET.getCoinsToSpend(2000, true, strAddr)[0];
+              if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
+              cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
+              // SCP output
+              cTx.addoutputburn(0.00000001, cCollection.contract + ' mint ' + strName + ' ' + strCID);
+              // Fee & Change output
+              const nFee = WALLET.getFee(cTx.serialize().length);
+              const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
+              cTx.addoutput(strAddr, nChange);
+              // Broadcast
+              cText.innerText = 'Signing TX' + strInterval;
+              cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
+                cProgress.style.width = '90%';
+                cText.innerText = 'Broadcasting TX' + strInterval;
+                WALLET.broadcastTx(strSignedTx).then(strTXID => {
+                  if (fLastMint) {
+                    strLastNftID = strTXID; 
+                    M.toast({html: 'Minting! Please wait for block confirmations!', displayLength: 5000});
+                  }
+                  cUTXO.spent = true;
+                  if (fLastMint) {
+                    cProgress.style.width = '100%';
+                    cText.innerText = 'Done!';
+                    if (isFullnodePtr()) {
+                      getMempoolActivity(strAddr).then(arrRes => cachedActivityIS = arrRes);
+                    } else {
+                      NET.getMempoolActivityLight(strAddr).then(strRes => {
+                        cachedActivityIS = JSON.parse(strRes);
+                      });
+                      getUnspentTransactions();
+                      // Updates NFTs and other contracts
+                      getMempoolActivity(strAddr);
+                    }
+                    setTimeout(() => {
+                      cProgress.style.width = '0%';
+                      domNftMintOpts.style.display = 'block';
+                      domNftMintProgress.style.display = 'none';
+                    }, 2500);
+                  }
+                });
               });
-            });
-          } else {
-            return M.toast({html: 'IPFS Upload failed, retry later!', displayLength: 3000});
+            } else {
+              cProgress.style.width = '0%';
+              domNftMintOpts.style.display = 'block';
+              domNftMintProgress.style.display = 'none';
+              return M.toast({html: 'IPFS Upload failed, retry later!', displayLength: 3000});
+            }
           }
         } catch (e) {
           console.log(e);
+          cProgress.style.width = '0%';
+          domNftMintOpts.style.display = 'block';
+          domNftMintProgress.style.display = 'none';
           return M.toast({html: 'Failed to reach IPFS Node, retry later!', displayLength: 3000});
         }
       }
@@ -2478,6 +2863,10 @@
 
     <div class="container marketing pt-navbar" id="createNftPage">
       <h4 class="mb-5 theme-color-secondary font-weight-bold">Create NFT</h4>
+      
+      <div class="float-end" style="margin-top:-50px;">
+        <button type="button" class="btn btn-theme btn-sm" onclick="switchToViewCollection()">Visit Collection</button>
+      </div>
     
       <div class="row">
         <div class="col-lg-8 offset-lg-2">
@@ -2517,8 +2906,20 @@
                   </div>
                 </div>
               </div>
-              <center>
+              <center id="nftMintOpts">
+                <br>
+                <h5>
+                  Quantity of NFT Mints
+                  <input id="scpNftDeployQty" type="range" class="form-range" value="1" min="1" max="20" id="nftQuantity">
+                </h5>
+                <p style="opacity:0.3;font-size:0.7em;margin-top:1rem;margin-bottom: 0;">Minting NFTs is FREE! There are no additional costs for minting, minus blockchain fees.</p>
                 <button id="scpNftDeployBtn" onclick="nftUpload()" disabled="" style="margin-top: 10px;" class="btn btn-theme btn-layout">Create NFT</button>
+              </center>
+              <center id="nftMintProgress" style="display: none;">
+                <h5 id="mintText" style="margin-bottom: 0.5em; margin-top: 0.5em;">Initializing Minter</h5>
+                <div class="progress" style="border-color:#0d6efd;border-style:solid;border-width:1px;">
+                  <div id="mintProgress" class="progress-bar" role="progressbar" style="width: 0%;background: linear-gradient(90deg, rgba(3, 23, 52, 0.97), #0a58ca 100%);" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
               </center>
               </div>
             </div>
@@ -2555,7 +2956,7 @@
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
           WALLET.broadcastTx(strSignedTx).then(strTXID => {
-            M.toast({html: 'NFT Sent!', displayLength: 1250});
+            M.toast({html: 'NFT Sent!', displayLength: 3000});
             cUTXO.spent = true;
             getUnspentTransactions();
             // Move user back to their NFTs page
@@ -2586,7 +2987,7 @@
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
           WALLET.broadcastTx(strSignedTx).then(strTXID => {
-            M.toast({html: 'NFT Burned!', displayLength: 1500});
+            M.toast({html: 'NFT Burned!', displayLength: 3000});
             cUTXO.spent = true;
             getUnspentTransactions();
             // Move user back to their NFTs page

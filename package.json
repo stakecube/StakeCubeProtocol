@@ -1,7 +1,7 @@
 {
   "name": "stakecubeprotocol",
   "productName": "SCP Wallet",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "The StakeCube Protocol full-node and GUI for Node.js",
   "main": "main.js",
   "scripts": {
@@ -37,7 +37,7 @@
   "config": {
     "forge": {
       "packagerConfig": {
-        "icon": "public/imgs/sc-logo.ico",
+        "icon": "public/imgs/scp.ico",
         "ignore": ["docs", ".github", ".gitignore", "linter.js", ".eslintrc.js"]
       },
       "makers": [
@@ -46,8 +46,8 @@
           "config": {
             "setupExe": "SCP Installer.exe",
             "loadingGif": "public/imgs/spinner.gif",
-            "iconUrl": "https://raw.githubusercontent.com/stakecube/StakeCubeProtocol/main/public/imgs/sc-logo.ico",
-            "setupIcon": "public/imgs/sc-logo.ico"
+            "iconUrl": "https://raw.githubusercontent.com/stakecube/StakeCubeProtocol/main/public/imgs/scp.ico",
+            "setupIcon": "public/imgs/scp.ico"
           }
         },
         {

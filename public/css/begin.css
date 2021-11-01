@@ -1,5 +1,5 @@
 body {
-  background: linear-gradient(90deg, #0d84f4, #0a43b5 100%)!important;
+  background: #202225;
 }
 
 .verticalalign {
@@ -21,29 +21,46 @@ body {
 }
 
 .btn-layout {
-  background-color:rgb(173, 173, 173);
-  border:none;
+  border: none;
+  border-bottom-style: solid;
+  border-bottom-color: #0fcad5	;
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
 }
 
 .btn-layout:hover {
-  background-color:rgb(195, 195, 195);
-  border:none;
+	border-bottom-color: #1dffb4;
 }
 
 .btn-layout:focus {
-  background-color:rgb(180, 180, 180);
-  border:none;
   box-shadow: 0 0 0 0.25rem rgba(195,195,195,.4);
 }
 
+.btn-success {
+	background-color: initial;
+}
+
+.btn-success:hover {
+	background-color: initial;
+}
+
+.btn-check:focus+.btn-success, .btn-success:focus {
+	background-color: initial;
+	box-shadow: none;
+}
+
+.btn-check:active+.btn-success:focus, .btn-check:checked+.btn-success:focus, .btn-success.active:focus, .btn-success:active:focus, .show>.btn-success.dropdown-toggle:focus {
+	box-shadow: none;
+}
+
 .card-prop2 {
-  border: none;
-  border-radius: 15px;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
-  -moz-box-shadow: 0 0 100px #eaeaea6e;
-  -webkit-box-shadow: 0 0 100px #eaeaea6e;
-  box-shadow: 0 0 100px #eaeaea6e;
+	border: solid;
+	border-radius: 15px;
+	-moz-box-shadow: 0 3px #0fcad5;
+	-webkit-box-shadow: 0 3px #0fcad5;
+	box-shadow: 0 3px #0fcad5;
+	border-width: 1px;
+	border-color: #ffffff24;
 }
 
 

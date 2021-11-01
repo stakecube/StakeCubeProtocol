@@ -167,6 +167,18 @@ async function getLightTokensByAccount(address) {
     return await get(rootSCCNet + 'scp/tokens/gettokensbyaccount/' + address);
 }
 
+async function getLightNFTsByAccount(address) {
+    return await get(rootSCCNet + 'scp/tokens/getnftsbyaccount/' + address);
+}
+
+async function getLightCollection(contract) {
+    return await get(rootSCCNet + 'scp/tokens/getcollection/' + contract);
+}
+
+async function getLightCollectionHeaders() {
+    return await get(rootSCCNet + 'scp/tokens/getallcollectionheaders');
+}
+
 async function broadcastTx(tx) {
     return await get(rootSCCNet + 'submittx?tx=' + tx);
 }
@@ -185,5 +197,8 @@ exports.getLightUTXOs = getLightUTXOs;
 exports.getLightStakingStatus = getLightStakingStatus;
 exports.getMempoolLight = getMempoolLight;
 exports.getLightTokensByAccount = getLightTokensByAccount;
+exports.getLightNFTsByAccount = getLightNFTsByAccount;
+exports.getLightCollection = getLightCollection;
+exports.getLightCollectionHeaders = getLightCollectionHeaders;
 exports.broadcastTx = broadcastTx;
 exports.getLatestRelease = getLatestRelease;
