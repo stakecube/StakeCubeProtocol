@@ -10,8 +10,8 @@ Address: sccburnaddressXXXXXXXXXXXXXXSfqakF
 
 ## Parameter
 
-param 1 = NAME (string, no spaces)
-param 2 = MAXMINTS (integer, use -1 for unlimited)
+param 1 = NAME (string, no spaces)  
+param 2 = MAXMINTS (integer, use -1 for unlimited)  
 param 3 = PROTECTED (integer, 1 for true, 0 for false)
 
 ## Syntax
