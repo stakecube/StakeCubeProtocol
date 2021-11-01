@@ -13,11 +13,11 @@ to use custom themes with light and dark available as default.
 
 ## Protocol Standards
 
-| # | Type |
-|---------|---------|
-| [SCP-1](protocols/scp-1.md) | Token |
-| [SCP-2](protocols/scp-2.md) | Token |
-| [SCP-4](protocols/scp-4.md) | NFTs |
+| # | Type | Description |
+|---------|---------|---------|
+| [SCP-1](protocols/scp-1.md) | Token | A simple token with central, issuer-only supply minting |
+| [SCP-2](protocols/scp-2.md) | Token | A PoS token protected by anti-rugpull rules & predictable emission schedule |
+| [SCP-4](protocols/scp-4.md) | NFTs | A collection-based, IPFS-enforced NFT protocol |
 
 ## API Documentation
 | Endpoints | Description |
