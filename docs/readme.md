@@ -17,6 +17,7 @@ to use custom themes with light and dark available as default.
 |---------|---------|
 | [SCP-1](protocols/scp-1.md) | Token |
 | [SCP-2](protocols/scp-2.md) | Token |
+| [SCP-4](protocols/scp-4.md) | NFTs |
 
 ## API Documentation
 | Endpoints | Description |
