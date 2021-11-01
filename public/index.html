@@ -2559,7 +2559,7 @@
 
         <div id="nftSearch" class="omrs-input-group" style="min-width: 50%;margin-left: auto;margin-right: auto;max-width: 100%;">
           <label class="omrs-input-underlined">
-            <input oninput="renderNFTs(nSelectedCollection, this.value.replace(/ /g, ' ').toLowerCase())" required="" type="text">
+            <input class="darkerInput" oninput="renderNFTs(nSelectedCollection, this.value.replace(/ /g, ' ').toLowerCase())" required="" type="text">
             <span class="omrs-input-label">Search (name, contract or creator)</span>
             <span class="omrs-input-hover"><i class="fas fa-search tooltip-questionmark"></i></span>
           </label>
@@ -2581,7 +2581,7 @@
 
         <div class="omrs-input-group" style="min-width: 50%;margin-left: auto;margin-right: auto;max-width: 100%;">
           <label class="omrs-input-underlined">
-            <input id="collectionSearch" oninput="renderCollections(this.value.replace(/ /g, ' ').toLowerCase())" required="" type="text">
+            <input class="darkerInput" id="collectionSearch" oninput="renderCollections(this.value.replace(/ /g, ' ').toLowerCase())" required="" type="text">
             <span class="omrs-input-label">Search (name, contract or creator)</span>
             <span class="omrs-input-hover"><i class="fas fa-search tooltip-questionmark"></i></span>
           </label>

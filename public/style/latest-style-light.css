@@ -75,6 +75,10 @@ body {
   border-width: 1px;
 }
 
+.darkerInput {
+  background-color: #f2f2f2 !important;
+}
+
 .fas-higher-contrast {
   color: white;
   opacity: 1;
