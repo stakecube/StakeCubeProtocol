@@ -249,6 +249,7 @@
     let domViewNFT;
     let domNFTList;
     let domNftDetailTitle;
+    let domNftDetailMintCount;
     let domNftDetailImg;
     let domNftDetailID;
     let domNftDetailCollection;
@@ -873,10 +874,15 @@
       if (isCached) {
         await fetchNFTs(cColl);
       } else {
-        fetchNFTs(cColl);
+        fetchNFTs(cColl, strID);
       }
       // Cache the ownership status
       const fOwned = cNFT.owner ? cNFT.owner === strAddr : true;
+      // Calculate supply and indexing for displaying
+      const nCardSupply = isFullnode ?
+                            cColl.nfts.filter(a => a.owner !== null).length :
+                            cColl.totalNFTs - cColl.burnedNFTs;
+      const nIndex = cColl.nfts ? cColl.nfts.findIndex(a => a.id === strID) : -1;
       // Render all elements
       if (!isCached) {
         domNftDetailTitle.innerText = cNFT.name;
@@ -885,6 +891,7 @@
         domNftDetailCollection.setAttribute('onclick', 'switchToViewCollection();renderNFTs(' + cColl.index + ');');
         domNftDetailImageID.innerText = cNFT.imgUrl;
       }
+      domNftDetailMintCount.innerHTML = '<b>#' + (nIndex === -1 ? '?' : (nIndex + 1)) + '</b><b style="opacity: 0.75">/' + (cColl.maxMints > 0 ? (cColl.maxMints - cColl.burnedNFTs) : nCardSupply) + '</b>';
       domNftDetailOwner.innerText = cNFT.owner || strAddr;
       strLastNftID = cNFT.nft || cNFT.id;
       // Pre-render activity
@@ -1019,11 +1026,13 @@
              cachedOwnedNFTs.findIndex(a => a.nft === strTx) !== -1; // SCP-4 NFT deployments
     }
 
-    async function fetchNFTs(cColl) {
+    async function fetchNFTs(cColl, renderID = null) {
       // Sync NFTs from the lightwallet server
       const cCollRes = JSON.parse(await NET.getLightCollection(cColl.contract));
       if (!cCollRes.error)
         addCachedCollection(cCollRes);
+      if (renderID !== null)
+        renderDetailedNFT(renderID);
       return getCachedCollection(cColl.index);
     }
 
@@ -1661,6 +1670,7 @@
       domScpTokenDeployBtn = document.getElementById("scpTokenDeployBtn");
       domNFTCollectionsBtn = document.getElementById("collectionsBtn");
       domNftDetailTitle = document.getElementById('nftDetailTitle');
+      domNftDetailMintCount = document.getElementById('nftDetailMintCount');
       domNftDetailImg = document.getElementById('nftDetailImg');
       domNftDetailID = document.getElementById('nftDetailID');
       domNftDetailCollection = document.getElementById('nftDetailCollection');
@@ -2576,6 +2586,7 @@
         <h4 class="mb-5 theme-color-secondary font-weight-bold">NFT Collections</h4>
 
         <div class="float-end" style="margin-top:-50px;">
+          <button type="button" class="btn btn-theme btn-sm" style="margin-right:0.5em;" onclick="switchToCreateToken('4')">Create Collection</button>
           <button type="button" class="btn btn-theme btn-sm" onclick="switchToViewCollection();renderNFTs(-1);">My NFTs</button>
         </div>
 
@@ -2623,8 +2634,13 @@
 
     <div class="container-fluid marketing pt-navbar" id="viewNFT">
       <div class="container">
-        <h4 id="nftDetailTitle" class="mb-5 theme-color-secondary font-weight-bold"></h4>
-        <div class="float-end" style="margin-top:-50px;">
+        <div class="d-inline-flex flex-column lh-sm" style="position: relative; top: -7px">
+          <span id="nftDetailTitle" style="font-size:x-large;"></span>
+          <span id="nftDetailMintCount" style="font-size:0.75em;background-color: transparent;" class="kbd">
+            <b></b><b style="opacity: 0.75"></b>
+          </span>
+        </div>
+        <div class="float-end">
           <button type="button" id="nftDetailCollection" class="btn btn-theme btn-sm" onclick="switchToViewCollection();renderNFTs();" style="margin-right:1em;">Visit Collection</button>
           <button type="button" class="btn btn-theme btn-sm" onclick="switchToViewCollection();renderNFTs();">Back</button>
         </div>
