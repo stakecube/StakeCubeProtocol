@@ -38,10 +38,10 @@ function tokenTick() {
 function stakeTick(cToken) {
     // Loop all stakers
     for (const cStaker of cToken.owners) {
-        const status = cToken.getStakingStatus(cStaker.address, true);
+        const status = cToken.getStakingStatus(cStaker, true);
         if (status.enabled) {
             // Credit rewards for this block
-            cToken.creditRewards(cStaker.address);
+            cToken.creditRewards(cStaker);
         }
     }
 }
@@ -189,9 +189,7 @@ class SCP2Token extends SCP1Token {
     }
 
     // Calculates the account's holdings (PoS weight) against the rest of the network in percentage
-    getWeightPercent(address) {
-        // Ensure the account exists and has a balance
-        const cAcc = super.getAccount(address);
+    getWeightPercent(cAcc) {
         if (!cAcc || (cAcc && cAcc.balance <= 0)) return 0;
         // If there's only one owner, then this will always be 100%
         if (this.owners.length <= 1) return 1;
@@ -200,12 +198,10 @@ class SCP2Token extends SCP1Token {
     }
 
     // Calculates and credits PoS rewards based on the current block
-    creditRewards(address) {
-        // Ensure the account exists and has a balance
-        const cAcc = super.getAccount(address);
+    creditRewards(cAcc) {
         if (!cAcc || (cAcc && cAcc.balance <= 0)) return false;
         // Calculate the weight and reward share
-        const nWeight = this.getWeightPercent(address);
+        const nWeight = this.getWeightPercent(cAcc);
         let nReward = this.inflation * nWeight;
         // Correct the reward precision and round-down
         const nOldReward = nReward;
@@ -229,9 +225,7 @@ class SCP2Token extends SCP1Token {
     }
 
     // Redeems all unclaimed balance from staking rewards
-    redeemRewards(address, tx) {
-        // Ensure the account exists and has a redeemable balance
-        const cAcc = super.getAccount(address);
+    redeemRewards(cAcc, tx) {
         if (!cAcc || (cAcc && cAcc.unclaimed_balance <= 0)) {
             return false;
         }
@@ -256,14 +250,14 @@ class SCP2Token extends SCP1Token {
     }
 
     // Gets the staking status of an address based on the time since it's last transaction
-    getStakingStatus(address, noStrings = false) {
+    getStakingStatus(cAcc, noStrings = false) {
         const ret = {
             'enabled': false,
             'age': 0,
             'unclaimed_rewards': 0,
-            'weight': this.getWeightPercent(address)
+            'weight': this.getWeightPercent(cAcc),
+            'note': ''
         };
-        const cAcc = super.getAccount(address);
         if (cAcc) {
             // We deduct the account's last tx block from the current SCP height to get the age
             const nAge = lastBlockSCP - cAcc.lastTxBlock;
@@ -342,7 +336,7 @@ class SCP2Token extends SCP1Token {
             });
         }
         this.supply += amount;
-        this.redeemRewards(address, tx);
+        this.redeemRewards(cAcc, tx);
         console.log('SCP-' + this.version + ": Issuer for token '" + this.name +
                     "' minted '" + amount + ' ' + this.ticker +
                     "', new supply is '" + this.supply + ' ' + this.ticker +

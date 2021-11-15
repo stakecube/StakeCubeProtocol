@@ -306,7 +306,7 @@ async function getMempoolActivity(req, res) {
 
                         case 'redeem':
                             cActivity.type = 'staked';
-                            const cStatus = cToken.getStakingStatus(cAccount);
+                            const cStatus = cToken.getStakingStatus(cToken.getAccount(cAccount));
                             cActivity.amount = cStatus.unclaimed_rewards;
                             if (!account ||
                                     (account && cAccount === account)) {

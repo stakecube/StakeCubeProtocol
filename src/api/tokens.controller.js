@@ -101,7 +101,7 @@ async function getStakingStatus(req, res) {
             'error': 'Token is not an SCP-2!'
         });
     }
-    res.json(cToken.getStakingStatus(req.params.account));
+    res.json(cToken.getStakingStatus(cToken.getAccount(req.params.account)));
 }
 
 /* ---- NFTs (SCP-4) ---- */
