@@ -902,7 +902,7 @@ async function processState(newMsg, tx) {
                     const fSafe = await isCallAuthorized(tx, addrCaller);
                     if (fSafe) {
                         // Authentication successful, redeeming tokens!
-                        cToken.redeemRewards(addrCaller, tx);
+                        cToken.redeemRewards(cToken.getAccount(addrCaller), tx);
                     } else {
                         console.error('An attempt to redeem SCP-' +
                                       cToken.version + ' stakes containing ' +

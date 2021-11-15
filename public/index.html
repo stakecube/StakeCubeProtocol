@@ -511,7 +511,7 @@
 
                       case 'redeem':
                           cActivity.type = 'staked';
-                          const cStatus = isFullnode ? cToken.getStakingStatus(cAccount) :
+                          const cStatus = isFullnode ? cToken.getStakingStatus(cToken.getAccount(cAccount)) :
                                                        JSON.parse(await NET.getLightStakingStatus(cToken.contract, cAccount));
                           cActivity.amount = cStatus.unclaimed_rewards;
                           if (!account ||
@@ -1387,7 +1387,7 @@
       if (isFullnode) {
         guiStakingToken   = TOKENS.getToken(contract);
         guiStakingAccount = guiStakingToken.getAccount(strPubkey);
-        guiStakingStatus  = guiStakingToken.getStakingStatus(strPubkey);
+        guiStakingStatus  = guiStakingToken.getStakingStatus(guiStakingAccount);
       } else {
         guiStakingToken   = getCachedToken(contract);
         guiStakingAccount = getCachedAccount(guiStakingToken);
