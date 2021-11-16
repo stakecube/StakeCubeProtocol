@@ -340,14 +340,21 @@ Example: `curl -X GET "https://stakecubecoin.net/web3/scp/tokens/getallcollectio
   {
     "index": 0,
     "version": 4,
+    "genesisBlock": 260098,
     "contract": "02f08b8cfc938a901ac939243bd091e48a650475d5d2f78baacef5f7c1cb899c",
     "collectionName": "test",
     "mints": 1,
     "maxMints": 4,
     "protected": false,
     "creator": "sDpkbWCCyh1zvAUHiJKGKr3h11ciaui3mP",
+    "totalTXs": 1,
     "totalNFTs": 1,
-    "burnedNFTs": 0
+    "burnedNFTs": 0,
+    "holders": 1,
+    "age": {
+      "blocks": 1220,
+      "days": 1.6944444444444444
+    }
   }
 ]
 ```
