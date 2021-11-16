@@ -14,12 +14,20 @@
 // The current chain state of SCP NFTs
 const stateCollections = [];
 
+// Pointers
+let ptrGetBlockcount;
+
+function init(getBlockCount) {
+    ptrGetBlockcount = getBlockCount;
+}
+
 // SCP-4: (SCP-4 represents 'barebones' NFTs, with an issuer-only minting process, with: mint and transfer functionality)
 class SCP4 {
     constructor(contract, collectionName, maxMints, collectionProtected,
         creator, nfts) {
         this.index = -1;
         this.version = 4;
+        this.genesisBlock = 0;
         this.contract = contract;
         this.collectionName = collectionName;
         this.mints = 0;
@@ -139,7 +147,7 @@ class SCP4 {
     }
 }
 
-function addCollection(collection = SCP4) {
+function addCollection(collection = SCP4, nBlock = 0) {
     // First, ensure the contract isn't already indexed in the current chain state.
     for (const coll of stateCollections) {
         if (coll.contract === collection.contract) {
@@ -153,6 +161,8 @@ function addCollection(collection = SCP4) {
     }
     // Calculate the index
     collection.index = stateCollections.length;
+    // Set genesis block
+    collection.genesisBlock = nBlock;
     // Push the Collection into the SCP NFT state tracker.
     stateCollections.push(collection);
     return true;
@@ -169,8 +179,24 @@ function getAllCollectionHeaders() {
     for (const cColl of stateCollections) {
         const cClone = JSON.parse(JSON.stringify(cColl));
         delete cClone.nfts;
+        cClone.totalTXs = (cColl.nfts.length > 0)
+            ? cColl.nfts
+                .map(a => a.activity.length) // Map the TX lengths of each NFT's activity.
+                .reduce((a, b) => a + b)
+            : 0; // Sum the lengths.
         cClone.totalNFTs = cColl.nfts.length;
         cClone.burnedNFTs = cColl.nfts.filter(a => a.owner === null).length;
+        const arrHolders = [];
+        // Aggregate and sum unique / non-duplicated holders
+        for (const cNFT of cColl.nfts) {
+            if (arrHolders.includes(cNFT.owner)) continue;
+            arrHolders.push(cNFT.owner);
+        }
+        cClone.holders = arrHolders.length;
+        cClone.age = {
+            'blocks': ptrGetBlockcount() - cColl.genesisBlock,
+            'days': (ptrGetBlockcount() - cColl.genesisBlock) / 720
+        };
         arrCollHeaders.push(cClone);
     }
     return arrCollHeaders;
@@ -262,6 +288,7 @@ function getNFTbyId(query) {
 // Class
 exports.SCP4 = SCP4;
 // Funcs
+exports.init = init;
 exports.getCollectionPtr = getCollectionPtr;
 exports.getAllCollectionHeaders = getAllCollectionHeaders;
 exports.addCollection = addCollection;

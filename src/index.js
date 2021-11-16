@@ -160,6 +160,8 @@ async function init(forcedCorePath = false, retry = false) {
     try {
         // Initialize the DB, load configs into memory
         await DB.init(forcedCorePath, retry);
+        // Initialize the NFTs module with necessary pointers
+        NFT.init(getBlockcount);
         // Initialize API modules, providing mutable pointer contexts to all necessary states
         if (!fInitialized) {
             fInitialized = true;
@@ -711,7 +713,7 @@ async function processState(newMsg, tx) {
                                 addrCaller,
                                 []);
 
-                            NFT.addCollection(newContract);
+                            NFT.addCollection(newContract, nCacheHeight);
                         }
 
                         if (newContract) {
