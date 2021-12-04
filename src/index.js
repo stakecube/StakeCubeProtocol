@@ -162,11 +162,18 @@ async function init(forcedCorePath = false, retry = false) {
         await DB.init(forcedCorePath, retry);
         // Initialize the NFTs module with necessary pointers
         NFT.init(getBlockcount);
+        // Load which caller addresses (if any) can call the API
+        const arrAllowedCallers = DB.getConfigValue('allowedips', '127.0.0.1',
+                                                    false)
+                                                    .replace(/::ffff:/g, '')
+                                                    .replace(/ /g, '')
+                                                    .split(',');
         // Initialize API modules, providing mutable pointer contexts to all necessary states
         if (!fInitialized) {
             fInitialized = true;
             const arrEnabledModules = [];
             const fApiActivity = apiACTIVITY.init(app, {
+                'callers': arrAllowedCallers,
                 'TOKENS': TOKENS,
                 'DB': DB,
                 'UPGRADES': UPGRADES,
@@ -176,17 +183,20 @@ async function init(forcedCorePath = false, retry = false) {
                 'isFullnode': isFullnodePtr
             });
             const fApiBlockchain = apiBLOCKCHAIN.init(app, {
+                'callers': arrAllowedCallers,
                 'gfm': getFullMempool,
                 'DB': DB,
                 'isFullnode': isFullnodePtr
             });
             const fApiTokens = apiTOKENS.init(app, {
+                'callers': arrAllowedCallers,
                 'TOKENS': TOKENS,
                 'DB': DB,
                 'NFT': NFT,
                 'isFullnode': isFullnodePtr
             });
             const fApiWallet = apiWALLET.init(app, {
+                'callers': arrAllowedCallers,
                 'TOKENS': TOKENS,
                 'WALLET': WALLET,
                 'DB': DB,
@@ -197,6 +207,7 @@ async function init(forcedCorePath = false, retry = false) {
                 'strDeployFeeDest': strDeployFeeDest
             });
             const fApiIO = apiIO.init(app, {
+                'callers': arrAllowedCallers,
                 'WALLET': WALLET,
                 'DB': DB,
                 'VM': VM,
@@ -222,6 +233,7 @@ async function init(forcedCorePath = false, retry = false) {
                         ' (' + nApiPort + ')');
             // Log our module statuses
             if (arrEnabledModules.length) {
+                console.log('API exposed to: ' + arrAllowedCallers.join(', '));
                 console.log('API: ' + arrEnabledModules.length + ' modules ' +
                             'enabled! (' + arrEnabledModules.join(', ') + ')');
             } else {

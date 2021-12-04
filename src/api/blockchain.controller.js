@@ -13,10 +13,12 @@ const cPerms = require('./permissions.js');
 let ptrGetFullMempool;
 let ptrIsFullnode;
 let strModule;
+let arrAllowedCallers;
 
 function init(context) {
     ptrGetFullMempool = context.gfm;
     ptrIsFullnode = context.isFullnode;
+    arrAllowedCallers = context.callers;
     // Static Non-Pointer (native value)
     strModule = context.strModule;
     // Initialize permissions controller
@@ -24,26 +26,44 @@ function init(context) {
 }
 
 async function getFullMempool(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
     res.json(await ptrGetFullMempool());
 }
 
+function callerError(req, res) {
+    res.status(403).json({
+        'error': 'Your IP (' + req.ip + ') is not in the API whitelist!'
+    });
+    return false;
+}
+
 function fullnodeError(res) {
-    return res.status(403).json({
+    res.status(403).json({
         'error': 'This endpoint is only available to Full-nodes, please ' +
                  'connect an SCC Core RPC server to enable as a Full-node!'
     });
+    return false;
 }
 
 function disabledError(res) {
-    return res.status(403).json({
+    res.status(403).json({
         'error': 'This module (' + strModule + ') is disabled!'
     });
+    return false;
+}
+
+function hasPermission(req, res) {
+    // Caller IP check
+    if (!arrAllowedCallers.includes('all') &&
+        !arrAllowedCallers.includes(req.ip.replace(/::ffff:/g, '')))
+            return callerError(req, res);
+    // Full Node check
+    if (!ptrIsFullnode()) return fullnodeError(res);
+    // Module activation status
+    if (!cPerms.isModuleAllowed(strModule)) return disabledError(res);
+
+    // If we reach here, then all checks are a-go!
+    return true;
 }
 
 exports.init = init;

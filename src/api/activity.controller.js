@@ -17,6 +17,7 @@ let ptrGetBlockcount;
 let ptrGetFullMempool;
 let ptrIsFullnode;
 let strModule;
+let arrAllowedCallers;
 
 function init(context) {
     ptrTOKENS = context.TOKENS;
@@ -25,6 +26,7 @@ function init(context) {
     ptrGetFullMempool = context.gfm;
     ptrRpcMain = context.rpcMain;
     ptrIsFullnode = context.isFullnode;
+    arrAllowedCallers = context.callers;
     // Static Non-Pointer (native value)
     strModule = context.strModule;
     // Initialize permissions controller
@@ -32,12 +34,8 @@ function init(context) {
 }
 
 function getActivity(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
+
     if (!req.params.contract || req.params.contract.length <= 1) {
         return res.json({
             'error': "You must specify a 'contract' param!"
@@ -64,12 +62,8 @@ function getActivity(req, res) {
 }
 
 function getAllActivity(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
+
     if (!req.params.account || req.params.account.length <= 1) {
         return res.json({
             'error': "You must specify an 'account' param!"
@@ -80,12 +74,8 @@ function getAllActivity(req, res) {
 }
 
 function getBlockActivity(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
+
     if (!req.params.block || req.params.block.length <= 1) {
         return res.json({
             'error': "You must specify a 'block' param!"
@@ -121,12 +111,8 @@ function getBlockActivity(req, res) {
 }
 
 function getActivityByTxid(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
+
     if (!req.params.txid || req.params.txid.length !== 64) {
         return res.json({
             'error': "You must specify a valid 'txid' param!"
@@ -177,12 +163,8 @@ function getActivityByTxid(req, res) {
 }
 
 async function listDeltas(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
+
     if (!req.params.address || req.params.address.length !== 34) {
         return res.status(400).send('Missing "address" parameter!');
     }
@@ -200,12 +182,8 @@ async function listDeltas(req, res) {
 
 /* eslint-disable no-case-declarations */
 async function getMempoolActivity(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
+
     if (!req.params.account) {
         return res.status(400).send('Missing "account" parameter!');
     }
@@ -333,17 +311,40 @@ async function getMempoolActivity(req, res) {
 }
 /* eslint-enable no-case-declarations */
 
+function callerError(req, res) {
+    res.status(403).json({
+        'error': 'Your IP (' + req.ip + ') is not in the API whitelist!'
+    });
+    return false;
+}
+
 function fullnodeError(res) {
-    return res.status(403).json({
+    res.status(403).json({
         'error': 'This endpoint is only available to Full-nodes, please ' +
                  'connect an SCC Core RPC server to enable as a Full-node!'
     });
+    return false;
 }
 
 function disabledError(res) {
-    return res.status(403).json({
+    res.status(403).json({
         'error': 'This module (' + strModule + ') is disabled!'
     });
+    return false;
+}
+
+function hasPermission(req, res) {
+    // Caller IP check
+    if (!arrAllowedCallers.includes('all') &&
+        !arrAllowedCallers.includes(req.ip.replace(/::ffff:/g, '')))
+            return callerError(req, res);
+    // Full Node check
+    if (!ptrIsFullnode()) return fullnodeError(res);
+    // Module activation status
+    if (!cPerms.isModuleAllowed(strModule)) return disabledError(res);
+
+    // If we reach here, then all checks are a-go!
+    return true;
 }
 
 exports.init = init;

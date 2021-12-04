@@ -16,12 +16,14 @@ let ptrGetMsgFromTx;
 let ptrIsFullnode;
 let strModule;
 let COIN;
+let arrAllowedCallers;
 
 function init(context) {
     ptrWALLET = context.WALLET;
     ptrVM = context.VM;
     ptrGetMsgFromTx = context.getMsgFromTx;
     ptrIsFullnode = context.isFullnode;
+    arrAllowedCallers = context.callers;
     // Static Non-Pointer (native value)
     strModule = context.strModule;
     COIN = context.COIN;
@@ -30,12 +32,8 @@ function init(context) {
 }
 
 async function readTx(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
+
     if (!req.params.txid || req.params.txid.length !== 64) {
         return res.json({
             'error': "You must specify a 'txid' param!"
@@ -58,12 +56,8 @@ async function readTx(req, res) {
 }
 
 async function writeTx(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
+
     if (!req.params.address || req.params.address.length !== 34) {
         return res.status(400).send('Missing "address" parameter!');
     }
@@ -130,12 +124,8 @@ async function writeTx(req, res) {
 }
 
 async function createDappIdentifier(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
+
     if (!req.params.address || req.params.address.length !== 34) {
         return res.status(400).send('Missing "address" parameter!');
     }
@@ -196,12 +186,8 @@ async function createDappIdentifier(req, res) {
 }
 
 async function writePushToStorage(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
+
     if (!req.params.address || req.params.address.length !== 34) {
         return res.status(400).send('Missing "address" parameter!');
     }
@@ -273,12 +259,8 @@ async function writePushToStorage(req, res) {
 }
 
 async function writeKeyToStorage(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
+
     if (!req.params.address || req.params.address.length !== 34) {
         return res.status(400).send('Missing "address" parameter!');
     }
@@ -355,12 +337,8 @@ async function writeKeyToStorage(req, res) {
 }
 
 async function getAllFromStorage(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
+
     if (!req.params.id || !req.params.id.length) {
         return res.status(400).send('Missing "id" parameter!');
     }
@@ -381,12 +359,8 @@ async function getAllFromStorage(req, res) {
 }
 
 async function getKeyFromStorage(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
+
     if (!req.params.id || !req.params.id.length) {
         return res.status(400).send('Missing "id" parameter!');
     }
@@ -411,17 +385,40 @@ async function getKeyFromStorage(req, res) {
     }
 }
 
+function callerError(req, res) {
+    res.status(403).json({
+        'error': 'Your IP (' + req.ip + ') is not in the API whitelist!'
+    });
+    return false;
+}
+
 function fullnodeError(res) {
-    return res.status(403).json({
+    res.status(403).json({
         'error': 'This endpoint is only available to Full-nodes, please ' +
                  'connect an SCC Core RPC server to enable as a Full-node!'
     });
+    return false;
 }
 
 function disabledError(res) {
-    return res.status(403).json({
+    res.status(403).json({
         'error': 'This module (' + strModule + ') is disabled!'
     });
+    return false;
+}
+
+function hasPermission(req, res) {
+    // Caller IP check
+    if (!arrAllowedCallers.includes('all') &&
+        !arrAllowedCallers.includes(req.ip.replace(/::ffff:/g, '')))
+            return callerError(req, res);
+    // Full Node check
+    if (!ptrIsFullnode()) return fullnodeError(res);
+    // Module activation status
+    if (!cPerms.isModuleAllowed(strModule)) return disabledError(res);
+
+    // If we reach here, then all checks are a-go!
+    return true;
 }
 
 exports.init = init;
