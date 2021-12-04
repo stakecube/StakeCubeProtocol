@@ -14,11 +14,13 @@ let ptrTOKENS;
 let ptrNFT;
 let ptrIsFullnode;
 let strModule;
+let arrAllowedCallers;
 
 function init(context) {
     ptrTOKENS = context.TOKENS;
     ptrNFT = context.NFT;
     ptrIsFullnode = context.isFullnode;
+    arrAllowedCallers = context.callers;
     // Static Non-Pointer (native value)
     strModule = context.strModule;
     // Initialize permissions controller
@@ -28,22 +30,13 @@ function init(context) {
 /* ---- Divisible Tokens (SCP-1, SCP-2) ---- */
 
 async function getAllTokens(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
     res.json(ptrTOKENS.getTokensPtr());
 }
 
 function getToken(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
+
     if (!req.params.contract || req.params.contract.length !== 64) {
         return res.json({
             'error': "You must specify a 'contract' param!"
@@ -59,12 +52,8 @@ function getToken(req, res) {
 }
 
 function getTokensByAccount(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
+
     if (!req.params.account || req.params.account.length <= 1) {
         return res.json({
             'error': "You must specify an 'account' param!"
@@ -74,12 +63,8 @@ function getTokensByAccount(req, res) {
 }
 
 async function getStakingStatus(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
+
     if (!req.params.contract || req.params.contract.length !== 64) {
         return res.json({
             'error': "You must specify a 'contract' param!"
@@ -107,32 +92,18 @@ async function getStakingStatus(req, res) {
 /* ---- NFTs (SCP-4) ---- */
 
 async function getAllCollections(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
     res.json(ptrNFT.getCollectionPtr());
 }
 
 async function getAllCollectionHeaders(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
     res.json(ptrNFT.getAllCollectionHeaders());
 }
 
 function getCollection(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
+
     if (!req.params.contract) {
         return res.json({
             'error': "You must specify a 'contract' param!"
@@ -148,12 +119,8 @@ function getCollection(req, res) {
 }
 
 function getNFTsByAccount(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
+
     if (!req.params.account || req.params.account.length <= 1) {
         return res.json({
             'error': "You must specify an 'account' param!"
@@ -163,12 +130,8 @@ function getNFTsByAccount(req, res) {
 }
 
 function getNFTbyID(req, res) {
-    if (!cPerms.isModuleAllowed(strModule)) {
-        return disabledError(res);
-    }
-    if (!ptrIsFullnode()) {
-        return fullnodeError(res);
-    }
+    if (!hasPermission(req, res)) return false;
+
     if (!req.params.id || req.params.id.length <= 1) {
         return res.json({
             'error': "You must specify an 'id' param!"
@@ -177,17 +140,41 @@ function getNFTbyID(req, res) {
     res.json(ptrNFT.getNFTbyId(req.params.id));
 }
 
+function callerError(req, res) {
+    res.status(403).json({
+        'error': 'Your IP (' + req.ip + ') is not in the API whitelist!'
+    });
+    return false;
+}
+
 function fullnodeError(res) {
-    return res.status(403).json({
+    res.status(403).json({
         'error': 'This endpoint is only available to Full-nodes, please ' +
                  'connect an SCC Core RPC server to enable as a Full-node!'
     });
+    return false;
 }
 
 function disabledError(res) {
-    return res.status(403).json({
+    res.status(403).json({
         'error': 'This module (' + strModule + ') is disabled!'
     });
+    return false;
+}
+
+function hasPermission(req, res) {
+    // Caller IP check
+    if (!arrAllowedCallers.includes('all') &&
+        !arrAllowedCallers.includes(req.ip.replace(/::ffff:/g, ''))) {
+        return callerError(req, res);
+    }
+    // Full Node check
+    if (!ptrIsFullnode()) return fullnodeError(res);
+    // Module activation status
+    if (!cPerms.isModuleAllowed(strModule)) return disabledError(res);
+
+    // If we reach here, then all checks are a-go!
+    return true;
 }
 
 exports.init = init;

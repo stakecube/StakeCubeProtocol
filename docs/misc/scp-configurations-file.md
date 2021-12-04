@@ -12,3 +12,4 @@ The configuration file is automatically created in the users home directory of t
 | coreconfname | stakecubecoin.conf | Name of the SCC Core Node configuration file | scc.conf |
 | apimodules | none | Comma-seperated list of exposed REST API modules | `activity`, `blockchain`, `tokens`, `wallet`, `io` |
 | apiport | 3000 | The port the REST API listens | 3001 |
+| allowedips | 127.0.0.1 (localhost) | The IPs that the API is exposed to | `127.0.0.1`, `123.123.123.123`, `all` |

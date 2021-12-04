@@ -162,11 +162,18 @@ async function init(forcedCorePath = false, retry = false) {
         await DB.init(forcedCorePath, retry);
         // Initialize the NFTs module with necessary pointers
         NFT.init(getBlockcount);
+        // Load which caller addresses (if any) can call the API
+        const arrAllowedCallers = DB.getConfigValue('allowedips', '127.0.0.1',
+            false)
+            .replace(/::ffff:/g, '')
+            .replace(/ /g, '')
+            .split(',');
         // Initialize API modules, providing mutable pointer contexts to all necessary states
         if (!fInitialized) {
             fInitialized = true;
             const arrEnabledModules = [];
             const fApiActivity = apiACTIVITY.init(app, {
+                'callers': arrAllowedCallers,
                 'TOKENS': TOKENS,
                 'DB': DB,
                 'UPGRADES': UPGRADES,
@@ -176,17 +183,20 @@ async function init(forcedCorePath = false, retry = false) {
                 'isFullnode': isFullnodePtr
             });
             const fApiBlockchain = apiBLOCKCHAIN.init(app, {
+                'callers': arrAllowedCallers,
                 'gfm': getFullMempool,
                 'DB': DB,
                 'isFullnode': isFullnodePtr
             });
             const fApiTokens = apiTOKENS.init(app, {
+                'callers': arrAllowedCallers,
                 'TOKENS': TOKENS,
                 'DB': DB,
                 'NFT': NFT,
                 'isFullnode': isFullnodePtr
             });
             const fApiWallet = apiWALLET.init(app, {
+                'callers': arrAllowedCallers,
                 'TOKENS': TOKENS,
                 'WALLET': WALLET,
                 'DB': DB,
@@ -197,6 +207,7 @@ async function init(forcedCorePath = false, retry = false) {
                 'strDeployFeeDest': strDeployFeeDest
             });
             const fApiIO = apiIO.init(app, {
+                'callers': arrAllowedCallers,
                 'WALLET': WALLET,
                 'DB': DB,
                 'VM': VM,
@@ -222,6 +233,7 @@ async function init(forcedCorePath = false, retry = false) {
                         ' (' + nApiPort + ')');
             // Log our module statuses
             if (arrEnabledModules.length) {
+                console.log('API exposed to: ' + arrAllowedCallers.join(', '));
                 console.log('API: ' + arrEnabledModules.length + ' modules ' +
                             'enabled! (' + arrEnabledModules.join(', ') + ')');
             } else {
@@ -481,10 +493,12 @@ async function getMsgsFromBlock(blk) {
     return true;
 }
 
-async function getMsgFromTx(rawTX, strFormat = 'utf8') {
+async function getMsgFromTx(rawTX, useCache = false, strFormat = 'utf8') {
     let res;
     try {
-        res = await rpcMain.call('getrawtransaction', rawTX, 1);
+        res = await (useCache
+            ? getRawTx(rawTX)
+            : rpcMain.call('getrawtransaction', rawTX, 1));
     } catch(e) {
         return {
             'error': true,
@@ -518,6 +532,22 @@ async function getMsgFromTx(rawTX, strFormat = 'utf8') {
     return null;
 }
 
+const arrRawTxCache = [];
+async function getRawTx(strID) {
+    const cCache = arrRawTxCache.find(a => a.txid === strID);
+    if (cCache) return cCache;
+    // TX not cached, fetch it the long way and cache it!
+    const cTx = await rpcMain.call('getrawtransaction', strID, 1);
+    // Only cache TXs that are InstantLock'd, for security
+    if (cTx.instantlock || cTx.chainlock) {
+        arrRawTxCache.unshift(cTx);
+    }
+    // Ensure the cache doesn't grow "too" big
+    if (arrRawTxCache.length > 10000) arrRawTxCache.pop();
+    // Return the cached result
+    return arrRawTxCache[0];
+}
+
 async function getFullMempool() {
     const arrFullMempool = [];
     const arrMempool = await rpcMain.call('getrawmempool');
@@ -531,7 +561,7 @@ async function getFullMempool() {
 async function isCallAuthorized(cTx, strAuthAddr) {
     for (const cVin of cTx.vin) {
         // Fetch the VIN raw tx
-        const vinTx = await rpcMain.call('getrawtransaction', cVin.txid, 1);
+        const vinTx = await getRawTx(cVin.txid);
         // Ensure all vins are from the 'authAddr' address
         const strVinAddr = vinTx.vout[cVin.vout].scriptPubKey.addresses[0];
         if (strVinAddr !== strAuthAddr) {
