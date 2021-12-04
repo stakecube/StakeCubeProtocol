@@ -759,8 +759,6 @@
       let strRendering = '';
       // Check if we're rendering all our NFTs, or a specific contract's NFTs
       if (nContract === -1) {
-        const strAddr = WALLET.getActiveWallet().getPubkey();
-        getMempoolActivity(strAddr, true);
         // Set title
         domCollectionsName.innerText = 'My NFTs';
         // Hide the mint button
@@ -1575,20 +1573,17 @@
       const strAddr = WALLET.getActiveWallet().getPubkey();
       if (strAddr) {
         getUnspentTransactions();
-        if (isFullnodePtr()) {
-          // Fetches all activity via fullnode
-          getMempoolActivity(strAddr).then(arrRes => cachedActivityIS = arrRes);
-        } else {
+        if (!isFullnodePtr()) {
           // Fetches SCP-1 and SCP-2 activity
           NET.getMempoolActivityLight(strAddr).then(strRes => {
             cachedActivityIS = JSON.parse(strRes);
           });
           // Updates NFTs and other contracts
-          getMempoolActivity(strAddr).then(res => {
-            if (domViewNFT.style.display === "block") {
+          if (domViewNFT.style.display === "block") {
+            getMempoolActivity(strAddr).then(res => {
               renderDetailedNFT(domNftDetailID.innerText);
-            }
-          });
+            });
+          }
         }
       }
       // Update Dashboard stats
