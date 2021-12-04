@@ -257,6 +257,7 @@
     let domNftDetailOwner;
     let domNftDetailActivity;
     let domNftDetailActions;
+    let domNftMintSubtitle;
     let domNftMintOpts;
     let domNftMintProgress;
 
@@ -702,7 +703,7 @@
           const strTypeSymbol = ((strType === 'received' || strType === 'staked') ? "+" : "-");
           const strCoinTicker = cActivity.token ? cActivity.token.ticker : 'SCC';
           const strExplorerID = strTx ? 'style="cursor: pointer;" onclick="openExternalURL(\'https://scc.ccore.online/transaction/' + strTx + '\')"' : '';
-          strActivityList += '<div class="mt-4" ' + strExplorerID + '><div class="float-start text-center">' + (fIsNumBlk ? 'Block ' : '') + ' ' + strBlk + '</div><span class="float-end ' + strTypeColour + '-balance-color font-weight-bold" style="position:relative; top:11px;"><i style="text-transform: capitalize;padding-right:5px;">' + strType + '</i> ' + strTypeSymbol + Math.abs(nValue).toLocaleString('en-GB', { maximumFractionDigits: nValue > 1 ? 2 : 8, minimumFractionDigits: 2 }) + ' ' + strCoinTicker + '</span></div><br><br><hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">';
+          strActivityList += '<div class="mt-4 hover-darker" ' + strExplorerID + '><div class="float-start text-center">' + (fIsNumBlk ? 'Block ' : '') + ' ' + strBlk + '</div><span class="float-end ' + strTypeColour + '-balance-color font-weight-bold" style="position:relative; top:11px;"><i style="text-transform: capitalize;padding-right:5px;">' + strType + '</i> ' + strTypeSymbol + Math.abs(nValue).toLocaleString('en-GB', { maximumFractionDigits: nValue > 1 ? 2 : 8, minimumFractionDigits: 2 }) + ' ' + strCoinTicker + '</span></div><br><br><hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">';
         }
         domActivityList.innerHTML += strActivityList;
       } else {
@@ -729,12 +730,11 @@
         // Construct the render structure
         strRendering += `
                 <tr>
-                  <td>${formatName(cColl.collectionName, 40)}</td>
+                  <td style="cursor:pointer" onclick="switchToViewCollection();renderNFTs(${cColl.index});">${formatName(cColl.collectionName, 40)}</td>
                   <td>${nCardSupply.toLocaleString('en-GB')}</td>
                   <td title="${cColl.maxMints > 0 ? (cColl.maxMints - cColl.burnedNFTs).toLocaleString('en-GB') : "This collection has no NFT cap"}">${cColl.maxMints === -1 ? 'Unlimited' : formatAmount(cColl.maxMints - cColl.burnedNFTs)}</td>
                   <td><span class="subtext">${cColl.protected ? 'Yes' : 'No'}</span></td>
                   <td style="padding-top: 11px;">
-                    <i class="far fa-eye" style="cursor: pointer;" onclick="switchToViewCollection();renderNFTs(${cColl.index});"></i>
                     ${fCanMint ? '<i class="fas fa-plus" style="margin-left: 10px;' + (cColl.mempool ? 'opacity:0.4;' : 'cursor: pointer;') + '" ' + (cColl.mempool ? 'title="Collection is confirming, you can mint once fully confirmed!"' : 'onclick="nSelectedCollection=' + cColl.index + ';switchToNftCreator();"') + '></i>' : ''}
                   </td>
                 </tr>`;
@@ -901,11 +901,11 @@
       for (const cActivity of arrActivity) {
         strRendering += `
           <tr>
-            <td>${formatName(cActivity.tx, 6)}</td>
-            <td><span class="badge" style="background-color:#c36666;text-transform:capitalize;">${cActivity.type}</span></td>
-            <td>${cActivity.from !== null ? formatName(cActivity.from, 6) : 'Mint'}</td>
-            <td>${cActivity.to !== null ? formatName(cActivity.to, 6) : 'Burn'}</td>
-            <td>${cActivity.block.toLocaleString('en-GB')}</td>
+            <td style="cursor:pointer" class="hover-darker" onclick="copyToClipboard('${cActivity.tx}', 'Transaction ID')">${formatName(cActivity.tx, 6)}</td>
+            <td><span onclick="copyToClipboard('${cActivity.type}', 'Type')" class="badge hover-darker" style="background-color:#c36666;text-transform:capitalize;cursor:pointer;">${cActivity.type}</span></td>
+            <td style="cursor:pointer" class="hover-darker" onclick="copyToClipboard('${cActivity.from}', 'Sender Address')">${cActivity.from !== null ? formatName(cActivity.from, 6) : 'Mint'}</td>
+            <td style="cursor:pointer" class="hover-darker" onclick="copyToClipboard('${cActivity.to}', 'Receive Address')">${cActivity.to !== null ? formatName(cActivity.to, 6) : 'Burn'}</td>
+            <td style="cursor:pointer" class="hover-darker" onclick="copyToClipboard('${cActivity.block}', 'Block Height')">${cActivity.block.toLocaleString('en-GB')}</td>
           </tr>`;
       }
       // Render the details page
@@ -1678,8 +1678,9 @@
       domNftDetailOwner = document.getElementById('nftDetailOwner');
       domNftDetailActivity = document.getElementById('nftDetailActivity');
       domNftDetailActions = document.getElementById('nftDetailActions');
-      domNftMintProgress = document.getElementById('nftMintProgress');
+      domNftMintSubtitle = document.getElementById('nftMintSubtitle');
       domNftMintOpts = document.getElementById('nftMintOpts');
+      domNftMintProgress = document.getElementById('nftMintProgress');
       dom2FAMenu = document.getElementById("2faBtnMenu");
       domStakingTitle = document.getElementById("stakingTitle");
       domStakingSubtitle = document.getElementById("stakingSubtitle");
@@ -1791,7 +1792,7 @@
           <div class="card card-prop mb-4">
             <div class="card-body">
               <div class="card-title font-gray font-weight-bold">Balance<span
-                  id="balanceRefresh" onclick="getBlockCount(); getUnspentTransactions();" class="float-end theme-color refresh-button reload"><i class="fas fa-redo-alt"></i></span></div>
+                  id="balanceRefresh" onclick="getBlockCount(); getUnspentTransactions();" class="float-end theme-color refresh-button reload hover-darker"><i class="fas fa-redo-alt"></i></span></div>
               <div class="mt-4 theme-color-secondary font-weight-bold">
                 <div class="float-end"><span id="guiBalance" class="font-balance">...</span> <span
                     class="font-size-ticker">SCC</span></div><br><br>
@@ -2540,7 +2541,7 @@
                       <div class="form-check form-switch" style="width: 100%;display: flex;padding-left: 4px;margin-top: 5px;">
                         <input class="form-check-input darkBorder" type="checkbox" value="" id="scpCollectionProtected" checked="true" style="margin-left: auto;margin-right: auto;">
                       </div>
-                      <span style="font-size:12px;color:#97a1b1;">Disabling this will allow NFTs in this Collection to be burned by it's holders.</span>
+                      <span style="font-size:12px;color:#97a1b1;">Disabling this will allow NFTs in this Collection to be burned by its holders.</span>
                     </div>
                   </div>
                   <hr style="color: #bcc4d2;">
@@ -2635,7 +2636,7 @@
     <div class="container-fluid marketing pt-navbar" id="viewNFT">
       <div class="container">
         <div class="d-inline-flex flex-column lh-sm" style="position: relative; top: -7px">
-          <span id="nftDetailTitle" style="font-size:x-large;"></span>
+          <span id="nftDetailTitle" class="hover-darker" onclick="copyToClipboard(this.innerText, 'Name')" style="font-size:x-large;cursor:pointer;"></span>
           <span id="nftDetailMintCount" style="font-size:0.75em;background-color: transparent;" class="kbd">
             <b></b><b style="opacity: 0.75"></b>
           </span>
@@ -2647,7 +2648,7 @@
 
         <div class="row">
           <div class="col-4">
-            <img id="nftDetailImg" style="width:100%; border-radius: 10px;">
+            <img id="nftDetailImg" class="hover-darker" onclick="copyToClipboard(this.src, 'Image URL')" style="width:100%;border-radius: 10px;cursor:pointer;">
             <div id="nftDetailActions" class="card card-prop mt-4">
               <div class="card-body" style="padding-top: 9px;">
                 <div class="card-title font-gray font-weight-bold">Actions</div>
@@ -2672,15 +2673,15 @@
                     <div class="col">
                       <span class="ls-1">ID</span>
                       <br>
-                      <code id="nftDetailID" class="kbd"></code>
+                      <code id="nftDetailID" onclick="copyToClipboard(this.innerText, 'NFT ID')" style="cursor:pointer" class="kbd hover-darker"></code>
                     </div>
                   </div><br>
 
                   <span class="ls-1">IPFS CID</span><br>
-                  <span id="nftDetailImageID" class="kbd"></span><br><br>
+                  <span id="nftDetailImageID" onclick="copyToClipboard(this.innerText, 'IPFS CID')" style="cursor:pointer" class="kbd hover-darker"></span><br><br>
 
                   <span class="ls-1">OWNER ADDRESS</span><br>
-                  <code id="nftDetailOwner" class="kbd"></code>
+                  <code id="nftDetailOwner" onclick="copyToClipboard(this.innerText, 'Address')" style="cursor:pointer" class="kbd hover-darker"></code>
                 </div>
               </div>
             </div>
@@ -2711,8 +2712,10 @@
     </div>
     <script>
       function switchToNftCreator() {
+        const cColl = isFullnode ? NFT.getCollection(nSelectedCollection) : getCachedCollection(nSelectedCollection);
         closeAllTabs();
         domCreateNftPage.style.display = 'block';
+        domNftMintSubtitle.innerText = cColl.collectionName + ': Mint an NFT';
       }
 
       let bRawImageBuf;
@@ -2759,85 +2762,95 @@
         cProgress.style.width = '10%';
         await sleep(1000);
         try {
-          for (let i = 0; i<intervals; i++) {
-            const fLastMint = i === intervals - 1;
-            const fAlreadyUploaded = bRawImageBuf.length === nLastImageLen;
-            cProgress.style.width = (fAlreadyUploaded ? '50' : '20') + '%';
-            cText.innerText = fAlreadyUploaded ? 'Fetching cached IPFS CID' : 'Uploading image to IPFS';
-            const cRetIPFS = !fAlreadyUploaded ? JSON.parse(await NET.uploadToIPFS(bRawImageBuf)) : undefined;
-            if ((fAlreadyUploaded && strLastImageCID) || (cRetIPFS && cRetIPFS.ok && cRetIPFS.value.cid.length)) {
-              // Prepare the progress text
-              const strInterval = !fLastMint ? ' (' + (i+1) + '/' + intervals + ')' : '';
-              // Fetch the latest UTXOs
-              cProgress.style.width = '70%';
-              cText.innerText = 'Preparing UTXOs' + strInterval;
-              const strAddr = WALLET.getActiveWallet().getPubkey();
-              await WALLET.refreshUTXOs(strAddr);
-              // Construct mint transaction
-              const strName = document.getElementById('scpNftName').value;
-              cProgress.style.width = '80%';
-              cText.innerText = 'Minting "' + formatName(strName, 24) + '"' + strInterval;
-              console.log('NFT Uploader: ' + (fAlreadyUploaded ?
-                                            'Using cached CID' :
-                                            'Uploaded new image (' + bRawImageBuf.length + 'b) to IPFS'));
-              // Save the image byte length (this will be used to prevent re-uploads of the same image)
-              nLastImageLen = bRawImageBuf.length;
-              // Grab the IPFS CID
-              const strCID = fAlreadyUploaded ? strLastImageCID : cRetIPFS.value.cid;
-              strLastImageCID = strCID;
-              // Prepare wallet
-              const cCollection = isFullnode ? NFT.getCollection(nSelectedCollection) : getCachedCollection(nSelectedCollection);
-              console.log("Constructing SCP-" + cCollection.version + " NFT mint TX!");
-              // Contruct SCP transaction
-              const cTx = WALLET.sccjs.tx.transaction();
-              // Add input
-              const cUTXO = WALLET.getCoinsToSpend(2000, true, strAddr)[0];
-              if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
-              cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
-              // SCP output
-              cTx.addoutputburn(0.00000001, cCollection.contract + ' mint ' + strName + ' ' + strCID);
-              // Fee & Change output
-              const nFee = WALLET.getFee(cTx.serialize().length);
-              const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-              cTx.addoutput(strAddr, nChange);
-              // Broadcast
-              cText.innerText = 'Signing TX' + strInterval;
-              cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
+          const fAlreadyUploaded = bRawImageBuf.length === nLastImageLen;
+          cProgress.style.width = (fAlreadyUploaded ? '50' : '20') + '%';
+          cText.innerText = fAlreadyUploaded ? 'Fetching cached IPFS CID' : 'Uploading image to IPFS';
+          const cRetIPFS = !fAlreadyUploaded ? JSON.parse(await NET.uploadToIPFS(bRawImageBuf)) : undefined;
+          try {
+            for (let i = 0; i<intervals; i++) {
+              const fLastMint = i === intervals - 1;
+              if ((fAlreadyUploaded && strLastImageCID) || (cRetIPFS && cRetIPFS.ok && cRetIPFS.value.cid.length)) {
+                // Prepare the progress text
+                const strInterval = !fLastMint ? ' (' + (i+1) + '/' + intervals + ')' : '';
+                // Fetch the latest UTXOs
+                cProgress.style.width = '70%';
+                cText.innerText = 'Preparing UTXOs' + strInterval;
+                const strAddr = WALLET.getActiveWallet().getPubkey();
+                await WALLET.refreshUTXOs(strAddr);
+                // Construct mint transaction
+                const strName = document.getElementById('scpNftName').value;
+                cProgress.style.width = '80%';
+                cText.innerText = 'Minting "' + formatName(strName, 24) + '"' + strInterval;
+                console.log('NFT Uploader: ' + (fAlreadyUploaded ?
+                                              'Using cached CID' :
+                                              'Uploaded new image (' + bRawImageBuf.length + 'b) to IPFS'));
+                // Save the image byte length (this will be used to prevent re-uploads of the same image)
+                nLastImageLen = bRawImageBuf.length;
+                // Grab the IPFS CID
+                const strCID = fAlreadyUploaded ? strLastImageCID : cRetIPFS.value.cid;
+                strLastImageCID = strCID;
+                // Prepare wallet
+                const cCollection = isFullnode ? NFT.getCollection(nSelectedCollection) : getCachedCollection(nSelectedCollection);
+                console.log("Constructing SCP-" + cCollection.version + " NFT mint TX!");
+                // Contruct SCP transaction
+                const cTx = WALLET.sccjs.tx.transaction();
+                // Add input
+                const cUTXO = WALLET.getCoinsToSpend(2000, true, strAddr)[0];
+                if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
+                cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
+                // SCP output
+                cTx.addoutputburn(0.00000001, cCollection.contract + ' mint ' + strName + ' ' + strCID);
+                // Fee & Change output
+                const nFee = WALLET.getFee(cTx.serialize().length);
+                const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
+                cTx.addoutput(strAddr, nChange);
+                // Sign
+                cText.innerText = 'Signing TX' + strInterval;
+                const strSignedTx = await cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1);
                 cProgress.style.width = '90%';
+                // Broadcast
                 cText.innerText = 'Broadcasting TX' + strInterval;
-                WALLET.broadcastTx(strSignedTx).then(strTXID => {
-                  if (fLastMint) {
-                    strLastNftID = strTXID; 
-                    M.toast({html: 'Minting! Please wait for block confirmations!', displayLength: 5000});
+                const strTXID = await WALLET.broadcastTx(strSignedTx);
+                cUTXO.spent = true;
+                if (fLastMint) {
+                  strLastNftID = strTXID;
+                  M.toast({html: 'Minting! Please wait for block confirmations!', displayLength: 5000});
+                  cProgress.style.width = '100%';
+                  cText.innerText = 'Done!';
+                  if (isFullnodePtr()) {
+                    getMempoolActivity(strAddr).then(arrRes => cachedActivityIS = arrRes);
+                  } else {
+                    NET.getMempoolActivityLight(strAddr).then(strRes => {
+                      cachedActivityIS = JSON.parse(strRes);
+                    });
+                    getUnspentTransactions();
+                    // Updates NFTs and other contracts
+                    getMempoolActivity(strAddr);
                   }
-                  cUTXO.spent = true;
-                  if (fLastMint) {
-                    cProgress.style.width = '100%';
-                    cText.innerText = 'Done!';
-                    if (isFullnodePtr()) {
-                      getMempoolActivity(strAddr).then(arrRes => cachedActivityIS = arrRes);
-                    } else {
-                      NET.getMempoolActivityLight(strAddr).then(strRes => {
-                        cachedActivityIS = JSON.parse(strRes);
-                      });
-                      getUnspentTransactions();
-                      // Updates NFTs and other contracts
-                      getMempoolActivity(strAddr);
-                    }
-                    setTimeout(() => {
-                      cProgress.style.width = '0%';
-                      domNftMintOpts.style.display = 'block';
-                      domNftMintProgress.style.display = 'none';
-                    }, 2500);
-                  }
-                });
-              });
-            } else {
+                  setTimeout(() => {
+                    cProgress.style.width = '0%';
+                    domNftMintOpts.style.display = 'block';
+                    domNftMintProgress.style.display = 'none';
+                  }, 2500);
+                }
+              } else {
+                cProgress.style.width = '0%';
+                domNftMintOpts.style.display = 'block';
+                domNftMintProgress.style.display = 'none';
+                return M.toast({html: 'IPFS Upload failed, retry later!', displayLength: 3000});
+              }
+            }
+          } catch (e) {
+            console.error('NFT Broadcast error: Likely a wallet or UTXO set issue, please wait for one block before re-attempting!');
+            console.error(e);
+            M.toast({html: 'Mint error! Please re-try in one block, wallet may be exhausted.', displayLength: 5000});
+            cProgress.style.width = '100%';
+            cText.innerText = 'Broadcast Failure!';
+            setTimeout(() => {
               cProgress.style.width = '0%';
               domNftMintOpts.style.display = 'block';
               domNftMintProgress.style.display = 'none';
-              return M.toast({html: 'IPFS Upload failed, retry later!', displayLength: 3000});
-            }
+            }, 2500);
           }
         } catch (e) {
           console.log(e);
@@ -2878,7 +2891,7 @@
     </script>
 
     <div class="container marketing pt-navbar" id="createNftPage">
-      <h4 class="mb-5 theme-color-secondary font-weight-bold">Create NFT</h4>
+      <h4 class="mb-5 theme-color-secondary font-weight-bold">Mint NFT</h4>
       
       <div class="float-end" style="margin-top:-50px;">
         <button type="button" class="btn btn-theme btn-sm" onclick="switchToViewCollection()">Visit Collection</button>
@@ -2888,7 +2901,7 @@
         <div class="col-lg-8 offset-lg-2">
           <div class="card card-prop mb-4">
             <div class="card-body">
-              <div class="card-title font-gray font-weight-bold">NFT information</div>
+              <div id="nftMintSubtitle" class="card-title font-gray font-weight-bold">NFT information</div>
 
               <div class="alert alert-danger-custom" style="font-size:13px; display: none;" id="scpTokenErrorsWidget">
                 <i class="fas fa-exclamation-triangle" style="margin-right: 6px;"></i><b id="scpTokenErrors"></b>
@@ -2929,7 +2942,7 @@
                   <input id="scpNftDeployQty" type="range" class="form-range" value="1" min="1" max="20" id="nftQuantity">
                 </h5>
                 <p style="opacity:0.3;font-size:0.7em;margin-top:1rem;margin-bottom: 0;">Minting NFTs is FREE! There are no additional costs for minting, minus blockchain fees.</p>
-                <button id="scpNftDeployBtn" onclick="nftUpload()" disabled="" style="margin-top: 10px;" class="btn btn-theme btn-layout">Create NFT</button>
+                <button id="scpNftDeployBtn" onclick="nftUpload()" disabled="" style="margin-top: 10px;" class="btn btn-theme btn-layout">Start Minting</button>
               </center>
               <center id="nftMintProgress" style="display: none;">
                 <h5 id="mintText" style="margin-bottom: 0.5em; margin-top: 0.5em;">Initializing Minter</h5>
@@ -3067,7 +3080,6 @@
 
   <!-- Materialize Library -->
   <script type="text/javascript" src="js/materialize.js"></script>
-
   <script src="js/bootstrap.bundle.min.js"></script>
   <script src="js/select.js"></script>
 
