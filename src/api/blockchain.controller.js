@@ -55,8 +55,9 @@ function disabledError(res) {
 function hasPermission(req, res) {
     // Caller IP check
     if (!arrAllowedCallers.includes('all') &&
-        !arrAllowedCallers.includes(req.ip.replace(/::ffff:/g, '')))
-            return callerError(req, res);
+        !arrAllowedCallers.includes(req.ip.replace(/::ffff:/g, ''))) {
+        return callerError(req, res);
+    }
     // Full Node check
     if (!ptrIsFullnode()) return fullnodeError(res);
     // Module activation status

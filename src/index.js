@@ -164,10 +164,10 @@ async function init(forcedCorePath = false, retry = false) {
         NFT.init(getBlockcount);
         // Load which caller addresses (if any) can call the API
         const arrAllowedCallers = DB.getConfigValue('allowedips', '127.0.0.1',
-                                                    false)
-                                                    .replace(/::ffff:/g, '')
-                                                    .replace(/ /g, '')
-                                                    .split(',');
+            false)
+            .replace(/::ffff:/g, '')
+            .replace(/ /g, '')
+            .split(',');
         // Initialize API modules, providing mutable pointer contexts to all necessary states
         if (!fInitialized) {
             fInitialized = true;
@@ -496,8 +496,9 @@ async function getMsgsFromBlock(blk) {
 async function getMsgFromTx(rawTX, useCache = false, strFormat = 'utf8') {
     let res;
     try {
-        res = await (useCache ? getRawTx(rawTX) :
-                                rpcMain.call('getrawtransaction', rawTX, 1));
+        res = await (useCache
+            ? getRawTx(rawTX)
+            : rpcMain.call('getrawtransaction', rawTX, 1));
     } catch(e) {
         return {
             'error': true,
@@ -538,8 +539,9 @@ async function getRawTx(strID) {
     // TX not cached, fetch it the long way and cache it!
     const cTx = await rpcMain.call('getrawtransaction', strID, 1);
     // Only cache TXs that are InstantLock'd, for security
-    if (cTx.instantlock || cTx.chainlock)
+    if (cTx.instantlock || cTx.chainlock) {
         arrRawTxCache.unshift(cTx);
+    }
     // Ensure the cache doesn't grow "too" big
     if (arrRawTxCache.length > 10000) arrRawTxCache.pop();
     // Return the cached result

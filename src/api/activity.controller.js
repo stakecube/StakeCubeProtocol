@@ -284,7 +284,8 @@ async function getMempoolActivity(req, res) {
 
                         case 'redeem':
                             cActivity.type = 'staked';
-                            const cStatus = cToken.getStakingStatus(cToken.getAccount(cAccount));
+                            const cStatus = cToken.getStakingStatus(cToken
+                                .getAccount(cAccount));
                             cActivity.amount = cStatus.unclaimed_rewards;
                             if (!account ||
                                     (account && cAccount === account)) {
@@ -336,8 +337,9 @@ function disabledError(res) {
 function hasPermission(req, res) {
     // Caller IP check
     if (!arrAllowedCallers.includes('all') &&
-        !arrAllowedCallers.includes(req.ip.replace(/::ffff:/g, '')))
-            return callerError(req, res);
+        !arrAllowedCallers.includes(req.ip.replace(/::ffff:/g, ''))) {
+        return callerError(req, res);
+    }
     // Full Node check
     if (!ptrIsFullnode()) return fullnodeError(res);
     // Module activation status
