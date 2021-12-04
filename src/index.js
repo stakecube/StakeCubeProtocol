@@ -493,10 +493,11 @@ async function getMsgsFromBlock(blk) {
     return true;
 }
 
-async function getMsgFromTx(rawTX, strFormat = 'utf8') {
+async function getMsgFromTx(rawTX, useCache = false, strFormat = 'utf8') {
     let res;
     try {
-        res = await getRawTx(rawTX);
+        res = await (useCache ? getRawTx(rawTX) :
+                                rpcMain.call('getrawtransaction', rawTX, 1));
     } catch(e) {
         return {
             'error': true,
@@ -546,10 +547,12 @@ async function getRawTx(strID) {
 }
 
 async function getFullMempool() {
-    // Map each TX-ID to it's raw structure, either by cache or node RPC
-    const arrMempool = (await rpcMain.call('getrawmempool')).map(getRawTx);
-    // Return the array of resolved getRawTx promises
-    return await Promise.all(arrMempool);
+    const arrFullMempool = [];
+    const arrMempool = await rpcMain.call('getrawmempool');
+    for (const cTX of arrMempool) {
+        arrFullMempool.push(await rpcMain.call('getrawtransaction', cTX, 1));
+    }
+    return arrFullMempool;
 }
 
 // Deterministically Authenticate a contract interaction via it's inputs

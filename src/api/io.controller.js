@@ -52,7 +52,7 @@ async function readTx(req, res) {
             'error': 'Encoding format (' + strFormat + ') is invalid'
         });
     }
-    res.json(await ptrGetMsgFromTx(strTxid, strFormat));
+    res.json(await ptrGetMsgFromTx(strTxid, true, strFormat));
 }
 
 async function writeTx(req, res) {
