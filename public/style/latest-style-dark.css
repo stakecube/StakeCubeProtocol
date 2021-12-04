@@ -126,12 +126,14 @@ input {
   background-color: rgb(0, 39, 89);
 }
 
-.hover-darker {
-  color: #ffffff!important;
+.hover-darker:hover {
+  opacity: 0.5;
 }
 
-.hover-darker:hover {
-  color: #c7c7c7!important;
+.hover-darker {
+  opacity: unset;
+  transition-timing-function: ease-in-out;
+  transition-duration: 0.15s;
 }
 
  /* width */
@@ -500,7 +502,7 @@ div.omrs-input-group {
   font-family: var(--bs-font-monospace);
   font-size: .875em;
   padding: 3px 4px;
-  color: #0fcad5;
+  color: #0fcad5!important;
   line-height: 22px;
 }
 

@@ -189,6 +189,7 @@ function getAllCollectionHeaders() {
         const arrHolders = [];
         // Aggregate and sum unique / non-duplicated holders
         for (const cNFT of cColl.nfts) {
+            if (cNFT.owner === null) continue;
             if (arrHolders.includes(cNFT.owner)) continue;
             arrHolders.push(cNFT.owner);
         }

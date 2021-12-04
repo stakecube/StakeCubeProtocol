@@ -168,11 +168,13 @@ body {
 }
 
 .hover-darker:hover {
-  color:#4b4b4b!important;
+  opacity: 0.5;
 }
 
 .hover-darker {
-  color:#696969!important;
+  opacity: unset;
+  transition-timing-function: ease-in-out;
+  transition-duration: 0.15s;
 }
 
 .textbox-custom {

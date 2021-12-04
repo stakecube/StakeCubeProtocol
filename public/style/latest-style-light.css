@@ -417,7 +417,7 @@ div.omrs-input-group {
   font-family: var(--bs-font-monospace);
   font-size: .875em;
   padding: 3px 4px;
-  color: #0045ac;
+  color: #0045ac!important;
   line-height: 22px;
 }
 
