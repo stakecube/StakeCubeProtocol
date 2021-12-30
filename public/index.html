@@ -718,9 +718,18 @@
       let strRendering = '';
       // Get the current Collections source (full-node or lightwallet sources)
       const arrColls = isFullnode ? NFT.getCollectionPtr() : getCachedCollections();
-      // Loop all SCP-4-like Collections and append each to the display table
+      // Loop all SCP-4-like Collections and sort them into owned/unowned
+      const arrOwned = [], arrUnowned = [];
       for (const cColl of arrColls) {
         if (strCollSearch.length && !(cColl.collectionName.toLowerCase().includes(strCollSearch) || cColl.creator.toLowerCase().includes(strCollSearch) || strCollSearch.includes(cColl.contract))) continue;
+        // Check if this Collection was created by me
+        if (cColl.creator === WALLET.getActiveWallet().getPubkey())
+          arrOwned.push(cColl);
+        else
+          arrUnowned.push(cColl);
+      }
+      // Loop all sorted collections and render them into HTML chunks
+      for (const cColl of arrOwned.concat(arrUnowned)) {
         // Calculate the supply (All existing NFTs that have not been burned)
         const nCardSupply = isFullnode ?
                               cColl.nfts.filter(a => a.owner !== null).length :
@@ -735,7 +744,7 @@
                   <td title="${cColl.maxMints > 0 ? (cColl.maxMints - cColl.burnedNFTs).toLocaleString('en-GB') : "This collection has no NFT cap"}">${cColl.maxMints === -1 ? 'Unlimited' : formatAmount(cColl.maxMints - cColl.burnedNFTs)}</td>
                   <td><span class="subtext">${cColl.protected ? 'Yes' : 'No'}</span></td>
                   <td style="padding-top: 11px;">
-                    ${fCanMint ? '<i class="fas fa-plus" style="margin-left: 10px;' + (cColl.mempool ? 'opacity:0.4;' : 'cursor: pointer;') + '" ' + (cColl.mempool ? 'title="Collection is confirming, you can mint once fully confirmed!"' : 'onclick="nSelectedCollection=' + cColl.index + ';switchToNftCreator();"') + '></i>' : ''}
+                    ${fCanMint ? '<i class="fas fa-plus" style="margin-left: 10px;' + (cColl.mempool ? 'opacity:0.4;' : 'cursor: pointer;') + '" ' + (cColl.mempool ? 'title="Collection is confirming, you can mint once fully confirmed!"' : 'onclick="nSelectedCollection=' + cColl.index + ';switchToNftCreator();" title="Mint NFTs"') + '></i>' : ''}
                   </td>
                 </tr>`;
       }
@@ -1264,7 +1273,6 @@
             getMempoolActivity(strAddr).then(res => {
               if (version === 4) {
                 switchToCollections();
-                window.scrollTo(0, document.body.scrollHeight);
               }
             });
           });
