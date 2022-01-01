@@ -870,18 +870,20 @@
       }
     }
 
-    async function renderDetailedNFT(strID) {
+    async function renderDetailedNFT(strID, fRefresh = true) {
       const strAddr = WALLET.getActiveWallet().getPubkey();
       // Find the NFT and Collection after refreshing mempool cache
       getMempoolActivity(strAddr, true);
       const cNFT = isFullnode ? NFT.getNFTbyId(strID) : getCachedNFT(strID);
       const cColl = isFullnode ? NFT.getCollection(cNFT.collectionIndex) : (typeof cNFT.collectionIndex === 'number' ? getCachedCollection(cNFT.collectionIndex) : getCachedCollectionByNftID(strID));
+      // Select the NFT
+      cSelectedNFT = getCachedNFT(cNFT.id || cNFT.nft, true);
       // Refresh the latest cache of this NFT's collection
       const isCached = domNftDetailID.innerText === strID;
       if (isCached) {
         await fetchNFTs(cColl);
       } else {
-        fetchNFTs(cColl, strID);
+        fetchNFTs(cColl, fRefresh ? strID : null);
       }
       // Cache the ownership status
       const fOwned = cNFT.owner ? cNFT.owner === strAddr : true;
@@ -957,8 +959,6 @@
         domNFTBurnBtn.setAttribute('data-bs-toggle', '');
         domNFTBurnBtn.setAttribute('title', '');
       }
-      // Select the NFT
-      cSelectedNFT = getCachedNFT(cNFT.id || cNFT.nft, true);
     }
 
     function setActivityView(viewSCP) {
@@ -1038,8 +1038,9 @@
       const cCollRes = JSON.parse(await NET.getLightCollection(cColl.contract));
       if (!cCollRes.error)
         addCachedCollection(cCollRes);
-      if (renderID !== null)
-        renderDetailedNFT(renderID);
+      // We check the Selected NFT is the same as the Render NFT, incase the user switched selection during a slow fetchNFTs(), preventing a race condition
+      if (renderID !== null && renderID === (cSelectedNFT.id || cSelectedNFT.nft))
+        renderDetailedNFT(renderID, false);
       return getCachedCollection(cColl.index);
     }
 
