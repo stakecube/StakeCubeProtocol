@@ -244,3 +244,31 @@ rm -r -f database evodb blocks chainstate llmq
 wget https://github.com/stakecube/StakeCubeCoin/releases/download/v3.1.0/bootstrap.zip
 unzip -o bootstrap.zip
 ```
+
+2. Add nodes to stakecubecoin.conf
+
+```bash
+cd /home/scc/.stakecubecoin
+nano stakecubecoin.conf
+```
+
+Paste this at the end of the file.
+
+```bash
+addnode=188.165.203.96
+addnode=161.97.80.185
+addnode=95.217.67.228
+addnode=95.216.234.131
+addnode=95.217.79.132
+addnode=88.198.135.172
+addnode=62.171.158.197
+addnode=173.249.21.122
+```
+
+If these nodes do not work for you try fetching a fresh list from StakeCube's discord bot BotCube#3357
+
+Send this command to the Bot's DM.
+
+```bash
+!addnodes scc
+```
