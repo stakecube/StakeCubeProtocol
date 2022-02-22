@@ -37,7 +37,7 @@
   "config": {
     "forge": {
       "packagerConfig": {
-        "icon": "public/imgs/scp.ico",
+        "icon": "./public/imgs/scp",
         "ignore": ["docs", ".github", ".gitignore", "linter.js", ".eslintrc.js"]
       },
       "makers": [
