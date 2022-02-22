@@ -241,6 +241,6 @@ Make sure that the SCC daemon is stopped.
 ```bash
 cd /home/scc/.stakecubecoin/
 rm -r -f database evodb blocks chainstate llmq
-wget https://github.com/stakecube/StakeCubeProtocol/releases/latest/download/indexed-bootstrap.zip
-unzip -o indexed-bootstrap.zip
+wget https://github.com/stakecube/StakeCubeCoin/releases/download/v3.1.0/bootstrap.zip
+unzip -o bootstrap.zip
 ```
