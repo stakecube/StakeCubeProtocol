@@ -37,6 +37,7 @@
   "config": {
     "forge": {
       "packagerConfig": {
+        "name": "stakecubeprotocol",
         "icon": "./public/imgs/scp",
         "ignore": ["docs", ".github", ".gitignore", "linter.js", ".eslintrc.js"]
       },
