@@ -541,11 +541,14 @@ async function getRawTx(strID) {
     // Only cache TXs that are InstantLock'd, for security
     if (cTx.instantlock || cTx.chainlock) {
         arrRawTxCache.unshift(cTx);
+        // Ensure the cache doesn't grow "too" big
+        if (arrRawTxCache.length > 10000) arrRawTxCache.pop();
+        // Return the cached result
+        return arrRawTxCache[0];
+    } else {
+        // Return non-lcoked TX without caching it
+        return cTx;
     }
-    // Ensure the cache doesn't grow "too" big
-    if (arrRawTxCache.length > 10000) arrRawTxCache.pop();
-    // Return the cached result
-    return arrRawTxCache[0];
 }
 
 async function getFullMempool() {
