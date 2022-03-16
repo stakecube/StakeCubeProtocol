@@ -179,6 +179,9 @@ Content of the *scp.conf* file
 ```bash  
 coredatadir=/home/scc/.stakecubecoin/
 coreconfname=stakecubecoin.conf
+apimodules=activity,blockchain,tokens,wallet,io
+allowedips=all
+apiport=3000
 ```
 
 Start SCP with pm2:
