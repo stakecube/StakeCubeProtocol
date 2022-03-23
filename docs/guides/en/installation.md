@@ -51,8 +51,8 @@ Download the SCC daemon for Linux:
 cd /home/
 mkdir scc
 cd scc
-wget https://github.com/stakecube/StakeCubeCoin/releases/download/v3.1.0/scc-3.1.0-linux-daemon.zip
-unzip scc-3.1.0-linux-daemon.zip
+wget https://github.com/stakecube/StakeCubeCoin/releases/download/v3.2.0/scc-3.2.0-linux-daemon.zip
+unzip scc-3.2.0-linux-daemon.zip
 ```
 
 > It is recommended to use the latest version. You can find the code and all downloads here: https://github.com/stakecube/StakeCubeCoin.
