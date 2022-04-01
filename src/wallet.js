@@ -149,7 +149,7 @@ function addWallet(cNewWallet = new Wallet()) {
 
 // Creates a new wallet
 async function createWallet() {
-    const rawWallet = await sccjs.generateWallet();
+    const rawWallet = await sccjs.wallet.generateWallet();
     addWallet(new Wallet(rawWallet.pubkey, rawWallet.privkey, false));
     console.log('Created new wallet! Now ' + arrWallets.length + ' loaded.');
     // Return the *pointer* of the new wallet - very important to avoid data loss!

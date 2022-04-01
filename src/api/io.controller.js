@@ -94,7 +94,7 @@ async function writeTx(req, res) {
         await ptrWALLET.refreshUTXOs(strPubkey);
 
         // Construct the transaction
-        const cTx = ptrWALLET.sccjs.tx.transaction();
+        const cTx = ptrWALLET.sccjs.wallet.tx.transaction();
         // Add input
         const cUTXO = ptrWALLET.getCoinsToSpend(10000, true, strPubkey)[0];
         if (!cUTXO) {
@@ -154,7 +154,7 @@ async function createDappIdentifier(req, res) {
         await ptrWALLET.refreshUTXOs(strPubkey);
 
         // Construct the transaction
-        const cTx = ptrWALLET.sccjs.tx.transaction();
+        const cTx = ptrWALLET.sccjs.wallet.tx.transaction();
         // Add input
         const cUTXO = ptrWALLET.getCoinsToSpend(10000, true, strPubkey)[0];
         if (!cUTXO) {
@@ -228,7 +228,7 @@ async function writePushToStorage(req, res) {
         await ptrWALLET.refreshUTXOs(strPubkey);
 
         // Construct the transaction
-        const cTx = ptrWALLET.sccjs.tx.transaction();
+        const cTx = ptrWALLET.sccjs.wallet.tx.transaction();
         // Add input
         const cUTXO = ptrWALLET.getCoinsToSpend(10000, true, strPubkey)[0];
         if (!cUTXO) {
@@ -305,7 +305,7 @@ async function writeKeyToStorage(req, res) {
         await ptrWALLET.refreshUTXOs(strPubkey);
 
         // Construct the transaction
-        const cTx = ptrWALLET.sccjs.tx.transaction();
+        const cTx = ptrWALLET.sccjs.wallet.tx.transaction();
         // Add input
         const cUTXO = ptrWALLET.getCoinsToSpend(10000, true, strPubkey)[0];
         if (!cUTXO) {

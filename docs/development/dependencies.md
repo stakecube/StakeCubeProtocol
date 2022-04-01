@@ -9,6 +9,6 @@ These are the dependencies currently used by SCP:
 |[jquery](https://www.npmjs.com/package/jquery) | 3.6.0 | minor, patch |
 |[otplib](https://www.npmjs.com/package/otplib) | 12.0.1 | minor, patch |
 |[regedit](https://www.npmjs.com/package/regedit) | 3.0.3 | minor, patch |
-|[scc-js](https://www.npmjs.com/package/scc-js) | 1.2.5 | minor, patch |
+|[scc-js](https://www.npmjs.com/package/scc-js) | 1.3.1 | minor, patch |
 
 See package.json for more details

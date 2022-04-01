@@ -199,7 +199,7 @@ async function send(req, res) {
         // Create the transaction!
         if (!cSelectedToken) {
         // --- SCC ---
-            const cTx = ptrWALLET.sccjs.tx.transaction();
+            const cTx = ptrWALLET.sccjs.wallet.tx.transaction();
             // Inputs
             const usedUTXOs = ptrWALLET.getCoinsToSpend(nAmount * COIN,
                 false,
@@ -237,7 +237,7 @@ async function send(req, res) {
             });
         } else {
         // --- SCP ---
-            const cTx = ptrWALLET.sccjs.tx.transaction();
+            const cTx = ptrWALLET.sccjs.wallet.tx.transaction();
             const nCoinsBal = (cSelectedToken.account.balance / COIN);
             if (nAmount > nCoinsBal) {
                 return res
@@ -324,7 +324,7 @@ async function stake(req, res) {
                                     'account.');
         }
         // --- CLAIM STAKE ---
-        const cTx = ptrWALLET.sccjs.tx.transaction();
+        const cTx = ptrWALLET.sccjs.wallet.tx.transaction();
         const nCoinsBal = (cSelectedToken.account.unclaimed_balance / COIN);
         if (nCoinsBal <= 0) {
             return res.status(400).send('You have no pending rewards!');
@@ -405,7 +405,7 @@ async function createCollection(req, res) {
         await ptrWALLET.refreshUTXOs(strPubkey);
 
         // --- CREATE COLLECTION CONTRACT ---
-        const cTx = ptrWALLET.sccjs.tx.transaction();
+        const cTx = ptrWALLET.sccjs.wallet.tx.transaction();
         // Inputs
         const usedUTXOs = ptrWALLET.getCoinsToSpend(nDeployFee * COIN,
             false,
@@ -508,7 +508,7 @@ async function mintNFT(req, res) {
         await ptrWALLET.refreshUTXOs(strPubkey);
 
         // --- MINT NFT ---
-        const cTx = ptrWALLET.sccjs.tx.transaction();
+        const cTx = ptrWALLET.sccjs.wallet.tx.transaction();
         // Add input
         const cUTXO = ptrWALLET.getCoinsToSpend(10000, true, strPubkey)[0];
         if (!cUTXO) {
@@ -598,7 +598,7 @@ async function burnNFT(req, res) {
         await ptrWALLET.refreshUTXOs(strPubkey);
 
         // --- BURN NFT ---
-        const cTx = ptrWALLET.sccjs.tx.transaction();
+        const cTx = ptrWALLET.sccjs.wallet.tx.transaction();
         // Add input
         const cUTXO = ptrWALLET.getCoinsToSpend(10000, true, strPubkey)[0];
         if (!cUTXO) {
@@ -686,7 +686,7 @@ async function transferNFT(req, res) {
         await ptrWALLET.refreshUTXOs(strPubkey);
 
         // --- TRANSFER NFT ---
-        const cTx = ptrWALLET.sccjs.tx.transaction();
+        const cTx = ptrWALLET.sccjs.wallet.tx.transaction();
         // Add input
         const cUTXO = ptrWALLET.getCoinsToSpend(10000, true, strPubkey)[0];
         if (!cUTXO) {

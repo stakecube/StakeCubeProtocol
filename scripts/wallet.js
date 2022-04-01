@@ -5,7 +5,7 @@ encryptWallet = async function(forcedPass = false) {
     const strEncWIF = await encrypt(strWIF, forcedPass);
     if (typeof strEncWIF !== 'string') return false;
     // Set the encrypted wallet and pubkey in DB
-    const strPubkey = cWallet.getPubkey() || WALLET.sccjs.pubFromPriv(strWIF);
+    const strPubkey = cWallet.getPubkey() || WALLET.sccjs.wallet.pubFromPriv(strWIF);
     cWallet.setKeys(strPubkey, null, strEncWIF);
     return strEncWIF;
 };
@@ -23,7 +23,7 @@ decryptWallet = async function(forcedPass = false) {
     if (decWif === 'decryption failed!') {
         return false;
     }
-    const pubkeyDeriv = cWallet.getPubkey() || WALLET.sccjs.pubFromPriv(decWif);
+    const pubkeyDeriv = cWallet.getPubkey() || WALLET.sccjs.wallet.pubFromPriv(decWif);
     cWallet.setKeys(pubkeyDeriv, decWif);
     console.log('Decrypted Address: ' + cWallet.getPubkey());
     return true;

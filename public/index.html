@@ -1066,7 +1066,7 @@
       const strPrivkey = WALLET.getActiveWallet().getPrivkey();
       if (coinSelection === "scc") {
         console.log("Constructing TX of value: " + sendAmount + " SCC");
-        const cTx = WALLET.sccjs.tx.transaction();
+        const cTx = WALLET.sccjs.wallet.tx.transaction();
         // Inputs
         const usedUTXOs = WALLET.getCoinsToSpend(sendAmount * COIN, false, strAddr);
         const nUTXOs = usedUTXOs.reduce((a, b) => {return a + b.sats}, 0);
@@ -1091,7 +1091,7 @@
         const nBal = getMempoolDeltas(cToken.contract) + cAccount.balance;
         if ((nBal / COIN) < sendAmount) return M.toast({html: 'You don\'t have enough ' + cToken.ticker + '!', displayLength: 3000});
         console.log("Constructing SCP-" + cToken.version + " Transfer TX for: " + sendAmount + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
-        const cTx = WALLET.sccjs.tx.transaction();
+        const cTx = WALLET.sccjs.wallet.tx.transaction();
         // Add input
         const cUTXO = WALLET.getCoinsToSpend(10000, true, strAddr)[0];
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
@@ -1136,7 +1136,7 @@
         domStakingRedeem.classList.add('disabled');
         domStakingRedeem.innerText = 'Redeeming...';
         // Contruct SCP transaction
-        const cTx = WALLET.sccjs.tx.transaction();
+        const cTx = WALLET.sccjs.wallet.tx.transaction();
         // Add input
         const cUTXO = WALLET.getCoinsToSpend(2000, true, strAddr)[0];
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
@@ -1181,7 +1181,7 @@
           domClaimAllBtn.style.cursor = "default";
           domClaimAllBtn.innerText = "Claiming " + cToken.token.ticker;
           // Init wallet & TX constructor
-          const cTx = WALLET.sccjs.tx.transaction();
+          const cTx = WALLET.sccjs.wallet.tx.transaction();
           // Asynchronously sync UTXOs with the network
           await WALLET.refreshUTXOs(cWallet.getPubkey());
           // Add input
@@ -1248,7 +1248,7 @@
           }
         }
         console.log("Constructing SCP-" + version + " deployment TX");
-        const cTx = WALLET.sccjs.tx.transaction();
+        const cTx = WALLET.sccjs.wallet.tx.transaction();
         // Inputs
         const strAddr = WALLET.getActiveWallet().getPubkey();
         const nDeployCost = (nDeployFee * COIN) + 1000;
@@ -1284,7 +1284,7 @@
         console.log("Constructing SCP mint TX for " + (amount / COIN).toLocaleString('en-GB'));
         const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
         const strAddr = WALLET.getActiveWallet().getPubkey();
-        const cTx = WALLET.sccjs.tx.transaction();
+        const cTx = WALLET.sccjs.wallet.tx.transaction();
         // Add input
         const cUTXO = WALLET.getCoinsToSpend(10000, true, strAddr)[0];
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
@@ -1319,7 +1319,7 @@
         // Use our first UTXO, as the fees will be incredibly low anyway
         const cToken = isFullnode ? TOKENS.getToken(contract) : getCachedToken(contract);
         const strAddr = WALLET.getActiveWallet().getPubkey();
-        const cTx = WALLET.sccjs.tx.transaction();
+        const cTx = WALLET.sccjs.wallet.tx.transaction();
         // Add input
         const cUTXO = WALLET.getCoinsToSpend(10000, true, strAddr)[0];
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
@@ -1740,7 +1740,7 @@
               tmppass = null;
               localStorage.removeItem("tmppass");
               // Load the new keys
-              const strPubkey = WALLET.sccjs.pubFromPriv(WALLET.getActiveWallet().getPrivkey());
+              const strPubkey = WALLET.sccjs.wallet.pubFromPriv(WALLET.getActiveWallet().getPrivkey());
               cWallet.setKeys(strPubkey, null, newEncwif);
               DB.setWallet(WALLET.toDB());
               // Load the Dashboard screen
@@ -2797,7 +2797,7 @@
                 const cCollection = isFullnode ? NFT.getCollection(nSelectedCollection) : getCachedCollection(nSelectedCollection);
                 console.log("Constructing SCP-" + cCollection.version + " NFT mint TX!");
                 // Contruct SCP transaction
-                const cTx = WALLET.sccjs.tx.transaction();
+                const cTx = WALLET.sccjs.wallet.tx.transaction();
                 // Add input
                 const cUTXO = WALLET.getCoinsToSpend(2000, true, strAddr)[0];
                 if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
@@ -2973,7 +2973,7 @@
         const strAddr = WALLET.getActiveWallet().getPubkey();
         const strPrivkey = WALLET.getActiveWallet().getPrivkey();
         // Construct the transaction
-        const cTx = WALLET.sccjs.tx.transaction();
+        const cTx = WALLET.sccjs.wallet.tx.transaction();
         // Add input
         const cUTXO = WALLET.getCoinsToSpend(2000, true, strAddr)[0];
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
@@ -3004,7 +3004,7 @@
         const strAddr = WALLET.getActiveWallet().getPubkey();
         const strPrivkey = WALLET.getActiveWallet().getPrivkey();
         // Construct the transaction
-        const cTx = WALLET.sccjs.tx.transaction();
+        const cTx = WALLET.sccjs.wallet.tx.transaction();
         // Add input
         const cUTXO = WALLET.getCoinsToSpend(2000, true, strAddr)[0];
         if (!cUTXO) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
