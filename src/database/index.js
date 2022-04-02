@@ -132,11 +132,13 @@ async function init(forceCorePath = false, retry = false) {
                      'via your SCP config file, with "coredatadir=xxxx".\n' +
                      'Another note: If you changed your conf file name, ' +
                      'use "coreconfname=xxx.conf" additionally to specify it.');
+        return false;
     } else {
         if (!retry) {
             console.log('Init: Successfully loaded SCC Core config with ' +
                         conf.getConfig(true).length + ' values!');
         }
+        return true;
     }
 }
 

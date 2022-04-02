@@ -159,9 +159,9 @@ let fInitialized = false;
 async function init(forcedCorePath = false, retry = false) {
     try {
         // Initialize the DB, load configs into memory
-        await DB.init(forcedCorePath, retry);
+        const fConfig = await DB.init(forcedCorePath, retry);
         // Initialize the NFTs module with necessary pointers
-        NFT.init(getBlockcount);
+        if (!retry) NFT.init(getBlockcount);
         // Load which caller addresses (if any) can call the API
         const arrAllowedCallers = DB.getConfigValue('allowedips', '127.0.0.1',
             false)
@@ -225,14 +225,15 @@ async function init(forcedCorePath = false, retry = false) {
             let nApiPort = Number(DB.getConfigValue('apiport', nDefaultApiPort,
                 false));
             if (!Number.isSafeInteger(nApiPort)) nApiPort = nDefaultApiPort;
-            app.listen(nApiPort);
             const strPortType = (nDefaultApiPort === nApiPort
                 ? 'default'
                 : 'custom');
-            console.log('API: Listening on ' + strPortType + ' port!' +
-                        ' (' + nApiPort + ')');
+            // Accept incoming API requests
+            app.listen(nApiPort);
             // Log our module statuses
             if (arrEnabledModules.length) {
+                console.log('API: Listening on ' + strPortType + ' port!' +
+                        ' (' + nApiPort + ')');
                 console.log('API exposed to: ' + arrAllowedCallers.join(', '));
                 console.log('API: ' + arrEnabledModules.length + ' modules ' +
                             'enabled! (' + arrEnabledModules.join(', ') + ')');
@@ -307,33 +308,34 @@ async function init(forcedCorePath = false, retry = false) {
 
         rpcMain.auth(rpcUser, rpcPass, 'localhost', rpcPort);
         // Initialize the wallet with the new RPC class and system contexts
-        WALLET.init({
-            'isHeadless': isHeadless,
-            'gfm': getFullMempool,
-            'rpcMain': rpcMain,
-            'COIN': COIN
-        });
+        if (!retry) {
+            WALLET.init({
+                'isHeadless': isHeadless,
+                'gfm': getFullMempool,
+                'rpcMain': rpcMain,
+                'COIN': COIN
+            });
+        }
 
         // Test the RPC connection
         let uptime;
         try {
             uptime = await rpcMain.call('uptime');
-        } catch(e) {
-            // Silently ignore
-        } finally {
-            if (!Number.isFinite(Number(uptime))) {
+        } catch(e) { /* Silently ignore */ }
+        if (!Number.isFinite(Number(uptime))) {
+            if (!retry) {
                 const strConnType = arrErr.length > 1 ? 'Config' : 'RPC';
                 arrErr.push('RPC: Unable to connect to SCC Core.');
-                if (arrErr[0] && !retry) {
-                    console.log('--- ERRORS ---');
-                    arrErr.map(a => console.log(a));
+                if (arrErr[0]) {
+                    console.error('--- ERRORS ---');
+                    arrErr.map(a => console.error(a));
                 }
-                if (arrWarn[0] && !retry) {
-                    console.log('--- WARNINGS ---');
-                    arrWarn.map(a => console.log(a));
+                if (arrWarn[0]) {
+                    console.warn('--- WARNINGS ---');
+                    arrWarn.map(a => console.warn(a));
                 }
 
-                if (arrErr[0] && !retry) {
+                if (arrErr[0]) {
                     console.log('--- NOTICE ---');
                     if (isHeadless()) {
                         console.log('Critical ' +
@@ -347,15 +349,19 @@ async function init(forcedCorePath = false, retry = false) {
                         ' fine!');
                     }
                 }
+            }
 
+            // If there's no SCC Core config detected at all for a GUI user, assume they are only using the Lightwallet
+            // ... otherwise, keep re-attempting to connect to an SCC Core instance.
+            if (fConfig && !isHeadless()) {
                 setTimeout(() => {
                     init(forcedCorePath, true);
                 }, 5000);
-            } else {
-                // RPC Connection successful!
-                isFullnode = true;
-                console.log('Init: Finished - Running as Fullnode! (Syncing)');
             }
+        } else {
+            // RPC Connection successful!
+            isFullnode = true;
+            console.log('Init: Finished - Running as Fullnode! (Syncing)');
         }
     } catch(e) {
         console.error('Init: FATAL ERROR!');
@@ -394,8 +400,8 @@ if (process.platform === 'win32') {
             }
         }
     });
-} else {
-// Otherwise, just initialize straight away!
+} else if (isHeadless()) {
+// Otherwise, if headless, just initialize straight away!
     init();
 }
 
