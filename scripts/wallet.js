@@ -25,7 +25,6 @@ decryptWallet = async function(forcedPass = false) {
     }
     const pubkeyDeriv = cWallet.getPubkey() || WALLET.sccjs.wallet.pubFromPriv(decWif);
     cWallet.setKeys(pubkeyDeriv, decWif);
-    console.log('Decrypted Address: ' + cWallet.getPubkey());
     return true;
 };
 

@@ -17,10 +17,7 @@ async function encrypt(data, forcedPassword = false) {
 async function decrypt(data, forcedPassword = false) {
   const password = forcedPassword || window.prompt("Please enter your wallet unlock password");
   if (typeof password !== "string") return false;
-  const decryptedData = await decryptData(data, password);
-  if (decryptedData)
-    console.log("Decrypted: '" + decryptedData.substr(0, Math.floor(decryptedData.length / 5)) + "...'");
-  return decryptedData || "decryption failed!";
+  return await decryptData(data, password) || "decryption failed!";
 }
 
 const getPasswordKey = (password) =>
@@ -89,8 +86,7 @@ async function decryptData(encryptedData, password) {
       data
     );
     return dec.decode(decryptedContent);
-  } catch (e) {
-    console.error(e);
+  } catch {
     return "";
   }
 }

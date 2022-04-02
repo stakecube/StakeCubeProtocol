@@ -7,8 +7,6 @@ const getBlockCount = function() {
         const data = Number(this.response);
         // If the block count has changed, refresh all of our data!
         if (data > cachedBlockCount) {
-            console.log('New block detected! ' + cachedBlockCount + ' --> ' +
-                        data);
             domBlock.innerText = data.toLocaleString('en-GB');
         } else {
             const reloader = document.getElementById('balanceRefresh');
@@ -18,12 +16,11 @@ const getBlockCount = function() {
     };
     request.send();
 };
-const getCoinValue = function() {
-    const request = new XMLHttpRequest();
-    request.open('GET', 'https://stakecube.io/api/v2/exchange/spot/' +
-                        'arbitrageInfo?ticker=SCC', true);
-    request.onload = function() {
-        const data = JSON.parse(this.response);
+
+// Flag to see if the SC Price API is down
+let fPriceAPI = true;
+const getCoinValue = () => {
+    NET.getPrice().then(data => {
         if (data.success && data.result && data.result[0]) {
             // Pull the price from StakeCube.net
             for (const nMarket of data.result) {
@@ -36,10 +33,12 @@ const getCoinValue = function() {
                     continue;
                 }
                 valueUSD = nMarket.converted_last.usd;
+                fPriceAPI = true;
             }
+        } else {
+            fPriceAPI = false;
         }
-    };
-    request.send();
+    }).catch(() => fPriceAPI = false);
 };
 const getCoinSupply = function() {
     const request = new XMLHttpRequest();

@@ -1601,6 +1601,9 @@
         domPrice.innerText = "$" + valueUSD.toFixed(2);
         if (currentSupply > 0)
           domMarketcap.innerText = "$" + (currentSupply * valueUSD).toLocaleString('en-GB', { maximumFractionDigits: 0});
+      } else if (!fPriceAPI) {
+        domPrice.innerText = 'Unknown (API down)';
+        domMarketcap.innerText = 'Unknown (API down)';
       }
       // Fetch price and supply info
       getCoinValue();
@@ -1717,7 +1720,6 @@
         else
           localStorage.getItem("encwif");
         if (encwif && encwif.length > 1) {
-          console.log("Encrypted key found: " + encwif);
           cWallet.setKeys(null, null, encwif);
           getUnspentTransactions();
         } else {

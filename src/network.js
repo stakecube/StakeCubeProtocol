@@ -14,6 +14,7 @@
 */
 
 const rootSCCNet = 'https://stakecubecoin.net/web3/';
+const rootSCNet = 'https://stakecube.io/api/v2/';
 const rootGithub = 'https://api.github.com/repos/stakecube/StakeCubeProtocol/';
 
 const http = require('http');
@@ -187,6 +188,12 @@ async function getLatestRelease() {
     return await get(rootGithub + 'releases/latest');
 }
 
+async function getPrice(strCoin = 'SCC') {
+    return JSON.parse(
+        await get(rootSCNet + 'exchange/spot/arbitrageInfo?ticker=' + strCoin)
+    );
+}
+
 exports.uploadToIPFS = uploadToIPFS;
 exports.get = get;
 exports.post = post;
@@ -202,3 +209,4 @@ exports.getLightCollection = getLightCollection;
 exports.getLightCollectionHeaders = getLightCollectionHeaders;
 exports.broadcastTx = broadcastTx;
 exports.getLatestRelease = getLatestRelease;
+exports.getPrice = getPrice;
