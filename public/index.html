@@ -1400,9 +1400,13 @@
         guiStakingAccount = getCachedAccount(guiStakingToken);
         getStakingStatusLight(contract, strPubkey);
       }
+
+      // Populate static data if available (name, ticker, etc)
+      domStakingTitle.innerText = guiStakingToken ? formatName(guiStakingToken.name, 18) + " (" + formatName(guiStakingToken.ticker, 6) + ")"
+                                                  : "Loading...";
+
       // Put token + account info on the Staking Page on this refresh!
       if ((guiStakingToken && guiStakingAccount && guiStakingStatus) && guiStakingStatus.enabled) {
-        domStakingTitle.innerText = formatName(guiStakingToken.name, 18) + " (" + formatName(guiStakingToken.ticker, 6) + ")";
         // Run a quick'n'dirty APY calculation based on the current weight reward
         const nReward = guiStakingToken.inflation * guiStakingStatus.weight;
         const nTotalRewards = guiStakingAccount.unclaimed_balance / COIN;
@@ -1449,17 +1453,15 @@
           }
         }
       } else if (guiStakingToken && guiStakingAccount && guiStakingStatus) {
-        domStakingTitle.innerText = formatName(guiStakingToken.name, 18) + " (" + formatName(guiStakingToken.ticker, 6) + ")";
         domStakingApy.innerText = "---";
         domStakingRoi.innerText = "";
         domStakingSubtitle.innerText = "Your tokens need another " + (guiStakingToken.minAge - guiStakingStatus.age).toLocaleString('en-GB') + " blocks to mature before earning stakes!";
-        domStakingRewards.innerText = nTotalRewards.toLocaleString('en-GB', { maximumFractionDigits: nTotalRewards > 1 ? 4 : 8 }) + " " + guiStakingToken.ticker;
+        domStakingRewards.innerText = "0 " + guiStakingToken.ticker;
         domStakingRedeem.setAttribute('onclick', '');
         if (!domStakingRedeem.classList.contains('disabled'))
           domStakingRedeem.classList.add('disabled');
         domStakingRedeem.innerText = 'No Stakes to Claim';
       } else {
-        domStakingTitle.innerText = guiStakingToken ? formatName(guiStakingToken.name, 18) + " (" + formatName(guiStakingToken.ticker, 6) + ")" : "Loading...";
         domStakingApy.innerText = "---";
         domStakingRoi.innerText = "";
         domStakingSubtitle.innerText = "Loading...";

@@ -130,7 +130,11 @@ function switchToStaking(contract) {
   domStakingPage.style.display = "block";
   domHeader.style.display = "block";
 
+  // Set staking contract
   currentStakingToken = contract;
+
+  // Refresh data for instant rendering (if cache is available)
+  refreshStakingStatus(currentStakingToken);
 }
 
 
