@@ -45,29 +45,6 @@ module.exports = {
       "platforms": [
         "darwin"
       ]
-    },
-    {
-      // The deb target builds .deb packages, which are the standard package format for Debian-based
-      // Linux distributions such as Ubuntu or Pop!_OS.
-      "name": "@electron-forge/maker-deb",
-      "config": {
-        "name": "scp-wallet",
-        "icon": "./public/imgs/scp.png",
-        "categories": [
-          "Office",
-          "Finance"
-        ],
-        "genericName": "Cryptocurrency Wallet",
-        "priority": "optional"
-      }
-    },
-    {
-      // The RPM target builds .rpm files, which is the standard package format for
-      // RedHat-based Linux distributions such as Fedora.
-      "name": "@electron-forge/maker-rpm",
-      "config": {
-        "name": "scp-wallet"
-      }
     }
   ]
 };

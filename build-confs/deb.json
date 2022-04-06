@@ -1,0 +1,11 @@
+{
+  "name": "scp-wallet",
+  "icon": "./public/imgs/scp.png",
+  "categories": [
+    "Office",
+    "Finance"
+  ],
+  "genericName": "Cryptocurrency Wallet",
+  "priority": "optional",
+  "compressionType": "gzip"
+}

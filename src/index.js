@@ -6,6 +6,8 @@
 
 'use strict';
 
+const path = require('path');
+
 let isFullnode = false;
 let isScanningBlocks = false;
 let nCacheHeight = 0;
@@ -63,13 +65,23 @@ try {
     } catch(e) {
         try {
             // Packed
-            const strFile = DB.fs.readFileSync(process.cwd() +
-                                               '\\resources\\app\\package.json',
-            'utf8');
+            const strFile = DB.fs.readFileSync(
+                path.join(process.cwd() + 'resources',
+                    'app', 'package.json'),
+                'utf8');
             npmPackage = JSON.parse(strFile);
         } catch(ee) {
-            // NPM package is hiding somewhere unusual... but we can live without it!
-            console.warn(e);
+            try {
+                // Packed (.deb)
+                const strFile = DB.fs.readFileSync(
+                    path.join(process.resourcesPath,
+                        'app', 'package.json'),
+                    'utf8');
+                npmPackage = JSON.parse(strFile);
+            } catch(eee) {
+                // NPM package is hiding somewhere unusual... but we can live without it!
+                console.warn(e);
+            }
         }
     }
 } catch(e) {

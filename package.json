@@ -5,31 +5,34 @@
   "description": "The StakeCube Protocol full-node and GUI Wallet",
   "homepage": "https://stakecube.net",
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/stakecube/StakeCubeProtocol.git"
+    "type": "git",
+    "url": "https://github.com/stakecube/StakeCubeProtocol.git"
   },
   "main": "main.js",
   "scripts": {
     "start": "electron-forge start",
     "package": "electron-forge package",
-    "make": "electron-forge make",
+    "make": "run-script-os",
+    "make:linux": "npm run package && better-electron-installer-debian --src out/$npm_package_name-linux-x64 --dest out/make/deb --arch amd64 --config build-confs/deb.json",
+    "make:default": "electron-forge make",
     "lint": "node linter"
   },
   "author": "StakeCube",
   "license": "MPL-2.0",
   "devDependencies": {
     "@electron-forge/cli": "^6.0.0-beta.54",
-    "@electron-forge/maker-deb": "^6.0.0-beta.54",
     "@electron-forge/maker-rpm": "^6.0.0-beta.54",
     "@electron-forge/maker-squirrel": "^6.0.0-beta.54",
     "@electron-forge/maker-zip": "^6.0.0-beta.54",
+    "better-electron-installer-debian": "^3.2.1",
     "electron": "^8.0.3",
     "electron-reloader": "^1.2.0",
     "eslint": "^7.29.0",
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-import": "^2.23.4",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^5.1.0"
+    "eslint-plugin-promise": "^5.1.0",
+    "run-script-os": "^1.1.6"
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
