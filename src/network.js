@@ -181,7 +181,7 @@ async function getLightCollectionHeaders() {
 }
 
 async function broadcastTx(tx) {
-    return await get(rootSCCNet + 'submittx?tx=' + tx);
+    return await post(rootSCCNet + 'submittx', tx);
 }
 
 async function getLatestRelease() {
