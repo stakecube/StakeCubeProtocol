@@ -16,6 +16,12 @@ module.exports = {
     "productName": "SCP Wallet",
     // Icon Set
     "icon": "./public/imgs/scp",
+    "protocols": [
+      {
+        "name": "SCP Wallet",
+        "schemes": ["scp-wallet"]
+      }
+    ],
     // File & Directories unnecessary in production
     "ignore": [
       "docs",

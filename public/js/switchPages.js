@@ -3,8 +3,8 @@
 function closeAllTabs() {
   domDashboardPage.style.display = "none";
   domReceivePage.style.display = "none";
-  domSendPage.style.display = "none ";
-  domLoginPage.style.display = "none";
+  domSendPage.style.display = "none";
+  domSigPage.style.display = "none";
   domAuthPage.style.display = "none";
   domStakingPage.style.display = "none";
   domSettingsPage.style.display = "none";
@@ -41,6 +41,7 @@ function switchToSend() {
   dom2FABtn.classList.remove('active');
   domCreateTokenBtn.classList.remove('active');
   domNFTCollectionsBtn.classList.remove('active');
+  domSigBtn.classList.remove('active');
 
   // Add active
   domSendBtn.classList.add('active');
@@ -69,6 +70,7 @@ function switchToDashboard() {
   dom2FABtn.classList.remove('active');
   domCreateTokenBtn.classList.remove('active');
   domNFTCollectionsBtn.classList.remove('active');
+  domSigBtn.classList.remove('active');
 
   // Add active
   domDashboardBtn.classList.add('active');
@@ -98,9 +100,30 @@ function switchToReceive() {
   dom2FABtn.classList.remove('active');
   domCreateTokenBtn.classList.remove('active');
   domNFTCollectionsBtn.classList.remove('active');
+  domSigBtn.classList.remove('active');
 
   // Add active
   domReceiveBtn.classList.add('active');
+}
+
+function switchToSigs() {
+  // Hide
+  closeAllTabs();
+
+  // Show
+  domSigPage.style.display = "block";
+  domHeader.style.display = "block";
+
+  // Remove active
+  domSendBtn.classList.remove('active');
+  domDashboardBtn.classList.remove('active');
+  domReceiveBtn.classList.remove('active');
+  dom2FABtn.classList.remove('active');
+  domCreateTokenBtn.classList.remove('active');
+  domNFTCollectionsBtn.classList.remove('active');
+
+  // Add active
+  domSigBtn.classList.add('active');
 }
 
 function switchToAuth() {
@@ -117,6 +140,7 @@ function switchToAuth() {
   domReceiveBtn.classList.remove('active');
   domCreateTokenBtn.classList.remove('active');
   domNFTCollectionsBtn.classList.remove('active');
+  domSigBtn.classList.remove('active');
 
   // Add active
   dom2FABtn.classList.add('active');
@@ -151,6 +175,7 @@ function switchToSettings() {
   domDashboardBtn.classList.remove('active');
   domReceiveBtn.classList.remove('active');
   domCreateTokenBtn.classList.remove('active');
+  domSigBtn.classList.remove('active');
 }
 
 function switchToCreateToken(strToken = false) {
@@ -175,6 +200,7 @@ function switchToCreateToken(strToken = false) {
   domReceiveBtn.classList.remove('active');
   dom2FABtn.classList.remove('active');
   domNFTCollectionsBtn.classList.remove('active');
+  domSigBtn.classList.remove('active');
 
   // Add active
   domCreateTokenBtn.classList.add('active');
@@ -190,6 +216,7 @@ function switchToViewCollection() {
   domReceiveBtn.classList.remove('active');
   dom2FABtn.classList.remove('active');
   domCreateTokenBtn.classList.remove('active');
+  domSigBtn.classList.remove('active');
 
   // Add active
   domNFTCollectionsBtn.classList.add('active');
@@ -216,6 +243,7 @@ function switchToCollections() {
   domReceiveBtn.classList.remove('active');
   dom2FABtn.classList.remove('active');
   domCreateTokenBtn.classList.remove('active');
+  domSigBtn.classList.remove('active');
 
   // Add active
   domNFTCollectionsBtn.classList.add('active');

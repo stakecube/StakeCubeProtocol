@@ -5,6 +5,9 @@
     "Office",
     "Finance"
   ],
+  "mimeType": [
+    "x-scheme-handler/scp-wallet"
+  ],
   "genericName": "Cryptocurrency Wallet",
   "priority": "optional",
   "compressionType": "gzip"

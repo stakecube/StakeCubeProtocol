@@ -1,7 +1,8 @@
 // Settings Defaults
-let allowEnterKey = true; // Allow the 'Enter' key to continue actions on dialogs & forms.
-let display2FAMenu = true; // Displays the 2FA button in the header menu.
-let limitActivity = true; // Limit the activity list to increase performance on large wallets.
+let allowEnterKey = true;   // Allow the 'Enter' key to continue actions on dialogs & forms.
+let display2FAMenu = true;  // Displays the 2FA button in the header menu.
+let minToTray = true;       // Allows the GUI to minimise to the Tray instead of the Taskbar.
+let limitActivity = true;   // Limit the activity list to increase performance on large wallets.
 let hideZeroBalance = true; // Hide wallets from view when they have no balance.
 let displayDevMenu = false; // Displays the SCP Developer button in the header menu.
 
@@ -15,6 +16,10 @@ function toggleSetting(evt) {
     if (strSetting === 'display2FAMenu') {
         dom2FAMenu.style.display = checked ? '' : 'none';
         display2FAMenu = checked;
+    }
+    if (strSetting === 'minToTray') {
+        minToTray = checked;
+        cElectron.ipcRenderer.send('changeMinToTray', checked);
     }
     if (strSetting === 'limitActivity') {
         limitActivity = checked;
@@ -46,6 +51,9 @@ function loadSettings() {
         }
         if (dbKey === 'display2FAMenu') {
             display2FAMenu = boolVal;
+        }
+        if (dbKey === 'minToTray') {
+            minToTray = boolVal;
         }
         if (dbKey === 'limitActivity') {
             limitActivity = boolVal;

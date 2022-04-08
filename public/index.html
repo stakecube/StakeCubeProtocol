@@ -108,12 +108,17 @@
   </div>
 
   <script>
+    let fDecrypted = false;
+    let funcStarter = switchToDashboard;
+
     function finishLogin() {
       const nPass = document.getElementById("pass1").value;
       decryptWallet(nPass).then(done => {
         if (done) {
+          fDecrypted = true;
           document.getElementById("pass1").value = "";
-          switchToDashboard();
+          domLoginPage.style.display = "none";
+          funcStarter();
           DB.setWallet(WALLET.toDB()).then(() => {
             if (localStorage.getItem("encwif")) {
               localStorage.removeItem("encwif");
@@ -164,6 +169,11 @@
                 Receive
               </a>
             </li>
+            <li class="nav-item" id="sigBtnMenu">
+              <a class="nav-link" href="#" id="sigBtn" onclick="switchToSigs()">
+                Sign / Verify
+              </a>
+            </li>
             <li class="nav-item">
               <a class="nav-link" href="#" id="collectionsBtn" onclick="switchToViewCollection();renderNFTs(-1)">
                 NFTs
@@ -191,8 +201,11 @@
   <script>
     'use strict';
     // GUI module imports
-    const { clipboard } = require('electron');
-    const { dialog } = require('electron').remote;
+    const cElectron = require('electron');
+    const clipboard = cElectron.clipboard;
+    const dialog = cElectron.remote.dialog;
+    const cMenu = cElectron.remote.Menu;
+    const cMenuItem = cElectron.remote.MenuItem;
     let authenticator = require("otplib").authenticator;
 
     // WALLET STATE DATA
@@ -218,6 +231,16 @@
     let domReceiveBtn;
     let dom2FABtn;
     let dom2FAMenu;
+    let domSigBtn;
+    let domSigMenu;
+    let domSigSelector;
+    let domSigMessageInput;
+    let domSigOutput;
+    let domSigAddress;
+    let domSigAddressBar;
+    let domSigSignature;
+    let domSigSignatureBar;
+    let domSigConfirmBtn;
     let domCreateTokenBtn;
     let domScpTokenErrors;
     let domScpTokenName;
@@ -235,6 +258,7 @@
     let domNFTTransferBtn;
     let domDashboardPage;
     let domSendPage;
+    let domSigPage;
     let domReceivePage;
     let domAuthPage;
     let domStakingPage;
@@ -289,6 +313,42 @@
     let domStakingRewards;
     let domStakingRedeem;
     let domStakingRoi;
+
+    // GUI Context Menu setup
+    const contextMenu = cMenu.buildFromTemplate([
+                   {
+                      role: 'undo'
+                   },
+                   {
+                      role: 'redo'
+                   },
+                   {
+                      type: 'separator'
+                   },
+                   {
+                      role: 'cut'
+                   },
+                   {
+                      role: 'copy'
+                   },
+                   {
+                      role: 'paste'
+                   },
+                   {
+                      type: 'separator'
+                   },
+                   {
+                      role: 'forceReload'
+                   },
+                   {
+                      role: 'toggleDevTools'
+                   },
+    ]);
+
+    window.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      contextMenu.popup(cElectron.remote.getCurrentWindow());
+    }, false);
 
     function getMempoolDeltas(strCurrency) {
       let nDelta = 0;
@@ -1054,7 +1114,7 @@
 
     function sendTransactionGUI() {
       const coinSelection = document.getElementById("sendingCoinVal").value;
-      const sendAmount = Number(document.getElementById("sendAmount").value.trim());
+      let sendAmount = Number(document.getElementById("sendAmount").value.trim());
       const sendAddress = document.getElementById("sendAddress").value.trim();
       if (!sendAmount || !Number.isFinite(sendAmount)) {
         return M.toast({html: 'Please enter a valid amount!', displayLength: 2000});
@@ -1072,14 +1132,24 @@
         const nUTXOs = usedUTXOs.reduce((a, b) => {return a + b.sats}, 0);
         for (const cUTXO of usedUTXOs)
           cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
-        if (sendAmount >= nUTXOs / COIN) return M.toast({html: 'Not enough funds!', displayLength: 2000});
-        // Destination output
-        cTx.addoutput(sendAddress, sendAmount);
+        if (sendAmount > nUTXOs / COIN) return M.toast({html: 'Not enough funds!', displayLength: 2000});
         // Fee & Change output
-        const nFee = WALLET.getFee(cTx.serialize().length);
+        const nFee = WALLET.getFee(cTx.serialize().length * 4);
         const nSpent = (nFee + sendAmount).toFixed(8);
         const nChange = ((nUTXOs / COIN) - nSpent).toFixed(8);
-        cTx.addoutput(strAddr, nChange);
+        const fNoChange = sendAmount >= ((nUTXOs / COIN) - nFee);
+        if (fNoChange) {
+          // We're sending alot! So we've got to deduct the fee from the send amount. There's not enough change to pay it with!
+          sendAmount = Number((sendAmount - nFee).toFixed(8));
+          // Destination output
+          cTx.addoutput(sendAddress, sendAmount);
+          console.log('Adjusted SCC transaction amount to ' + sendAmount + ' and removed change output to fit send-all.');
+        } else {
+          // Destination output
+          cTx.addoutput(sendAddress, sendAmount);
+          // Add change output
+          cTx.addoutput(strAddr, nChange);
+        }
         // Broadcast
         cTx.sign(strPrivkey, 1).then(strSignedTx => {
           sendTransaction(strSignedTx, usedUTXOs);
@@ -1629,6 +1699,15 @@
       domPass1Visibility = document.getElementById("pass1Visibility");
       domDashboardPage = document.getElementById('dashboardPage');
       domSendPage = document.getElementById('sendPage');
+      domSigPage = document.getElementById('sigPage');
+      domSigSelector = document.getElementById('sigType');
+      domSigMessageInput = document.getElementById('signerMessage');
+      domSigOutput = document.getElementById('signerOutput');
+      domSigAddressBar = document.getElementById('signerAddressBar');
+      domSigAddress = document.getElementById('signerAddress');
+      domSigSignatureBar = document.getElementById('signerSignatureBar');
+      domSigSignature = document.getElementById('signerSignature');
+      domSigConfirmBtn = document.getElementById('signBtn');
       domReceivePage = document.getElementById('receivePage');
       domAuthPage = document.getElementById('authPage');
       domStakingPage = document.getElementById('stakingPage');
@@ -1666,6 +1745,7 @@
       domSendBtn = document.getElementById("sendBtn");
       domReceiveBtn = document.getElementById("receiveBtn");
       dom2FABtn = document.getElementById("2faBtn");
+      domSigBtn = document.getElementById("sigBtn");
       domCreateTokenBtn = document.getElementById("createTokenBtn");
       domScpTokenErrors = document.getElementById("scpTokenErrors");
       domScpTokenName = document.getElementById("scpTokenName");
@@ -1691,6 +1771,7 @@
       domNftMintOpts = document.getElementById('nftMintOpts');
       domNftMintProgress = document.getElementById('nftMintProgress');
       dom2FAMenu = document.getElementById("2faBtnMenu");
+      domSigMenu = document.getElementById("sigBtnMenu");
       domStakingTitle = document.getElementById("stakingTitle");
       domStakingSubtitle = document.getElementById("stakingSubtitle");
       domStakingApy = document.getElementById("stakingApy");
@@ -1704,6 +1785,7 @@
         domCreateTokenBtn.style.display = "none";
       if (!display2FAMenu)
         dom2FAMenu.style.display = "none";
+      cElectron.ipcRenderer.send('changeMinToTray', minToTray);
       // Don't need to cache these as it's just one-time use
       if (npmPackage) {
         document.getElementById("version").innerText = "v" + npmPackage.version;
@@ -1748,6 +1830,7 @@
               cWallet.setKeys(strPubkey, null, newEncwif);
               DB.setWallet(WALLET.toDB());
               // Load the Dashboard screen
+              domLoginPage.style.display = "none";
               switchToDashboard();
               // Give the cache a kick
               setTimeout(() => {
@@ -1768,6 +1851,7 @@
                 tmppass = null;
                 localStorage.removeItem("tmppass");
                 // Load the Dashboard screen
+                domLoginPage.style.display = "none";
                 switchToDashboard();
               });
             });
@@ -1775,6 +1859,46 @@
         }
       });
     }
+
+    cElectron.ipcRenderer.on('cmd', (event, message) => {
+      // Only process messages matching protocol specs
+      if (!message.includes('=')) return;
+      const [strCMD, strContent] = message.split('=');
+      if (strCMD.length <= 1 || strContent.length <= 1) return;
+
+      // Log the request details
+      console.log('--- New URI Request ---');
+      console.log('Command: ' + strCMD);
+      console.log('Content: ' + strContent);
+
+      try {
+        // Find any compatible commands
+        if (strCMD === 'sign') {
+          // Content should be in HEX and will be converted to utf8
+          const strConverted = Buffer.from(strContent, 'hex').toString('utf8');
+          // (If not logged in) Switch the default after-login screen
+          if (!fDecrypted)
+            funcStarter = switchToSigs;
+          else
+            switchToSigs();
+          // Switch the signer mode
+          domSigSelector.selectedIndex = 0;
+          changeSigType(domSigSelector);
+          // Enter the input
+          domSigMessageInput.value = strConverted;
+          // Focus on the Sign button
+          domSigConfirmBtn.focus();
+        } else {
+          console.warn('URI command is unrecognised, cannot continue processing!');
+        }
+      } catch(e) {
+        M.toast({html: 'Website sent a malformed URI request!<br>Debug logs are available to view.', displayLength: 5000});
+        console.warn('Something went wrong with the request, perhaps malformed content?');
+        console.warn(e);
+      }
+
+      console.log('--- End URI Request ---');
+    })
 
     function showTooltip(obj) {
       obj = document.getElementById(obj);
@@ -1950,6 +2074,111 @@
 
     </div>
 
+    <div class="container marketing pt-navbar" id="sigPage">
+      <h4 class="mb-5 theme-color-secondary font-weight-bold">Sign or Verify</h4>
+
+      <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+
+          <div class="card card-prop mb-4">
+            <div class="card-body">
+              <div class="card-title font-gray font-weight-bold">Sign or Verify a message</div>
+
+              <div class="alert alert-danger-custom" style="font-size:13px;"><i class="fas fa-exclamation-triangle"></i> &nbsp;If you sign a message, please ensure you understand the contents of it, do not sign messages that you would not agree to.</div><br>
+
+              <div class="row">
+                <div class="col-sm-12">
+                  <select id="sigType" class="form-select" oninput="changeSigType(this)">
+                    <option selected value="sign">Mode: Sign a message</option>
+                    <option value="verify">Mode: Verify a message</option>
+                  </select>
+                </div>
+              </div><br>
+
+              <div class="row">
+                <div class="col-md-6" style="width: 100%;">
+                  <div class="omrs-input-group" style="width:100%;">
+                    <label class="omrs-input-underlined">
+                      <input required="" id="signerMessage" type="text">
+                      <span class="omrs-input-label">Message</span>
+                    </label>
+                  </div>
+                  <div class="omrs-input-group" id="signerAddressBar" style="width:100%; display: none;">
+                    <label class="omrs-input-underlined">
+                      <input required="" id="signerAddress" type="text">
+                      <span class="omrs-input-label">Signer Address</span>
+                    </label>
+                  </div>
+                  <div class="omrs-input-group" id="signerSignatureBar" style="width:100%; display: none;">
+                    <label class="omrs-input-underlined">
+                      <input required="" id="signerSignature" type="text">
+                      <span class="omrs-input-label">Message Signature</span>
+                    </label>
+                  </div>
+                  <div style="text-align: center;">
+                    <p>Signature Output</p>
+                    <textarea disabled="" id="signerOutput" style="width: 100%;height: auto;margin-top: 0px;margin-bottom: 0px;background-color: transparent;color: #888888;"></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col text-end">
+                  <br>
+                  <button class="btn btn-layout btn-theme" id="signBtn" onclick="runSignerGUI()">Sign Message</button><br>
+                </div>
+              </div>
+
+              <script>
+                function runSignerGUI(str  = domSigMessageInput.value,
+                                      addr = domSigAddress.value,
+                                      sig  = domSigSignature.value) {
+                  if (strSigType === 'sign') {
+                    WALLET.sccjs.signer.sign(str, WALLET.getActiveWallet().getPrivkey()).then(buf => {
+                      domSigOutput.value = buf.toString('base64');
+                      copyToClipboard(buf.toString('base64'), 'Signature');
+                    });
+                  } else if (strSigType === 'verify') {
+                    try {
+                      const valid = WALLET.sccjs.signer.verify(str, addr, sig);
+                      domSigOutput.value = valid ? 'Signature is valid! :)' : 'Signature is invalid! :(';
+                    } catch(e) {
+                      domSigOutput.value = e.message;
+                    }
+                  }
+                }
+
+                let strSigType = 'sign';
+                function changeSigType(obj) {
+                  // Reset inputs
+                  domSigOutput.value = '';
+                  domSigMessageInput.value = '';
+                  domSigAddress.value = '';
+                  // Display relevent UI
+                  strSigType = obj.options[obj.selectedIndex].value;
+                  if (strSigType === 'sign') {
+                    domSigConfirmBtn.innerText = 'Sign Message';
+                    domSigAddressBar.style.display = 'none';
+                    domSigSignatureBar.style.display = 'none';
+                  } else {
+                    domSigConfirmBtn.innerText = 'Verify Message';
+                    domSigAddressBar.style.display = 'block';
+                    domSigSignatureBar.style.display = 'block';
+                  }
+                }
+
+                $("#signBtn").on("keydown", e => {
+                  if (e.keyCode === 13 && !allowEnterKey) e.preventDefault();
+                });
+              </script>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
     <div class="container marketing pt-navbar" id="authPage">
       <h4 class="mb-5 theme-color-secondary font-weight-bold">StakeCube 2FA</h4>
 
@@ -2058,7 +2287,7 @@
                       <span style="font-size:12px; color:#97a1b1;">Disabling this will mean hitting 'Enter' will not perform or continue any actions or dialogs.<br>This setting is ignored on all Password fields.</span>
                     </div>
                     <div class="col-3">
-                      <div class="container">
+                      <div>
                         <div class="row align-items-center justify-content-center" style="height: 100%;">
                           <div class="col-md-6">
                             <div class="form-check form-switch">
@@ -2078,7 +2307,7 @@
                       <span style="font-size:12px; color:#97a1b1;">Disabling this will hide the 2FA button from the header menu.<br>This will not remove or lose any 2FA codes, only hide them visually.</span>
                     </div>
                     <div class="col-3">
-                      <div class="container">
+                      <div>
                         <div class="row align-items-center justify-content-center" style="height: 100%;">
                           <div class="col-md-6">
                             <div class="form-check form-switch">
@@ -2094,11 +2323,31 @@
 
                   <div class="row">
                     <div class="col-9">
+                      <span>Minimise to Tray</span><br>
+                      <span style="font-size:12px; color:#97a1b1;">Disabling this will revert back to Taskbar-based minimisation.</span>
+                    </div>
+                    <div class="col-3">
+                      <div>
+                        <div class="row align-items-center justify-content-center" style="height: 100%;">
+                          <div class="col-md-6">
+                            <div class="form-check form-switch">
+                              <input class="form-check-input darkBorder" type="checkbox" value="" id="minToTraySetting" checked="true" setting="minToTray" onclick="toggleSetting(this)">
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr style="color: #bcc4d2;">
+
+                  <div class="row">
+                    <div class="col-9">
                       <span>Limit Activity to 200 TXs</span><br>
                       <span style="font-size:12px; color:#97a1b1;">Disabling this will let the Activity display unlimited TXs, however this may cause performance issues on large wallets.</span>
                     </div>
                     <div class="col-3">
-                      <div class="container">
+                      <div>
                         <div class="row align-items-center justify-content-center" style="height: 100%;">
                           <div class="col-md-6">
                             <div class="form-check form-switch">
@@ -2118,7 +2367,7 @@
                       <span style="font-size:12px; color:#97a1b1;">Disabling this will display empty (0-balance) wallets in their respective area.</span>
                     </div>
                     <div class="col-3">
-                      <div class="container">
+                      <div>
                         <div class="row align-items-center justify-content-center" style="height: 100%;">
                           <div class="col-md-6">
                             <div class="form-check form-switch">
@@ -2138,7 +2387,7 @@
                       <span style="font-size:12px; color:#97a1b1;">Enabling this will display the SCP Developer Toolkit menu.<br>This page can be used for creating, deploying and interacting with custom DApps!</span>
                     </div>
                     <div class="col-3">
-                      <div class="container">
+                      <div>
                         <div class="row align-items-center justify-content-center" style="height: 100%;">
                           <div class="col-md-6">
                             <div class="form-check form-switch">
@@ -2166,7 +2415,7 @@
                       <span style="font-size:12px; color:#97a1b1;">This will highlight your private wallet file in your file explorer. You can use this file to move your wallet to another device, or as an encrypted backup method. (Contains: Encrypted Privkey, Pubkey & 2FA secret)</span>
                     </div>
                     <div class="col-sm-3">
-                      <div class="container" style="padding: 10px 0;">
+                      <div style="padding: 10px 0;">
                         <div class="row align-items-center justify-content-center" style="height: 100%;">
                           <div class="col-md-6">
                             <button class="btn btn-primary" onclick="showFileInExplorer(DB.appdata.getAppDataPath('SCPWallet\\wallet.json'))" style="width: 100%; min-width: 80px;">Export</button>
