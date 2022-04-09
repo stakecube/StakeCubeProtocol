@@ -194,6 +194,12 @@ async function getPrice(strCoin = 'SCC') {
     );
 }
 
+async function requestFaucet(strAddr) {
+    return JSON.parse(
+        await post(rootSCCNet + 'faucet', strAddr)
+    );
+}
+
 exports.uploadToIPFS = uploadToIPFS;
 exports.get = get;
 exports.post = post;
@@ -210,3 +216,4 @@ exports.getLightCollectionHeaders = getLightCollectionHeaders;
 exports.broadcastTx = broadcastTx;
 exports.getLatestRelease = getLatestRelease;
 exports.getPrice = getPrice;
+exports.requestFaucet = requestFaucet;

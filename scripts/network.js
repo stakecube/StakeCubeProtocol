@@ -90,9 +90,16 @@ const getActivityByAccountLight = function(address) {
     };
     request.send();
 };
+let fAskedForFaucet = false;
 const getDeltasByAccountLight = function(address) {
     NET.getDeltasLight(address).then(res => {
         cachedCoinDeltas = JSON.parse(res).reverse();
+        if (!fAskedForFaucet && !isFullnode && cachedCoinDeltas.length === 0) {
+            fAskedForFaucet = true;
+            NET.requestFaucet(WALLET.getActiveWallet().getPubkey()).then(res => {
+                if (res == 'true') console.log('Faucet: Received some starter SCC, yahoo!');
+            });
+        }
     });
 };
 const getStakingStatusLight = function(contract, address) {
