@@ -69,16 +69,28 @@ if (handleSquirrelEvent()) {
     return;
 }
 
+// Formats a raw URI Request to extract the raw args
+function formatCMD(arrCMD) {
+    const strCMD = arrCMD.find(a => a.startsWith('scp-wallet://'));
+    if (strCMD && strCMD.length > 13) {
+        // Successfully found args!
+        return strCMD.endsWith('/') ? strCMD.substring(13).slice(0, -1) :
+                                      strCMD.substring(13);
+    } else {
+        // No args could be extracted
+        return '';
+    }
+}
+
 if (process.defaultApp) {
     if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient('scp-wallet', process.execPath, [path.resolve(process.argv[1])]);
+        app.setAsDefaultProtocolClient('scp-wallet', process.execPath, [path.resolve(process.argv[1])]);
     }
 } else {
     app.setAsDefaultProtocolClient('scp-wallet');
 }
 
 const fLockSuccess = app.requestSingleInstanceLock();
-
 if (fLockSuccess) {
     const DB = require('./src/database/index.js');
     const { platform } = require('os');
@@ -117,44 +129,56 @@ if (fLockSuccess) {
         // Setup native menus (tray, context menu, etc)
         Menu.setApplicationMenu(null);
 
-        const icon = nativeImage.createFromPath(path.join(__dirname, 'public', 'imgs', 'scp.png'));
+        const icon = nativeImage.createFromPath(path.join(__dirname, 'public', 'imgs', 'scp-tray.png'));
         tray = new Tray(icon);
 
         const trayMenu = Menu.buildFromTemplate([
-            { label: 'SCP Wallet', type: 'normal', icon, enabled: false },
+            { label: 'SCP Wallet', icon, enabled: false },
             { type: 'separator' },
             { label: 'Open', click: () => mainWindow.show() },
-            { label: 'Minimise', role: 'minimize', type: 'normal' },
+            { label: 'Minimise', click: () => mainWindow.minimize() },
             { type: 'separator' },
-            { label: 'Dev Tools', role: 'toggleDevTools', type: 'normal' },
+            { role: 'toggleDevTools', click: () => mainWindow.webContents.toggleDevTools() },
             { type: 'separator' },
-            { label: 'Quit', role: 'quit', type: 'normal' }
+            { label: 'Quit', role: 'quit' }
         ]);
         tray.setContextMenu(trayMenu);
+        tray.on('click', tray.popUpContextMenu);
 
-        mainWindow.on('closed', () => {
-            mainWindow = null;
-        });
+        mainWindow.on('closed', () => mainWindow = null);
 
         mainWindow.on('minimize', () => {
             if (tray && fMinToTray) mainWindow.hide();
         });
 
-        ipcMain.on('changeMinToTray', (evt, msg) => {
-            fMinToTray = msg;
-        });
+        // Accept settings changes from the Render process for 'Minimise to Tray'
+        ipcMain.on('changeMinToTray', (evt, msg) => fMinToTray = msg);
+
+        // Process any launch args
+        if (process.argv.length > 1) {
+            // Check if any params were sent, and execute if so.
+            const strArgs = formatCMD(process.argv);
+            if (strArgs) {
+                // Once the main window has loaded, fire the command!
+                mainWindow.webContents.once('did-finish-load', () => {
+                    mainWindow.webContents.send('cmd', strArgs);
+                });
+            }
+        }
     }
 
     app.on('ready', createWindow);
 
-    app.on('second-instance', (event, commandLine, workingDirectory) => {
-        // A second intence was ran: let's check if there's any params to read.
-        if (commandLine.length === 1) return;
+    app.on('second-instance', (evt, commandLine) => {
+        // A second intence was ran: focus our primary instance.
         if (mainWindow) {
             if (mainWindow.isMinimized())
                 mainWindow.restore();
             mainWindow.focus();
-            mainWindow.webContents.send('cmd', commandLine[1].replace('scp-wallet://', ''));
+            // Check if any params were sent, and execute if so.
+            const strArgs = formatCMD(commandLine);
+            if (strArgs)
+                mainWindow.webContents.send('cmd', strArgs);
         }
     });
 
