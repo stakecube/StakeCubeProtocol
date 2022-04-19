@@ -256,6 +256,10 @@
     let domNFTCollectionsBtn;
     let domNFTBurnBtn;
     let domNFTTransferBtn;
+    let domNFTMarketDetails;
+    let domNFTMarketLast;
+    let domNFTMarketHigh;
+    let domNFTMarketLow;
     let domDashboardPage;
     let domSendPage;
     let domSigPage;
@@ -944,6 +948,26 @@
         await fetchNFTs(cColl);
       } else {
         fetchNFTs(cColl, fRefresh ? strID : null);
+        // Fetch NFT prices and display them if they have any!
+        domNFTMarketDetails.style.display = 'none';
+        NET.getNftPrice(cNFT.id || cNFT.nft).then(cPrice => {
+          if (cPrice && cPrice.result.length) {
+            // Calculate all prices (last, high, low)
+            const nLast = Number(cPrice.result[0].price);
+            let nHigh = 0, nLow = 100000;
+            for (const cTrade of cPrice.result) {
+              const nPrice = Number(cTrade.price);
+              if (nPrice > nHigh) nHigh = nPrice;
+              if (nPrice < nLow) nLow = nPrice;
+            }
+            // Update the display!
+            domNFTMarketLast.innerText = nLast.toLocaleString('en-GB') + ' SCC ($' + (nLast * valueUSD).toFixed(2) + ')';
+            domNFTMarketHigh.innerText = nHigh.toLocaleString('en-GB') + ' SCC ($' + (nHigh * valueUSD).toFixed(2) + ')';
+            domNFTMarketLow.innerText = nLow.toLocaleString('en-GB') + ' SCC ($' + (nLow * valueUSD).toFixed(2) + ')';
+            domNFTMarketDetails.style.display = '';
+          }
+          // Sweet silence.
+        }).catch(e => e);
       }
       // Cache the ownership status
       const fOwned = cNFT.owner ? cNFT.owner === strAddr : true;
@@ -1099,7 +1123,8 @@
       if (!cCollRes.error)
         addCachedCollection(cCollRes);
       // We check the Selected NFT is the same as the Render NFT, incase the user switched selection during a slow fetchNFTs(), preventing a race condition
-      if (renderID !== null && renderID === (cSelectedNFT.id || cSelectedNFT.nft))
+      const strID = cSelectedNFT ? cSelectedNFT.id || cSelectedNFT.nft : '';
+      if (renderID !== null && renderID === strID)
         renderDetailedNFT(renderID, false);
       return getCachedCollection(cColl.index);
     }
@@ -1742,6 +1767,10 @@
       domScpTokenDeployArea = document.getElementById('scpTokenDeployArea');
       domNFTBurnBtn = document.getElementById('nftBurnBtn');
       domNFTTransferBtn = document.getElementById('nftTransferBtn');
+      domNFTMarketDetails = document.getElementById('nftMarketDetails');
+      domNFTMarketLast = document.getElementById('nftMarketLast');
+      domNFTMarketHigh = document.getElementById('nftMarketHigh');
+      domNFTMarketLow = document.getElementById('nftMarketLow');
       domSendBtn = document.getElementById("sendBtn");
       domReceiveBtn = document.getElementById("receiveBtn");
       dom2FABtn = document.getElementById("2faBtn");
@@ -2929,16 +2958,26 @@
                   <div class="row">
                     <div class="col">
                       <span class="ls-1">ID</span>
-                      <br>
                       <code id="nftDetailID" onclick="copyToClipboard(this.innerText, 'NFT ID')" style="cursor:pointer" class="kbd hover-darker"></code>
                     </div>
                   </div><br>
 
-                  <span class="ls-1">IPFS CID</span><br>
+                  <span class="ls-1">IPFS CID</span>
                   <span id="nftDetailImageID" onclick="copyToClipboard(this.innerText, 'IPFS CID')" style="cursor:pointer" class="kbd hover-darker"></span><br><br>
 
-                  <span class="ls-1">OWNER ADDRESS</span><br>
+                  <span class="ls-1">OWNER ADDRESS</span>
                   <code id="nftDetailOwner" onclick="copyToClipboard(this.innerText, 'Address')" style="cursor:pointer" class="kbd hover-darker"></code>
+                  
+                  <div id="nftMarketDetails" style="display: none;">
+                    <hr>
+                    <p style="width: max-content;margin: auto;">
+                      <b style="font-size: 15px;">Last Price:</b> <span id="nftMarketLast">1 SCC ($1)</span>
+                      <br>
+                      <b style="font-size: 15px;">All-time-high:</b> <span id="nftMarketHigh">1 SCC ($1)</span>
+                      <br>
+                      <b style="font-size: 15px;">All-time-low:</b> <span id="nftMarketLow">1 SCC ($1)</span>
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

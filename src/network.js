@@ -194,6 +194,12 @@ async function getPrice(strCoin = 'SCC') {
     );
 }
 
+async function getNftPrice(strID) {
+    return JSON.parse(
+        await get(rootSCNet + 'marketplace/nft?id=' + strID)
+    );
+}
+
 async function requestFaucet(strAddr) {
     return JSON.parse(
         await post(rootSCCNet + 'faucet', strAddr)
@@ -216,4 +222,5 @@ exports.getLightCollectionHeaders = getLightCollectionHeaders;
 exports.broadcastTx = broadcastTx;
 exports.getLatestRelease = getLatestRelease;
 exports.getPrice = getPrice;
+exports.getNftPrice = getNftPrice;
 exports.requestFaucet = requestFaucet;
