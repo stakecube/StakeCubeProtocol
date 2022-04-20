@@ -3167,11 +3167,11 @@
           nftName.value = nftName.value.replace(/ /g, ' ');
           // Limit to 25 characters
           if (nftName.value.length > 25) nftName.value = nftName.value.substr(0, 25);
-          // Set the display name
-          document.getElementById('nftCreatorName').innerText = nftName.value;
         } else {
           isComplete = false;
         }
+        // Set the sanitised display name
+        document.getElementById('nftCreatorName').innerText = nftName.value;
 
         // Image
         if (!bRawImageBuf || !bRawImageBuf.length) {
@@ -3183,6 +3183,14 @@
         } else {
           document.getElementById('scpNftDeployBtn').setAttribute('disabled', '');
         }
+      }
+
+      function clearNftCreator() {
+        document.getElementById('nftPreviewImg').style['background-image'] = '';
+        bRawImageBuf = null;
+        document.getElementById('scpNftName').value = '';
+        checkNftInput();
+        document.getElementById('nftCreatorName').innerText = 'Click to edit image';
       }
     </script>
 
@@ -3229,6 +3237,7 @@
                       </div>
                     </div>
                   </div>
+                  <p onclick="clearNftCreator()" style="text-align: center;margin: 5 0 0 0;opacity: 0.4;cursor: pointer;">Clear</p>
                 </div>
               </div>
               <center id="nftMintOpts">
