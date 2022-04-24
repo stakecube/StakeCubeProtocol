@@ -564,7 +564,7 @@ async function getRawTx(strID) {
         // Return the cached result
         return arrRawTxCache[0];
     } else {
-        // Return non-lcoked TX without caching it
+        // Return non-locked TX without caching it
         return cTx;
     }
 }
