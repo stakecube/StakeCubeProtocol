@@ -167,9 +167,9 @@ function getBalance(strAddr = false) {
         }, 0) / ptrCOIN;
 }
 
-// Returns the fee for the given bytes
+// Returns the fee for the given bytes (static for the meantime)
 function getFee(nBytes) {
-    return Math.round(nBytes * 2) / ptrCOIN;
+    return nBytes * 2;
 }
 
 // Deep-clones a UTXO

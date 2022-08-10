@@ -1139,9 +1139,9 @@
 
     function sendTransactionGUI() {
       const coinSelection = document.getElementById("sendingCoinVal").value;
-      let sendAmount = Number(document.getElementById("sendAmount").value.trim());
+      let nAmountSats = Number(document.getElementById("sendAmount").value.trim()) * COIN;
       const sendAddress = document.getElementById("sendAddress").value.trim();
-      if (!sendAmount || !Number.isFinite(sendAmount)) {
+      if (!nAmountSats || !Number.isInteger(nAmountSats)) {
         return M.toast({html: 'Please enter a valid amount!', displayLength: 2000});
       }
       if (!sendAddress || sendAddress.length !== 34 || !sendAddress.startsWith("s")) {
@@ -1150,30 +1150,30 @@
       const strAddr = WALLET.getActiveWallet().getPubkey();
       const strPrivkey = WALLET.getActiveWallet().getPrivkey();
       if (coinSelection === "scc") {
-        console.log("Constructing TX of value: " + sendAmount + " SCC");
+        console.log("Constructing TX of value: " + (nAmountSats / COIN) + " SCC");
         const cTx = WALLET.sccjs.wallet.tx.transaction();
         // Inputs
-        const usedUTXOs = WALLET.getCoinsToSpend(sendAmount * COIN, false, strAddr);
+        const usedUTXOs = WALLET.getCoinsToSpend(nAmountSats, false, strAddr);
         const nUTXOs = usedUTXOs.reduce((a, b) => {return a + b.sats}, 0);
         for (const cUTXO of usedUTXOs)
           cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
-        if (sendAmount > nUTXOs / COIN) return M.toast({html: 'Not enough funds!', displayLength: 2000});
+        if (nAmountSats > nUTXOs) return M.toast({html: 'Not enough funds!', displayLength: 2000});
         // Fee & Change output
         const nFee = WALLET.getFee(cTx.serialize().length * 4);
-        const nSpent = (nFee + sendAmount).toFixed(8);
-        const nChange = ((nUTXOs / COIN) - nSpent).toFixed(8);
-        const fNoChange = sendAmount >= ((nUTXOs / COIN) - nFee);
+        const nSpent = nFee + nAmountSats;
+        const nChange = nUTXOs - nSpent;
+        const fNoChange = nAmountSats >= nUTXOs - nFee;
         if (fNoChange) {
           // We're sending alot! So we've got to deduct the fee from the send amount. There's not enough change to pay it with!
-          sendAmount = Number((sendAmount - nFee).toFixed(8));
+          nAmountSats = nAmountSats - nFee;
           // Destination output
-          cTx.addoutput(sendAddress, sendAmount);
-          console.log('Adjusted SCC transaction amount to ' + sendAmount + ' and removed change output to fit send-all.');
+          cTx.addoutput(sendAddress, nAmountSats / COIN);
+          console.log('Adjusted SCC transaction amount to ' + (nAmountSats / COIN) + ' and removed change output to fit send-all.');
         } else {
           // Destination output
-          cTx.addoutput(sendAddress, sendAmount);
+          cTx.addoutput(sendAddress, nAmountSats / COIN);
           // Add change output
-          cTx.addoutput(strAddr, nChange);
+          cTx.addoutput(strAddr, nChange / COIN);
         }
         // Broadcast
         cTx.sign(strPrivkey, 1).then(strSignedTx => {
@@ -1184,8 +1184,8 @@
         const cToken = isFullnode ? TOKENS.getToken(strToken) : getCachedToken(strToken);
         const cAccount = isFullnode ? cToken.getAccount(strAddr) : getCachedAccount(cToken);
         const nBal = getMempoolDeltas(cToken.contract) + cAccount.balance;
-        if ((nBal / COIN) < sendAmount) return M.toast({html: 'You don\'t have enough ' + cToken.ticker + '!', displayLength: 3000});
-        console.log("Constructing SCP-" + cToken.version + " Transfer TX for: " + sendAmount + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
+        if (nBal < nAmountSats) return M.toast({html: 'You don\'t have enough ' + cToken.ticker + '!', displayLength: 3000});
+        console.log("Constructing SCP-" + cToken.version + " Transfer TX for: " + (nAmountSats / COIN) + " " + formatName(cToken.name, 12) + " (" + cToken.contract + ")");
         const cTx = WALLET.sccjs.wallet.tx.transaction();
         // Add input
         const cUTXO = WALLET.getCoinsToSpend(10000, true, strAddr)[0];
@@ -1194,14 +1194,14 @@
         // SCP output
         const fIndexed = UPGRADES.isTokenIndexingActive(isFullnodePtr() ? nCacheHeight : cachedBlockCount);
         const idContract = fIndexed ? "id" + cToken.index : cToken.contract;
-        cTx.addoutputburn(0.00000001, idContract + " send " + Math.round(sendAmount * COIN) + " " + sendAddress);
+        cTx.addoutputburn(0.00000001, idContract + " send " + nAmountSats + " " + sendAddress);
         // Fee & Change output
         const nFee = WALLET.getFee(cTx.serialize().length);
-        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-        cTx.addoutput(strAddr, nChange);
+        const nChange = cUTXO.sats - nFee;
+        cTx.addoutput(strAddr, nChange / COIN);
         // Broadcast
         cTx.sign(strPrivkey, 1).then(strSignedTx => {
-          addMockActivity("sent", sendAmount * COIN, cToken);
+          addMockActivity("sent", nAmountSats, cToken);
           WALLET.broadcastTx(strSignedTx).then(strTXID => {
             cUTXO.spent = true;
             M.toast({html: 'Transaction Sent!', displayLength: 1250});
@@ -1242,8 +1242,8 @@
         cTx.addoutputburn(0.00000001, idContract + " redeem");
         // Fee & Change output
         const nFee = WALLET.getFee(cTx.serialize().length);
-        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-        cTx.addoutput(strAddr, nChange);
+        const nChange = cUTXO.sats - nFee;
+        cTx.addoutput(strAddr, nChange / COIN);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
           addMockActivity("staked", cAccount.unclaimed_balance, cToken);
@@ -1294,8 +1294,8 @@
           cTx.addoutputburn(0.00000001, idContract + " redeem");
           // Fee & Change output
           const nFee = WALLET.getFee(cTx.serialize().length);
-          const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-          cTx.addoutput(cWallet.getPubkey(), nChange);
+          const nChange = cUTXO.sats - nFee;
+          cTx.addoutput(cWallet.getPubkey(), nChange / COIN);
           // Sign & Broadcast
           const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
           addMockActivity("staked", cToken.account.unclaimed_balance, cToken.token);
@@ -1362,9 +1362,9 @@
         cTx.addoutput(strDeployFeeDest, nDeployFee);
         // Fee & Change output
         const nFee = WALLET.getFee(cTx.serialize().length);
-        const nSpent = (nFee + nDeployFee).toFixed(8);
-        const nChange = ((nUTXOs / COIN) - nSpent).toFixed(8);
-        cTx.addoutput(strAddr, nChange);
+        const nSpent = nFee + (nDeployFee * COIN);
+        const nChange = nUTXOs - nSpent;
+        cTx.addoutput(strAddr, nChange / COIN);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
           WALLET.broadcastTx(strSignedTx).then(strTX => {
@@ -1392,8 +1392,8 @@
         cTx.addoutputburn(0.00000001, contract + " mint " + amount);
         // Fee & Change output
         const nFee = WALLET.getFee(cTx.serialize().length);
-        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-        cTx.addoutput(strAddr, nChange);
+        const nChange = cUTXO.sats - nFee;
+        cTx.addoutput(strAddr, nChange / COIN);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
           if (cToken && !cToken.error)
@@ -1427,8 +1427,8 @@
         cTx.addoutputburn(0.00000001, contract + " burn " + amount);
         // Fee & Change output
         const nFee = WALLET.getFee(cTx.serialize().length);
-        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-        cTx.addoutput(strAddr, nChange);
+        const nChange = cUTXO.sats - nFee;
+        cTx.addoutput(strAddr, nChange / COIN);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
           if (cToken && !cToken.error)
@@ -3107,8 +3107,8 @@
                 cTx.addoutputburn(0.00000001, cCollection.contract + ' mint ' + strName + ' ' + strCID);
                 // Fee & Change output
                 const nFee = WALLET.getFee(cTx.serialize().length);
-                const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-                cTx.addoutput(strAddr, nChange);
+                const nChange = cUTXO.sats - nFee;
+                cTx.addoutput(strAddr, nChange / COIN);
                 // Sign
                 cText.innerText = 'Signing TX' + strInterval;
                 const strSignedTx = await cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1);
@@ -3294,8 +3294,8 @@
         cTx.addoutputburn(0.00000001, idContract + ' transfer ' + strTo + ' ' + cSelectedNFT.nft);
         // Fee & Change output
         const nFee = WALLET.getFee(cTx.serialize().length);
-        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-        cTx.addoutput(strAddr, nChange);
+        const nChange = cUTXO.sats - nFee;
+        cTx.addoutput(strAddr, nChange / COIN);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
           WALLET.broadcastTx(strSignedTx).then(strTXID => {
@@ -3325,8 +3325,8 @@
         cTx.addoutputburn(0.00000001, idContract + ' destroy ' + cSelectedNFT.nft);
         // Fee & Change output
         const nFee = WALLET.getFee(cTx.serialize().length);
-        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-        cTx.addoutput(strAddr, nChange);
+        const nChange = cUTXO.sats - nFee;
+        cTx.addoutput(strAddr, nChange / COIN);
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
           WALLET.broadcastTx(strSignedTx).then(strTXID => {

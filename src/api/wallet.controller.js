@@ -140,7 +140,7 @@ async function send(req, res) {
     const strAddr = req.params.address;
     const strCurrency = req.params.currency;
     const strTo = req.params.to;
-    const nAmount = Number(req.params.amount);
+    const nSentSats = Number(req.params.amount) * COIN;
     try {
     // Cache our tokens list, for if needed
         let cTokens = false;
@@ -154,9 +154,9 @@ async function send(req, res) {
         }
 
         // Ensure the 'amount' is a valid number
-        if (Number.isNaN(nAmount) || !Number.isFinite(nAmount)) {
+        if (Number.isNaN(nSentSats) || !Number.isInteger(nSentSats)) {
             return res.status(400)
-                .send('Sending amount "' + nAmount +
+                .send('Sending amount "' + (nSentSats / COIN) +
                         '" is an invalid amount!');
         }
 
@@ -201,7 +201,7 @@ async function send(req, res) {
         // --- SCC ---
             const cTx = ptrWALLET.sccjs.wallet.tx.transaction();
             // Inputs
-            const usedUTXOs = ptrWALLET.getCoinsToSpend(nAmount * COIN,
+            const usedUTXOs = ptrWALLET.getCoinsToSpend(nSentSats,
                 false,
                 strPubkey);
             const nUTXOs = usedUTXOs.reduce((a, b) => {
@@ -210,20 +210,20 @@ async function send(req, res) {
             for (const cUTXO of usedUTXOs) {
                 cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
             }
-            if (nAmount >= nUTXOs / COIN) {
+            if (nSentSats >= nUTXOs) {
                 return res
                     .status(400)
                     .send('Not enough funds! (Sending: ' +
-                            nAmount + ', Have: ' + (nUTXOs / COIN) +
+                            (nSentSats / COIN) + ', Have: ' + (nUTXOs / COIN) +
                             ')');
             }
             // Destination output
-            cTx.addoutput(strTo, nAmount);
+            cTx.addoutput(strTo, nSentSats / COIN);
             // Fee & Change output
             const nFee = ptrWALLET.getFee(cTx.serialize().length);
-            const nSpent = (nFee + nAmount).toFixed(8);
-            const nChange = ((nUTXOs / COIN) - nSpent).toFixed(8);
-            cTx.addoutput(strPubkey, nChange);
+            const nSpent = nFee + nSentSats;
+            const nChange = nUTXOs - nSpent;
+            cTx.addoutput(strPubkey, nChange / COIN);
             // Broadcast
             const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
             const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
@@ -238,13 +238,13 @@ async function send(req, res) {
         } else {
         // --- SCP ---
             const cTx = ptrWALLET.sccjs.wallet.tx.transaction();
-            const nCoinsBal = (cSelectedToken.account.balance / COIN);
-            if (nAmount > nCoinsBal) {
+            const nCoinsBal = cSelectedToken.account.balance;
+            if (nSentSats > nCoinsBal) {
                 return res
                     .status(400)
                     .send('Not enough funds! (Sending: ' +
-                            nAmount + ', Have: ' +
-                            nCoinsBal + ')');
+                            (nSentSats / COIN) + ', Have: ' +
+                            (nCoinsBal / COIN) + ')');
             }
             // Add input
             const cUTXO = ptrWALLET.getCoinsToSpend(10000, true,
@@ -255,12 +255,12 @@ async function send(req, res) {
             cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
             // SCP output
             cTx.addoutputburn(0.00000001,
-                cSelectedToken.token.contract + ' send ' +
-                            (nAmount * COIN).toFixed(0) + ' ' + strTo);
+                cSelectedToken.token.contract + ' send ' + nSentSats +
+                                                ' ' + strTo);
             // Fee & Change output
             const nFee = ptrWALLET.getFee(cTx.serialize().length);
-            const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-            cTx.addoutput(strPubkey, nChange);
+            const nChange = cUTXO.sats - nFee;
+            cTx.addoutput(strPubkey, nChange / COIN);
             // Broadcast
             const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
             const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
@@ -325,7 +325,7 @@ async function stake(req, res) {
         }
         // --- CLAIM STAKE ---
         const cTx = ptrWALLET.sccjs.wallet.tx.transaction();
-        const nCoinsBal = (cSelectedToken.account.unclaimed_balance / COIN);
+        const nCoinsBal = cSelectedToken.account.unclaimed_balance;
         if (nCoinsBal <= 0) {
             return res.status(400).send('You have no pending rewards!');
         }
@@ -340,8 +340,8 @@ async function stake(req, res) {
             cSelectedToken.token.contract + ' redeem');
         // Fee & Change output
         const nFee = ptrWALLET.getFee(cTx.serialize().length);
-        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-        cTx.addoutput(strPubkey, nChange);
+        const nChange = cUTXO.sats - nFee;
+        cTx.addoutput(strPubkey, nChange / COIN);
         // Broadcast
         const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
         const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
@@ -432,9 +432,9 @@ async function createCollection(req, res) {
         cTx.addoutput(strDeployFeeDest, nDeployFee);
         // Fee & Change output
         const nFee = ptrWALLET.getFee(cTx.serialize().length);
-        const nSpent = (nFee + nDeployFee).toFixed(8);
-        const nChange = ((nUTXOs / COIN) - nSpent).toFixed(8);
-        cTx.addoutput(strPubkey, nChange);
+        const nSpent = nFee + (nDeployFee * COIN);
+        const nChange = nUTXOs - nSpent;
+        cTx.addoutput(strPubkey, nChange / COIN);
         // Broadcast
         const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
         const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
@@ -520,8 +520,8 @@ async function mintNFT(req, res) {
             strContract + ' mint ' + strName + ' ' + strIpfsCID);
         // Fee & Change output
         const nFee = ptrWALLET.getFee(cTx.serialize().length);
-        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-        cTx.addoutput(strPubkey, nChange);
+        const nChange = cUTXO.sats - nFee;
+        cTx.addoutput(strPubkey, nChange / COIN);
         // Broadcast
         const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
         const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
@@ -610,8 +610,8 @@ async function burnNFT(req, res) {
             strContract + ' destroy ' + strID);
         // Fee & Change output
         const nFee = ptrWALLET.getFee(cTx.serialize().length);
-        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-        cTx.addoutput(strPubkey, nChange);
+        const nChange = cUTXO.sats - nFee
+        cTx.addoutput(strPubkey, nChange / COIN);
         // Broadcast
         const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
         const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
@@ -698,8 +698,8 @@ async function transferNFT(req, res) {
             strContract + ' transfer ' + strTo + ' ' + strID);
         // Fee & Change output
         const nFee = ptrWALLET.getFee(cTx.serialize().length);
-        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-        cTx.addoutput(strPubkey, nChange);
+        const nChange = cUTXO.sats - nFee;
+        cTx.addoutput(strPubkey, nChange / COIN);
         // Broadcast
         const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
         const strTXID = await ptrWALLET.broadcastTx(strSignedTx);

@@ -105,8 +105,8 @@ async function writeTx(req, res) {
         cTx.addoutputburn(0.00000001, strData);
         // Fee & Change output
         const nFee = ptrWALLET.getFee(cTx.serialize().length);
-        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-        cTx.addoutput(strPubkey, nChange);
+        const nChange = cUTXO.sats - nFee;
+        cTx.addoutput(strPubkey, nChange / COIN);
         // Broadcast
         const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
         const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
@@ -165,8 +165,8 @@ async function createDappIdentifier(req, res) {
         cTx.addoutputburn(0.00000001, ptrVM.createIdentifierScript(strType));
         // Fee & Change output
         const nFee = ptrWALLET.getFee(cTx.serialize().length);
-        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-        cTx.addoutput(strPubkey, nChange);
+        const nChange = cUTXO.sats - nFee;
+        cTx.addoutput(strPubkey, nChange / COIN);
         // Broadcast
         const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
         const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
@@ -240,8 +240,8 @@ async function writePushToStorage(req, res) {
             ptrVM.createWritePushScript(strID, strData));
         // Fee & Change output
         const nFee = ptrWALLET.getFee(cTx.serialize().length);
-        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-        cTx.addoutput(strPubkey, nChange);
+        const nChange = cUTXO.sats - nFee;
+        cTx.addoutput(strPubkey, nChange / COIN);
         // Broadcast
         const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
         const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
@@ -317,8 +317,8 @@ async function writeKeyToStorage(req, res) {
             ptrVM.createWriteKeyScript(strID, strKey, strData));
         // Fee & Change output
         const nFee = ptrWALLET.getFee(cTx.serialize().length);
-        const nChange = ((cUTXO.sats / COIN) - nFee).toFixed(8);
-        cTx.addoutput(strPubkey, nChange);
+        const nChange = cUTXO.sats - nFee;
+        cTx.addoutput(strPubkey, nChange / COIN);
         // Broadcast
         const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
         const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
