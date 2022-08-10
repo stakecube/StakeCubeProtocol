@@ -1249,6 +1249,8 @@
           addMockActivity("staked", cAccount.unclaimed_balance, cToken);
           WALLET.broadcastTx(strSignedTx).then(strTXID => {
             cUTXO.spent = true;
+            refreshStakingStatus(contract, false);
+            M.toast({html: '🎉', displayLength: 2500});
             if (isFullnodePtr()) {
               getMempoolActivity(strAddr).then(arrRes => cachedActivityIS = arrRes);
             } else {
@@ -1267,13 +1269,16 @@
       isClaiming = true;
       let nClaims = 0;
       const cWallet = WALLET.getActiveWallet();
+      // Update UI
+      domClaimAllBtn.style.opacity = 0.4;
+      domClaimAllBtn.style.cursor = "default";
+      // Search for stakeable tokens
       for (const cToken of cachedTokens) {
           if (cToken.token.version !== 2) continue;
           if (cToken.account.unclaimed_balance <= 0) continue;
+          if (cToken.token.supply + cToken.account.unclaimed_balance >= cToken.token.maxSupply) continue;
           if (hasMempoolStakes(cToken.token.contract)) continue;
           // Let's claim the rewards!
-          domClaimAllBtn.style.opacity = 0.4;
-          domClaimAllBtn.style.cursor = "default";
           domClaimAllBtn.innerText = "Claiming " + cToken.token.ticker;
           // Init wallet & TX constructor
           const cTx = WALLET.sccjs.wallet.tx.transaction();
@@ -1315,8 +1320,7 @@
         if (isFullnodePtr()) {
           cachedActivityIS = await getMempoolActivity(cWallet.getPubkey());
         } else {
-          const strRes = await NET.getMempoolActivityLight(cWallet.getPubkey());
-          cachedActivityIS = JSON.parse(strRes);
+          cachedActivityIS = JSON.parse(await NET.getMempoolActivityLight(cWallet.getPubkey()));
         }
         isClaiming = false;
         // Notify the user, finished!
@@ -1480,78 +1484,82 @@
       }
     }
 
-    let currentStakingToken = false;
-    let guiStakingToken;
-    let guiStakingAccount;
-    let guiStakingStatus;
-    function refreshStakingStatus(contract) {
+    function getStakingAccountPacked(strContract, fRefresh = true) {
       const strPubkey = WALLET.getActiveWallet().getPubkey();
-      if (isFullnode) {
-        guiStakingToken   = TOKENS.getToken(contract);
-        guiStakingAccount = guiStakingToken.getAccount(strPubkey);
-        guiStakingStatus  = guiStakingToken.getStakingStatus(guiStakingAccount);
-      } else {
-        guiStakingToken   = getCachedToken(contract);
-        guiStakingAccount = getCachedAccount(guiStakingToken);
-        getStakingStatusLight(contract, strPubkey);
-      }
+      const cToken = isFullnode ? TOKENS.getToken(strContract) : getCachedToken(strContract);
+
+      // Lightwallets should async-refresh their status every call
+      if (!isFullnode && fRefresh) getStakingStatusLight(strContract, strPubkey);
+
+      return [
+        cToken,
+        //           Fullnode                            Lightwallet
+        isFullnode ? cToken.getAccount(strPubkey)      : getCachedAccount(cToken),
+        isFullnode ? cToken.getStakingStatus(cAccount) : cStakingStatus
+      ];
+    }
+
+    let currentStakingToken = '';
+    let cStakingStatus;
+    function refreshStakingStatus(contract, fRefresh = true) {
+      const strPubkey = WALLET.getActiveWallet().getPubkey();
+      const [cStakeToken, cStakeAcc] = getStakingAccountPacked(contract, fRefresh);
 
       // Populate static data if available (name, ticker, etc)
-      domStakingTitle.innerText = guiStakingToken ? formatName(guiStakingToken.name, 18) + " (" + formatName(guiStakingToken.ticker, 6) + ")"
+      domStakingTitle.innerText = cStakeToken ? formatName(cStakeToken.name, 18) + " (" + formatName(cStakeToken.ticker, 6) + ")"
                                                   : "Loading...";
 
       // Put token + account info on the Staking Page on this refresh!
-      if ((guiStakingToken && guiStakingAccount && guiStakingStatus) && guiStakingStatus.enabled) {
+      if ((cStakeToken && cStakeAcc && cStakingStatus) && cStakingStatus.enabled) {
         // Run a quick'n'dirty APY calculation based on the current weight reward
-        const nReward = guiStakingToken.inflation * guiStakingStatus.weight;
-        const nTotalRewards = guiStakingAccount.unclaimed_balance / COIN;
+        const nReward = cStakeToken.inflation * cStakingStatus.weight;
+        const nTotalRewards = cStakeAcc.unclaimed_balance / COIN;
         // Also check to ensure we haven't hit the max supply yet
-        if (guiStakingToken.supply === guiStakingToken.maxSupply ||
-           (guiStakingToken.supply + guiStakingAccount.unclaimed_balance) >= guiStakingToken.maxSupply)
+        if (cStakeToken.supply + cStakeAcc.unclaimed_balance >= cStakeToken.maxSupply)
         {
           domStakingApy.innerText = "0%";
           domStakingRoi.innerText = "";
-          domStakingSubtitle.innerText = formatName(guiStakingToken.name, 12) + " has hit it's max supply of " + (guiStakingToken.maxSupply / COIN).toLocaleString('en-GB', { maximumFractionDigits: 8 }) + " " + formatName(guiStakingToken.ticker, 6)  + "!";
+          domStakingSubtitle.innerText = formatName(cStakeToken.name, 12) + " has hit it's max supply of " + (cStakeToken.maxSupply / COIN).toLocaleString('en-GB', { maximumFractionDigits: 8 }) + " " + formatName(cStakeToken.ticker, 6)  + "!";
           domStakingRewards.innerText = "Cap Reached";
           domStakingRedeem.setAttribute('onclick', '');
           if (!domStakingRedeem.classList.contains('disabled'))
             domStakingRedeem.classList.add('disabled');
           domStakingRedeem.innerText = 'No Stakes to Claim';
         } else {
-          const fStaked = hasMempoolStakes(guiStakingToken.contract);
-          const nAPY = percentOf((nReward * 720) * 365, guiStakingAccount.balance);
+          const fStaked = hasMempoolStakes(cStakeToken.contract);
+          const nAPY = percentOf((nReward * 720) * 365, cStakeAcc.balance);
           if (nAPY > 0.01 && nReward > 1) {
             domStakingApy.innerText = nAPY.toLocaleString('en-GB', { maximumFractionDigits: (nAPY > 100 ? 0 : 2) }) + "%";
-            domStakingRoi.innerText = "or a ROI of " + percentOf(guiStakingAccount.unclaimed_balance, guiStakingAccount.balance).toLocaleString('en-GB', { maximumFractionDigits: 2 }) + "%";
+            domStakingRoi.innerText = "or a ROI of " + percentOf(cStakeAcc.unclaimed_balance, cStakeAcc.balance).toLocaleString('en-GB', { maximumFractionDigits: 2 }) + "%";
           } else {
             domStakingApy.innerText = "---";
             domStakingRoi.innerText = "";
           }
-          domStakingSubtitle.innerText = "You've been staking for " + (guiStakingStatus.age - guiStakingToken.minAge).toLocaleString('en-GB') + " blocks and earned...";
+          domStakingSubtitle.innerText = "You've been staking for " + (cStakingStatus.age - cStakeToken.minAge).toLocaleString('en-GB') + " blocks and earned...";
           if (fStaked) {
-            domStakingRewards.innerText = '0 ' + formatName(guiStakingToken.ticker, 6);
+            domStakingRewards.innerText = '0 ' + formatName(cStakeToken.ticker, 6);
             domStakingRedeem.setAttribute('onclick', '');
             if (!domStakingRedeem.classList.contains('disabled'))
               domStakingRedeem.classList.add('disabled');
             domStakingRedeem.innerText = 'No Stakes to Claim';
-          } else if (guiStakingAccount.unclaimed_balance > 0) {
-            domStakingRewards.innerText = nTotalRewards.toLocaleString('en-GB', { maximumFractionDigits: nTotalRewards > 1 ? 4 : 8}) + " " + formatName(guiStakingToken.ticker, 6);
+          } else if (cStakeAcc.unclaimed_balance > 0) {
+            domStakingRewards.innerText = nTotalRewards.toLocaleString('en-GB', { maximumFractionDigits: nTotalRewards > 1 ? 4 : 8}) + " " + formatName(cStakeToken.ticker, 6);
             domStakingRedeem.setAttribute('onclick', 'claimStakingRewards("' + contract + '")');
             domStakingRedeem.classList.remove('disabled');
             domStakingRedeem.innerText = 'Claim Rewards';
           } else {
-            domStakingRewards.innerText = '0 ' + formatName(guiStakingToken.ticker, 6);
+            domStakingRewards.innerText = '0 ' + formatName(cStakeToken.ticker, 6);
             domStakingRedeem.setAttribute('onclick', '');
             if (!domStakingRedeem.classList.contains('disabled'))
               domStakingRedeem.classList.add('disabled');
             domStakingRedeem.innerText = 'No Stakes to Claim';
           }
         }
-      } else if (guiStakingToken && guiStakingAccount && guiStakingStatus) {
+      } else if (cStakeToken && cStakeAcc && cStakingStatus) {
         domStakingApy.innerText = "---";
         domStakingRoi.innerText = "";
-        domStakingSubtitle.innerText = "Your tokens need another " + (guiStakingToken.minAge - guiStakingStatus.age).toLocaleString('en-GB') + " blocks to mature before earning stakes!";
-        domStakingRewards.innerText = "0 " + guiStakingToken.ticker;
+        domStakingSubtitle.innerText = "Your tokens need another " + (cStakeToken.minAge - cStakingStatus.age).toLocaleString('en-GB') + " blocks to mature before earning stakes!";
+        domStakingRewards.innerText = "0 " + cStakeToken.ticker;
         domStakingRedeem.setAttribute('onclick', '');
         if (!domStakingRedeem.classList.contains('disabled'))
           domStakingRedeem.classList.add('disabled');
@@ -1625,6 +1633,7 @@
         for (const cToken of cachedTokens) {
           if (cToken.token.version !== 2) continue;
           if (cToken.account.unclaimed_balance <= 0) continue;
+          if (cToken.token.supply + cToken.account.unclaimed_balance >= cToken.token.maxSupply) continue;
           if (hasMempoolStakes(cToken.token.contract)) continue;
           nPendingStakes++;
         }

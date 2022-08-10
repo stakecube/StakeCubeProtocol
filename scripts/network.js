@@ -107,7 +107,11 @@ const getStakingStatusLight = function(contract, address) {
     request.open('GET', 'https://stakecubecoin.net/web3/scp/tokens/getstakingstatus/' +
                          contract + '/' + address, true);
     request.onload = function() {
-        guiStakingStatus = JSON.parse(this.response);
+        cStakingStatus = JSON.parse(this.response);
+        // If the staking page is open still: render this data ASAP!
+        if (domStakingPage.style.display === "block" && currentStakingToken) {
+            refreshStakingStatus(contract, false);
+        }
     };
     request.send();
 };
