@@ -133,9 +133,7 @@ const sendTransaction = function(hex, usedUTXOs = [], message = 'Transaction Sen
                     'displayLength': 1000 + (message.length * 75)
                 });
                 // Mark UTXOs as spent
-                for (const cUTXO of usedUTXOs) {
-                    cUTXO.spent = true;
-                }
+                usedUTXOs.forEach(cUTXO => cUTXO.spent = true);
             }
             // Refresh UTXOs from on-chain and mempool
             getUnspentTransactions();

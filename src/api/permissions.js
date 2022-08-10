@@ -18,9 +18,7 @@ function init(context) {
     if (strConfModules && strConfModules.length) {
         // Convert to lowercase, splice into an array using commas as seperators, then trim all input
         arrConfModules = strConfModules.toLowerCase().split(',');
-        arrConfModules = arrConfModules.map((a) => {
-            return a.trim();
-        });
+        arrConfModules = arrConfModules.map((a) => a.trim());
     }
     // Return if this module is enabled/disabled
     return isModuleAllowed(context.strModule);

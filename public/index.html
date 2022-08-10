@@ -1154,7 +1154,7 @@
         const cTx = WALLET.sccjs.wallet.tx.transaction();
         // Inputs
         const usedUTXOs = WALLET.getCoinsToSpend(nAmountSats, false, strAddr);
-        const nUTXOs = usedUTXOs.reduce((a, b) => {return a + b.sats}, 0);
+        const nUTXOs = usedUTXOs.reduce((a, b) => a + b.sats, 0);
         for (const cUTXO of usedUTXOs)
           cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         if (nAmountSats > nUTXOs) return M.toast({html: 'Not enough funds!', displayLength: 2000});
@@ -1352,7 +1352,7 @@
         const strAddr = WALLET.getActiveWallet().getPubkey();
         const nDeployCost = (nDeployFee * COIN) + 1000;
         const usedUTXOs = WALLET.getCoinsToSpend(nDeployCost, false, strAddr);
-        const nUTXOs = usedUTXOs.reduce((a, b) => {return a + b.sats}, 0);
+        const nUTXOs = usedUTXOs.reduce((a, b) => a + b.sats, 0);
         for (const cUTXO of usedUTXOs)
           cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
         if (nDeployCost >= nUTXOs) return M.toast({html: 'You don\'t have enough SCC for gas fees!', displayLength: 3000});
@@ -1368,7 +1368,7 @@
         // Broadcast
         cTx.sign(WALLET.getActiveWallet().getPrivkey(), 1).then(strSignedTx => {
           WALLET.broadcastTx(strSignedTx).then(strTX => {
-            usedUTXOs.forEach(cUTXO => { cUTXO.spent = true; });
+            usedUTXOs.forEach(cUTXO => cUTXO.spent = true);
             // Updates NFTs and other contracts
             getMempoolActivity(strAddr).then(res => {
               if (version === 4) {

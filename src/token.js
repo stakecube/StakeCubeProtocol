@@ -183,9 +183,7 @@ class SCP2Token extends SCP1Token {
 
     // Calculates the current amount of pending, redeemable supply from staking
     getPendingSupply() {
-        return this.owners.reduce((a, b) => {
-            return a + b.unclaimed_balance;
-        }, 0);
+        return this.owners.reduce((a, b) => a + b.unclaimed_balance, 0);
     }
 
     // Calculates the account's holdings (PoS weight) against the rest of the network in percentage

@@ -162,9 +162,7 @@ const arrUTXOs = [];
 // Returns the balance of the wallet (aggregate UTXOs value)
 function getBalance(strAddr = false) {
     return getAvailableUTXOs(strAddr)
-        .reduce((a, b) => {
-            return a + b.sats;
-        }, 0) / ptrCOIN;
+        .reduce((a, b) => a + b.sats, 0) / ptrCOIN;
 }
 
 // Returns the fee for the given bytes (static for the meantime)

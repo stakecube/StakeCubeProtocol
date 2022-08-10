@@ -59,9 +59,7 @@ async function getBalances(req, res) {
             'name': 'StakeCubeCoin',
             'ticker': 'SCC',
             // Balance is the sum of all UTXOs, for standardization
-            'balance': arrUTXOs.reduce((a, b) => {
-                return a + b.sats;
-            }, 0),
+            'balance': arrUTXOs.reduce((a, b) => a + b.sats, 0),
             'utxos': arrUTXOs
         });
         // Get SCP tokens and add these to the list too
@@ -204,9 +202,7 @@ async function send(req, res) {
             const usedUTXOs = ptrWALLET.getCoinsToSpend(nSentSats,
                 false,
                 strPubkey);
-            const nUTXOs = usedUTXOs.reduce((a, b) => {
-                return a + b.sats;
-            }, 0);
+            const nUTXOs = usedUTXOs.reduce((a, b) => a + b.sats, 0);
             for (const cUTXO of usedUTXOs) {
                 cTx.addinput(cUTXO.id, cUTXO.vout, cUTXO.script);
             }
@@ -228,9 +224,7 @@ async function send(req, res) {
             const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
             const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
             // Mark UTXOs as spent
-            for (const cUTXO of usedUTXOs) {
-                cUTXO.spent = true;
-            }
+            usedUTXOs.forEach(cUTXO => cUTXO.spent = true);
             return res.json({
                 'txid': strTXID,
                 'rawTx': strSignedTx
@@ -410,9 +404,7 @@ async function createCollection(req, res) {
         const usedUTXOs = ptrWALLET.getCoinsToSpend(nDeployFee * COIN,
             false,
             strPubkey);
-        const nUTXOs = usedUTXOs.reduce((a, b) => {
-            return a + b.sats;
-        }, 0);
+        const nUTXOs = usedUTXOs.reduce((a, b) => a + b.sats, 0);
         if (nDeployFee >= nUTXOs / COIN) {
             return res
                 .status(400)
@@ -439,9 +431,7 @@ async function createCollection(req, res) {
         const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
         const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
         // Mark UTXOs as spent
-        for (const cUTXO of usedUTXOs) {
-            cUTXO.spent = true;
-        }
+        usedUTXOs.forEach(cUTXO => cUTXO.spent = true);
         // Return API data
         return res.json({
             'txid': strTXID,
