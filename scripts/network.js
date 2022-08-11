@@ -100,6 +100,8 @@ const getDeltasByAccountLight = function(address) {
                 if (res == 'true') console.log('Faucet: Received some starter SCC, yahoo!');
             });
         }
+        // Render the updated list ASAP
+        renderTokens();
     });
 };
 const getStakingStatusLight = function(contract, address) {

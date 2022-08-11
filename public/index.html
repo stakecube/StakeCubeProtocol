@@ -294,6 +294,8 @@
     let domReceiveAddress;
     let domBalance;
     let domBalanceUSD;
+    let domTokensList;
+    let domSendingCoin;
     let domSendingBalance;
     let domActivityList;
     let domActivitySCC;
@@ -626,47 +628,16 @@
           getTokensByAccountLight(strPubkey);
           fetchNFTsByAddress(strPubkey);
         }
-        // Loop all tokens, construct an updated GUI for the Dashboard
-        let dashboardTokens = document.getElementById("dashboardTokens");
-        let sendTokensSelector = document.getElementById('sendingCoin');
-        sendTokensSelector.innerHTML = '<option value="scc" data-thumbnail="imgs/circular-logo.svg">StakeCubeCoin (SCC)</option>';
-        dashboardTokens.innerHTML = '';
+
+        // Update sync status
         if (chainHashesCache.length === 0 && isFullnode) {
-          dashboardTokens.innerHTML += '<center style=\'margin-top:30px;\'><p>Loading SCP</p></center>';
+          domTokensList.innerHTML = '<center style=\'margin-top:30px;\'><p>Loading SCP</p></center>';
         } else if (getSyncPercentage() < 99.99 && isFullnode) {
-          dashboardTokens.innerHTML += '<center style=\'margin-top:30px;\'><p id="scpSyncing">SCP is still syncing (' + getSyncPercentage().toFixed(2) + '%)</p></center>';
-        } else if (cachedTokens.length > 0) {
-          let strDashTokens = "";
-          let strSendTokens = "";
-          for (const cToken of cachedTokens) {
-            let nBal = (getMempoolDeltas(cToken.token.contract) + cToken.account.balance) / COIN;
-            if (hideZeroBalance && nBal <= 0) continue;
-            let stakingButton = 'onclick="switchToStaking(\'' + cToken.token.contract + '\')"';
-            let stakingStyle = 'cursor:pointer;';
-            let stakingText = '';
-            if (cToken.token.version !== 2) {
-              stakingButton = '';
-              stakingStyle = '';
-            } else {
-              let fStaked = hasMempoolStakes(cToken.token.contract);
-              if (!fStaked) {
-                const nRewards = (cToken.account.unclaimed_balance / COIN);
-                // Ensure we have unclaimed stakes, and the token has not hit max supply yet
-                if (cToken.account.unclaimed_balance > 0 && (cToken.token.supply + cToken.account.unclaimed_balance) < cToken.token.maxSupply)
-                  stakingText = ' <i style="opacity:0.5;">(+' + nRewards.toLocaleString('en-GB', { maximumFractionDigits: (nRewards > 0.1 ? 2 : 8 ) }) + ')</i>';
-              } else {
-                stakingButton = '';
-                stakingStyle = '';
-              }
-            }
-            strDashTokens += '<div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px; max-height: 32px;' + stakingStyle + '" ' + stakingButton + '><img src="imgs/circular-logo.svg" style="width:32px; height:32px; margin-right: 10px"><div class="d-inline-flex flex-column lh-sm" style="position: relative; top: -7px"><span>'+ formatName(cToken.token.ticker, 8) +'</span><span style="opacity: 0.75;font-size:0.75em;">SCP-' + cToken.token.version + '</span></div><span class="float-end theme-color-secondary">' + nBal.toLocaleString('en-GB', { maximumFractionDigits: (nBal > 1 ? 2 : 8) }) + stakingText + '</span></div>';
-            strSendTokens += '<option value="scptoken-' + cToken.token.contract + '" data-thumbnail="imgs/circular-logo.svg">' + formatName(cToken.token.name, 10) + ' (' + cToken.token.ticker + ')</option>';
-          }
-          dashboardTokens.innerHTML += strDashTokens;
-          sendTokensSelector.innerHTML += strSendTokens;
-        } else {
-          dashboardTokens.innerHTML += '<center style=\'margin-top:30px;\'><p>You have no tokens!</p></center>';
+          domTokensList.innerHTML = '<center style=\'margin-top:30px;\'><p id="scpSyncing">SCP is still syncing (' + getSyncPercentage().toFixed(2) + '%)</p></center>';
         }
+
+        // Update tokens list
+        renderTokens();
 
         // Update activity widget
         if (isFullnode) {
@@ -720,6 +691,42 @@
       }
 
       return nBalance;
+    }
+
+    function renderTokens() {
+      if (cachedTokens.length > 0) {
+        // Dashboard
+        let strDashTokens = "";
+        // Send list
+        let strSendingSCC = '<option value="scc" data-thumbnail="imgs/circular-logo.svg">StakeCubeCoin (SCC)</option>';
+        let strSendTokens = "";
+        for (const cToken of cachedTokens) {
+          const nBal = (getMempoolDeltas(cToken.token.contract) + cToken.account.balance) / COIN;
+          if (hideZeroBalance && nBal <= 0) continue;
+          let strTokenButton = '';
+          let strTokenStyle = '';
+          let strTokenText = '';
+          // Staking UI
+          if (cToken.token.version === 2) {
+            strTokenButton = 'onclick="switchToStaking(\'' + cToken.token.contract + '\')"';
+            strTokenStyle = 'cursor:pointer;';
+            const fStaked = hasMempoolStakes(cToken.token.contract);
+            // If we haven't claimed stakes; display rewards!
+            if (!fStaked) {
+              const nRewards = cToken.account.unclaimed_balance / COIN;
+              // Ensure we have unclaimed stakes, and the token has not hit max supply yet
+              if (cToken.account.unclaimed_balance > 0 && cToken.token.supply + cToken.account.unclaimed_balance < cToken.token.maxSupply)
+                strTokenText = ' <i style="opacity:0.5;">(+' + nRewards.toLocaleString('en-GB', { maximumFractionDigits: nRewards > 0.1 ? 2 : 8 }) + ')</i>';
+            }
+          }
+          strDashTokens += '<div class="mt-3 mb-3 font-gray-2 font-weight-bold" style="font-size:15px; max-height: 32px;' + strTokenStyle + '" ' + strTokenButton + '><img src="imgs/circular-logo.svg" style="width:32px; height:32px; margin-right: 10px"><div class="d-inline-flex flex-column lh-sm" style="position: relative; top: -7px"><span>'+ formatName(cToken.token.ticker, 8) +'</span><span style="opacity: 0.75;font-size:0.75em;">SCP-' + cToken.token.version + '</span></div><span class="float-end theme-color-secondary">' + nBal.toLocaleString('en-GB', { maximumFractionDigits: (nBal > 1 ? 2 : 8) }) + strTokenText + '</span></div>';
+          strSendTokens += '<option value="scptoken-' + cToken.token.contract + '" data-thumbnail="imgs/circular-logo.svg">' + formatName(cToken.token.name, 10) + ' (' + cToken.token.ticker + ')</option>';
+        }
+        domTokensList.innerHTML = strDashTokens;
+        domSendingCoin.innerHTML = strSendingSCC + strSendTokens;
+      } else {
+        domTokensList.innerHTML = '<center style=\'margin-top:30px;\'><p>You have no tokens!</p></center>';
+      }
     }
 
     function renderActivity() {
@@ -1304,6 +1311,8 @@
           nClaims++;
           // Mark UTXO as spent
           cUTXO.spent = true;
+          // Refresh token list
+          renderTokens();
           // If no available UTXOs: Sleep to allow the mempool time to return our fresh UTXO set
           if (!WALLET.getAvailableUTXOs(cWallet.getPubkey()).length)
             await sleep(500);
@@ -1765,6 +1774,8 @@
       domAuthReset = document.getElementById("authReset");
       domBalance = document.getElementById("guiBalance");
       domBalanceUSD = document.getElementById("balanceUSD");
+      domTokensList = document.getElementById("dashboardTokens");
+      domSendingCoin = document.getElementById("sendingCoin");
       domSendingBalance = document.getElementById("sendingCoinBalance");
       domPrice = document.getElementById("dashboardPrice");
       domMarketcap = document.getElementById("dashboardMarketcap");
