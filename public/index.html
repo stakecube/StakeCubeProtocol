@@ -724,10 +724,9 @@
 
     function renderActivity() {
       // Our 'view' is either SCP or SCC, depending on the user's Activity settings
-      const arrView = JSON.parse(JSON.stringify(activityViewSCP ? cachedActivity : cachedCoinDeltas));
+      const arrView = activityViewSCP ? cachedActivity : cachedCoinDeltas;
       let strActivityList = "";
       if (arrView.length > 0) {
-        domActivityList.innerHTML = "";
         let arrTxView = [];
         // (SCC view ONLY) Sort the individual output deltas into per-transaction deltas
         if (!activityViewSCP) {
@@ -737,8 +736,15 @@
               // Found a prev. TX delta, merge the values
               cFoundTx.satoshis += cDelta.satoshis;
             } else {
-              // Didn't find any TX deltas, add a new one (Deep Clone)
-              arrTxView.push(JSON.parse(JSON.stringify(cDelta)));
+              // Didn't find any TX deltas, add a new one (Deep Clone Primitives)
+              arrTxView.push({
+                satoshis: cDelta.satoshis,
+                txid: cDelta.txid,
+                index: cDelta.index,
+                blockindex: cDelta.blockindex,
+                height: cDelta.height,
+                address: cDelta.address
+              });
             }
           }
         } else {
@@ -753,23 +759,18 @@
           const nValue = (cActivity.amount || cActivity.satoshis) / COIN;
           const strTx  = (cActivity.id || cActivity.txid);
           const strBlk = (cActivity.block || cActivity.height).toLocaleString('en-GB');
-          const fIsNumBlk = Number.isSafeInteger(cActivity.block || cActivity.height);
-          let strType;
-          if (activityViewSCP) {
-            strType = cActivity.type;
-          } else {
-            if (cActivity.satoshis >= 0)
-              strType = 'received';
-            else
-              strType = 'sent';
-          }
-          const strTypeColour = ((strType === 'received' || strType === 'staked') ? "plus" : "minus");
-          const strTypeSymbol = ((strType === 'received' || strType === 'staked') ? "+" : "-");
+          const fIsNumBlk = Number.isInteger(cActivity.block || cActivity.height);
+          //                                SCP Type         SCC Received or Sent
+          const strType = activityViewSCP ? cActivity.type : (cActivity.satoshis >= 0 ? 'received' : 'sent');
+          //                              (r)eceived                 (st)aked
+          const fReceiveOrStake = strType.startsWith('r') || strType.startsWith('st');
+          const strTypeColour = fReceiveOrStake ? "plus" : "minus";
+          const strTypeSymbol = fReceiveOrStake ? "+" : "-";
           const strCoinTicker = cActivity.token ? cActivity.token.ticker : 'SCC';
           const strExplorerID = strTx ? 'style="cursor: pointer;" onclick="openExternalURL(\'https://scc.ccore.online/transaction/' + strTx + '\')"' : '';
           strActivityList += '<div class="mt-4 hover-darker" ' + strExplorerID + '><div class="float-start text-center">' + (fIsNumBlk ? 'Block ' : '') + ' ' + strBlk + '</div><span class="float-end ' + strTypeColour + '-balance-color font-weight-bold" style="position:relative; top:11px;"><i style="text-transform: capitalize;padding-right:5px;">' + strType + '</i> ' + strTypeSymbol + Math.abs(nValue).toLocaleString('en-GB', { maximumFractionDigits: nValue > 1 ? 2 : 8, minimumFractionDigits: 2 }) + ' ' + strCoinTicker + '</span></div><br><br><hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">';
         }
-        domActivityList.innerHTML += strActivityList;
+        domActivityList.innerHTML = strActivityList;
       } else {
         domActivityList.innerHTML = "<center style='margin-top:30px;'><p>You have no activity!</p></center>";
       }
