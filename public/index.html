@@ -119,12 +119,7 @@
           document.getElementById("pass1").value = "";
           domLoginPage.style.display = "none";
           funcStarter();
-          DB.setWallet(WALLET.toDB()).then(() => {
-            if (localStorage.getItem("encwif")) {
-              localStorage.removeItem("encwif");
-              console.log("DB: Migrated 'encwif' from LS to Backend DB!");
-            }
-          });
+          DB.setWallet(WALLET.toDB());
           // Give the cache a kick
           getBlockCount();
           getUnspentTransactions();
@@ -1848,11 +1843,7 @@
       init().then(() => {
         // Check for an encrypted wallet, if one exists, pull up the login screen!
         let cWallet = WALLET.getActiveWallet() || new WALLET.Wallet();
-        let encwif = false;
-        if (cWallet && cWallet.getPrivkeyEnc())
-          encwif = cWallet.getPrivkeyEnc();
-        else
-          localStorage.getItem("encwif");
+        const encwif = cWallet.getPrivkeyEnc();
         if (encwif && encwif.length > 1) {
           cWallet.setKeys(null, null, encwif);
           getUnspentTransactions();
