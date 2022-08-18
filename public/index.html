@@ -1589,6 +1589,31 @@
       }
     }
 
+    async function createAdditionalAccount() {
+      // Create a new multi-wallet account
+      const cWallet = await WALLET.createWallet();
+
+      // Load the new wallet and save to DB
+      const nWalletIndex = WALLET.getWalletIndexByPubkey(cWallet.getPubkey());
+      WALLET.setActiveWallet(nWalletIndex);
+      DB.setWallet(WALLET.toDB());
+
+      // Nuke all wallet states
+      cachedActivity = [];
+      cachedActivityIS = [];
+      cachedCoinDeltas = [];
+      cachedOwnedNFTs = [];
+      cachedTokens = [];
+
+      // Append the wallet to the multi-wallet switcher
+      const cOption = document.createElement("option");
+      cOption.text = cWallet.getPubkey();
+      domWalletSelector.add(cOption);
+
+      // Feedback!
+      M.toast({html: 'Account #' + WALLET.countWallets() + ' created! (' + cWallet.getPubkey().substr(0, 5) + '...)', displayLength: 3500});
+    }
+
     function import2FA() {
       const strNewSecret = document.getElementById("authSecretImport").value;
       const testToken = authenticator.generate(strNewSecret);
@@ -1870,6 +1895,8 @@
             getBalance(true);
             // Force an NFTs re-render since the NFT updates deactivate when hidden
             renderNFTs(-1);
+            // Feedback!
+            M.toast({html: 'Switched account (' + WALLET.getActiveWallet().getPubkey().substr(0, 5) + '...)', displayLength: 3500});
           }
           // Add all wallets to the settings selector
           for (const cSelectorWallet of WALLET.getWalletsPtr()) {
@@ -2467,12 +2494,12 @@
 
                   <div class="row">
                     <div class="col-9">
-                      <span>Switch Wallet</span><br>
+                      <span>Switch Account</span><br>
                       <span style="font-size:12px; color:#97a1b1;">Switch into a different wallet account from your multi-wallet.</span>
                     </div>
                     <div class="col-3">
                       <select id="walletSelector" class="form-select form-select-sm" aria-label=".form-select-sm example">
-                        <option selected disabled>Select Wallet</option>
+                        <option selected disabled>Select Account</option>
                       </select>
                     </div>
                   </div>
@@ -2481,8 +2508,27 @@
 
                   <div class="row">
                     <div class="col-sm-9">
+                      <span>Create additional Account</span><br>
+                      <span style="font-size:12px; color:#97a1b1;">Creates another account in your multi-wallet. (Note: New accounts are NOT yet encrypted!)
+                      </span>
+                    </div>
+                    <div class="col-sm-3">
+                      <div style="padding: 10px 0;">
+                        <div class="row align-items-center justify-content-center" style="height: 100%;">
+                          <div class="col-md-6">
+                            <button class="btn btn-primary" onclick="createAdditionalAccount()" style="width: 100%; min-width: 80px;">Create</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <hr style="color: #bcc4d2;">
+
+                  <div class="row">
+                    <div class="col-sm-9">
                       <span>Export Wallet</span><br>
-                      <span style="font-size:12px; color:#97a1b1;">This will highlight your private wallet file in your file explorer. You can use this file to move your wallet to another device, or as an encrypted backup method. (Contains: Encrypted Privkey, Pubkey & 2FA secret)</span>
+                      <span style="font-size:12px; color:#97a1b1;">You can use this private file to move your wallet to another device, or as a backup.</span>
                     </div>
                     <div class="col-sm-3">
                       <div style="padding: 10px 0;">
@@ -2494,6 +2540,7 @@
                       </div>
                     </div>
                   </div>
+
                 </div>
               </div>
             </div>
