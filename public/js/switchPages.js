@@ -21,6 +21,7 @@ function switchToLogin() {
 
   // Show
   domLoginPage.style.display = "block";
+  domHeader.style.display = "none";
 
   // Focus on the password entry
   document.getElementById("pass1").focus();

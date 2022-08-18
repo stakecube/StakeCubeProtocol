@@ -118,6 +118,7 @@
       // Hide login screen
       domLoginPage.style.display = "none";
       funcStarter();
+      funcStarter = switchToDashboard;
       DB.setWallet(WALLET.toDB());
       // Give the cache a kick
       getBlockCount();
@@ -1895,8 +1896,16 @@
             getBalance(true);
             // Force an NFTs re-render since the NFT updates deactivate when hidden
             renderNFTs(-1);
+
             // Feedback!
-            M.toast({html: 'Switched account (' + WALLET.getActiveWallet().getPubkey().substr(0, 5) + '...)', displayLength: 3500});
+            if (WALLET.getActiveWallet().getPrivkey()) {
+              // We have a private key, so simply notify of a successful switch
+              M.toast({html: 'Switched account (' + WALLET.getActiveWallet().getPubkey().substr(0, 5) + '...)', displayLength: 3500});
+            } else {
+              // We don't have a private key, so most likely an encrypted wallet: prompt for login and clarify!
+              switchToLogin();
+              M.toast({html: 'The selected account is locked, password required!', displayLength: 5500});
+            }
           }
           // Add all wallets to the settings selector
           for (const cSelectorWallet of WALLET.getWalletsPtr()) {
