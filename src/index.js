@@ -257,24 +257,17 @@ async function init(forcedCorePath = false, retry = false) {
             // Load the wallet DB
             const rawDBWallet = await DB.getWallet();
             if (rawDBWallet) {
-                // Check which format we're using (pre-v1.1.4, or above)
-                if (rawDBWallet.wallets && rawDBWallet.wallets.length > 0) {
-                    // New format
-                    for (const rawWallet of rawDBWallet.wallets) {
-                        const cWallet = new WALLET.Wallet(rawWallet.pubkey,
-                            rawWallet.privkeyDecrypted,
-                            rawWallet.privkeyEncrypted);
-                        WALLET.addWallet(cWallet);
-                    }
-                } else {
-                    // Old format
-                    const cWallet = new WALLET.Wallet(rawDBWallet.pubkey,
-                        rawDBWallet.privkeyDecrypted,
-                        rawDBWallet.privkeyEncrypted);
+                // Load each individual account
+                for (const rawWallet of rawDBWallet.wallets) {
+                    const cWallet = new WALLET.Wallet(rawWallet.pubkey,
+                        rawWallet.privkeyDecrypted,
+                        rawWallet.privkeyEncrypted);
                     WALLET.addWallet(cWallet);
                 }
-                // Set 2FA (resides in the root object, regardless of wallet format)
+                // Set 2FA
                 WALLET.set2FAkey(rawDBWallet.opt2FA);
+                // Set the Active wallet index, if none (e.g; newly updated client, assume index 0)
+                WALLET.setActiveWallet(Number(rawDBWallet.activeWallet) || 0);
                 // Log the amount of wallets we've loaded
                 const nWalletCount = WALLET.countWallets();
                 console.log('Init: Loaded ' + nWalletCount + ' wallet' +

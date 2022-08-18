@@ -29,6 +29,7 @@ function init(context) {
 }
 
 let opt2FA = '';
+let nActiveWallet = 0;
 
 // Sets the 2FA private code
 function set2FAkey(code = false) {
@@ -130,10 +131,20 @@ function getWallet(query = String()) {
 // Returns the first wallet of the cache, generally considered the 'active' wallet for GUI purposes
 function getActiveWallet() {
     if (arrWallets.length > 0) {
-        return arrWallets[0];
+        return arrWallets[nActiveWallet];
     } else {
         return false;
     }
+}
+
+// Set the active wallet index
+function setActiveWallet(n) {
+    nActiveWallet = n;
+}
+
+// Find the index of a wallet by it's pubkey
+function getWalletIndexByPubkey(strPub) {
+    return arrWallets.findIndex(cWallet => cWallet.getPubkey() === strPub);
 }
 
 // Adds a wallet, if it doesn't already exist
@@ -359,13 +370,10 @@ function getCoinsToSpend(sats = 0, min = false, chosenAddress = false) {
 // Returns the entire wallets cache in a DB-sanitized format
 function toDB() {
     const objDB = {
-        'wallets': [],
-        'opt2FA': get2FAkey()
+        'wallets': arrWallets.map(cWallet => cWallet.toDB()),
+        'opt2FA': get2FAkey(),
+        'activeWallet': nActiveWallet
     };
-    // Add each wallet
-    for (const cWallet of arrWallets) {
-        objDB.wallets.push(cWallet.toDB());
-    }
     return objDB;
 }
 
@@ -389,6 +397,8 @@ exports.init = init;
 exports.deepCloneWallet = deepCloneWallet;
 exports.getWallet = getWallet;
 exports.getActiveWallet = getActiveWallet;
+exports.setActiveWallet = setActiveWallet;
+exports.getWalletIndexByPubkey = getWalletIndexByPubkey;
 exports.addWallet = addWallet;
 exports.createWallet = createWallet;
 exports.set2FAkey = set2FAkey;

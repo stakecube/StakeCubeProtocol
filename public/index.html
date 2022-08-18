@@ -79,7 +79,7 @@
                         $(document).ready(function(){
                           $('#pass1').keypress(function(e){
                             if(e.keyCode==13) {
-                              finishLogin();
+                              finishEncryptedLogin();
                             }
                           });
                         });
@@ -112,23 +112,29 @@
     let funcStarter = switchToDashboard;
 
     function finishLogin() {
+      fDecrypted = true;
+      // Reset password entry
+      document.getElementById("pass1").value = "";
+      // Hide login screen
+      domLoginPage.style.display = "none";
+      funcStarter();
+      DB.setWallet(WALLET.toDB());
+      // Give the cache a kick
+      getBlockCount();
+      getUnspentTransactions();
+      // If an update is available, notify the user after a brief period
+      if (isOutdated) {
+        setTimeout(() => {
+          M.toast({html: '<a style="cursor: pointer;" onclick="openExternalURL(\'https://github.com/stakecube/StakeCubeProtocol/releases/latest\')">An update is available!</a>', displayLength: 30000});
+        }, 3 * 1000);
+      }
+    }
+
+    function finishEncryptedLogin() {
       const nPass = document.getElementById("pass1").value;
       decryptWallet(nPass).then(done => {
         if (done) {
-          fDecrypted = true;
-          document.getElementById("pass1").value = "";
-          domLoginPage.style.display = "none";
-          funcStarter();
-          DB.setWallet(WALLET.toDB());
-          // Give the cache a kick
-          getBlockCount();
-          getUnspentTransactions();
-          // If an update is available, notify the user after a brief period
-          if (isOutdated) {
-            setTimeout(() => {
-              M.toast({html: '<a style="cursor: pointer;" onclick="openExternalURL(\'https://github.com/stakecube/StakeCubeProtocol/releases/latest\')">An update is available!</a>', displayLength: 30000});
-            }, 3 * 1000);
-          }
+          finishLogin();
         } else {
           M.toast({html: 'Incorrect Password!', displayLength: 2000});
         }
@@ -296,6 +302,7 @@
     let domActivitySCC;
     let domActivitySCP;
     let domClaimAllBtn;
+    let domWalletSelector;
 
     let domMarketcap;
     let domPrice;
@@ -689,11 +696,11 @@
     }
 
     function renderTokens() {
+      let strSendingSCC = '<option value="scc" data-thumbnail="imgs/circular-logo.svg">StakeCubeCoin (SCC)</option>';
       if (cachedTokens.length > 0) {
         // Dashboard
         let strDashTokens = "";
         // Send list
-        let strSendingSCC = '<option value="scc" data-thumbnail="imgs/circular-logo.svg">StakeCubeCoin (SCC)</option>';
         let strSendTokens = "";
         for (const cToken of cachedTokens) {
           const nBal = (getMempoolDeltas(cToken.token.contract) + cToken.account.balance) / COIN;
@@ -721,6 +728,7 @@
         domSendingCoin.innerHTML = strSendingSCC + strSendTokens;
       } else {
         domTokensList.innerHTML = '<center style=\'margin-top:30px;\'><p>You have no tokens!</p></center>';
+        domSendingCoin.innerHTML = strSendingSCC;
       }
     }
 
@@ -1633,7 +1641,7 @@
       }
 
       // Also use this to update the Claim All button's visibility
-      if ((!isFullnode && cachedTokens.length) || getSyncPercentage() >= 99.99) {
+      if (!isFullnode || getSyncPercentage() >= 99.99) {
         let nPendingStakes = 0;
         for (const cToken of cachedTokens) {
           if (cToken.token.version !== 2) continue;
@@ -1780,6 +1788,7 @@
       domActivitySCC = document.getElementById("domActivitySCC");
       domActivitySCP = document.getElementById("domActivitySCP");
       domClaimAllBtn = document.getElementById("domClaimAllBtn");
+      domWalletSelector = document.getElementById("walletSelector");
       domScpTokenDeployArea = document.getElementById('scpTokenDeployArea');
       domNFTBurnBtn = document.getElementById('nftBurnBtn');
       domNFTTransferBtn = document.getElementById('nftTransferBtn');
@@ -1841,14 +1850,37 @@
       }
       switchToLogin();
       init().then(() => {
-        // Check for an encrypted wallet, if one exists, pull up the login screen!
+        // Check for a selected wallet, if one exists, pull up the login screen!
         let cWallet = WALLET.getActiveWallet() || new WALLET.Wallet();
-        const encwif = cWallet.getPrivkeyEnc();
-        if (encwif && encwif.length > 1) {
-          cWallet.setKeys(null, null, encwif);
-          getUnspentTransactions();
+        if (cWallet.getPrivkeyEnc() || cWallet.getPrivkey()) {
+          // Hook the wallet selector into the live wallet system
+          domWalletSelector.onchange = (evt) => {
+            // Find the wallet index by the selected pubkey
+            const nWalletIndex = WALLET.getWalletIndexByPubkey(evt.srcElement.value);
+            // Set as active wallet and save to DB
+            WALLET.setActiveWallet(nWalletIndex);
+            DB.setWallet(WALLET.toDB());
+            // Nuke all wallet states
+            cachedActivity = [];
+            cachedActivityIS = [];
+            cachedCoinDeltas = [];
+            cachedOwnedNFTs = [];
+            cachedTokens = [];
+            // Force a full cache refresh
+            getBalance(true);
+            // Force an NFTs re-render since the NFT updates deactivate when hidden
+            renderNFTs(-1);
+          }
+          // Add all wallets to the settings selector
+          for (const cSelectorWallet of WALLET.getWalletsPtr()) {
+            const cOption = document.createElement("option");
+            cOption.text = cSelectorWallet.getPubkey();
+            domWalletSelector.add(cOption);
+          }
+          // If we have an unencrypted key, skip the login screen!
+          if (cWallet.getPrivkey()) finishLogin();
         } else {
-          // No encrypted wallet available, check for an unencrypted key
+          // No wallet available, check for an unencrypted key
           const tmpwifkey = localStorage.getItem("tmpwifkey");
           let tmppass = localStorage.getItem("tmppass");
           if (!tmppass) throw "Unable to find encwif, and no tmppass available, bailing out!";
@@ -2013,7 +2045,6 @@
               </div>
             </div>
           </div>
-
         </div>
       </div>
 
@@ -2304,23 +2335,6 @@
               </h2>
               <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
                 <div class="accordion-body">
-                  
-                  <div class="row" style="display: none;">
-                    <div class="col-9">
-                      <span style="font-size:14px;">How many taco's do you want for dinner?</span><br>
-                      <span style="font-size:11px; color:#97a1b1;">Basicly a description of the taco here</span>
-                    </div>
-                    <div class="col-3">
-                      <select class="form-select form-select-sm" aria-label=".form-select-sm example">
-                        <option selected>Open this select menu</option>
-                        <option value="1">One</option>
-                        <option value="2">Two</option>
-                        <option value="3">Three</option>
-                      </select>
-                    </div>
-                  </div>
-                  
-                  <hr style="color: #bcc4d2; display: none;">
 
                   <div class="row">
                     <div class="col-9">
@@ -2450,6 +2464,21 @@
               </h2>
               <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionExample">
                 <div class="accordion-body">
+
+                  <div class="row">
+                    <div class="col-9">
+                      <span>Switch Wallet</span><br>
+                      <span style="font-size:12px; color:#97a1b1;">Switch into a different wallet account from your multi-wallet.</span>
+                    </div>
+                    <div class="col-3">
+                      <select id="walletSelector" class="form-select form-select-sm" aria-label=".form-select-sm example">
+                        <option selected disabled>Select Wallet</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <hr style="color: #bcc4d2;">
+
                   <div class="row">
                     <div class="col-sm-9">
                       <span>Export Wallet</span><br>

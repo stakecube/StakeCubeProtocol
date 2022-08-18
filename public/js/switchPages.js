@@ -76,7 +76,8 @@ function switchToDashboard() {
   domDashboardBtn.classList.add('active');
 }
 
-let hasSetupRecvQR = false;
+
+let strQrKey = '';
 function switchToReceive() {
   // Hide
   closeAllTabs();
@@ -85,9 +86,9 @@ function switchToReceive() {
   domReceivePage.style.display = "block";
   domHeader.style.display = "block";
 
-  // QR setup
-  if (!hasSetupRecvQR) {
-    hasSetupRecvQR = true;
+  // QR setup (also ensure we update the QR if the account is hot-swapped)
+  if (strQrKey !== WALLET.getActiveWallet().getPubkey()) {
+    strQrKey = WALLET.getActiveWallet().getPubkey();
     let recvQR = qrcode(4, 'L');
     recvQR.addData('scc:' + WALLET.getActiveWallet().getPubkey());
     recvQR.make();
