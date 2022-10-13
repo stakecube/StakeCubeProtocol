@@ -30,16 +30,18 @@ function isHeadless() {
 // Flag to specify if the client is outdated according to external sources (i.e; Github API)
 let isOutdated = false;
 
-let npmPackage;
 // Main Modules
-let DB, NET, RPC, TOKENS, NFT, WALLET, UPGRADES, VM;
+let npmPackage;
+let DB, NET,
+    RPC = require("@jskitty/bitcoin-rpc"),
+    TOKENS, NFT, WALLET, UPGRADES, VM;
+
 // API Modules
 let apiACTIVITY, apiBLOCKCHAIN, apiTOKENS, apiWALLET, apiIO;
 try {
 // GUI
     DB = require('../src/database/index.js');
     NET = require('../src/network.js');
-    RPC = require('../src/rpc.js');
     TOKENS = require('../src/token.js');
     NFT = require('../src/nft.js');
     WALLET = require('../src/wallet.js');
@@ -89,7 +91,6 @@ try {
     try {
         DB = require('./database/index.js');
         NET = require('./network.js');
-        RPC = require('./rpc.js');
         TOKENS = require('./token.js');
         NFT = require('./nft.js');
         WALLET = require('./wallet.js');
@@ -111,7 +112,7 @@ try {
     }
 }
 
-const rpcMain = RPC;
+let rpcMain;
 
 if (npmPackage) {
     console.log('--- StakeCube Protocol (SCP) Wallet v' + npmPackage.version +
@@ -311,8 +312,8 @@ async function init(forcedCorePath = false, retry = false) {
             arrErr.push('Config: No rpcport found: rpcport=39999');
         }
 
-        rpcMain.auth(rpcUser, rpcPass, 'localhost', rpcPort);
         // Initialize the wallet with the new RPC class and system contexts
+        rpcMain = new RPC(rpcUser, rpcPass, 'localhost', rpcPort);
         if (!retry) {
             WALLET.init({
                 'isHeadless': isHeadless,
