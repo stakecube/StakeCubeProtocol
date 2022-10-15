@@ -914,8 +914,7 @@ async function processState(newMsg, tx) {
                     const nCheck3 = Number(arrParams[2]);
                     const check3 = (nCheck3 > 0 &&
                                     Number.isSafeInteger(nCheck3));
-                    const check4 = (await rpcMain.call('validateaddress',
-                        arrParams[3])).isvalid;
+                    const check4 = (WALLET.sccjs.wallet.verifyPubkey(arrParams[3]));
                     if (check3 && check4 === true) {
                         // Authentication: Ensure all inputs of the TX are from the caller
                         const fSafe = await isCallAuthorized(tx,
@@ -1020,11 +1019,7 @@ async function processState(newMsg, tx) {
                         throw Error('Missing caller address!');
                     }
                     // Run sanity checks
-                    const check3 = arrParams[2] && (await rpcMain
-                        .call(
-                            'validateaddress',
-                            arrParams[2]))
-                        .isvalid;
+                    const check3 = arrParams[2] && WALLET.sccjs.wallet.verifyPubkey(arrParams[2]);
                     const check4 = arrParams[3] && arrParams[3].length === 64;
 
                     if (check3 && check4) {
