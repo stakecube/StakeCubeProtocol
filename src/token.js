@@ -80,6 +80,7 @@ class SCP1Token {
             this.owners.push({
                 'address': address,
                 'balance': amount,
+                'lockedBalance': 0,
                 'activity': [
                     {
                         'id': tx.txid,
@@ -111,14 +112,15 @@ class SCP1Token {
     debitAccount(address, amount, tx) {
         // Ensure expended debit does not bring the supply into the negative
         if ((this.supply - amount) < 0) {
-            console.error("SCP-1: Attempted burn of '" + amount +
-                            "' for token '" + this.name +
+            console.error("SCP-" + this.version + ": Attempted burn of '" +
+                             amount + "' for token '" + this.name +
                             "' brings the supply into the negative!");
             return false;
         }
         // Ensure the account does not spend more than it's available balance
         const cAcc = this.getAccount(address);
-        if ((cAcc.balance - amount) >= 0) {
+        const nSpendable = cAcc.balance - cAcc.lockedBalance;
+        if (nSpendable >= amount) {
             cAcc.balance -= amount;
             cAcc.activity.push({
                 'id': tx.txid,
@@ -127,17 +129,98 @@ class SCP1Token {
                 'amount': amount
             });
             this.supply -= amount;
-            console.log("SCP-1: User for token '" + this.name +
-                        "' burned '" + amount + ' ' + this.ticker +
+            console.log("SCP-" + this.version + ": User for token '" +
+                        this.name + "' burned '" + amount + ' ' + this.ticker +
                         "', new balance is '" + cAcc.balance +
                         "', new supply is '" + this.supply + "'!");
         } else {
-            console.log("SCP-1: Attempted burn of token '" +
+            console.log("SCP-" + this.version + ": Attempted burn of token '" +
                         this.name + "' of amount '" + amount +
                         ' ' + this.ticker +
                         "' failed due to insufficient funds!");
             return false;
         }
+        return true;
+    }
+
+    // Lock an amount of tokens inside an SCP-1 account, making them unspendable until unlocked
+    lockAccount(address, amount, tx) {
+        // Search for the account, immediately reject if we don't find one
+        const cAcc = this.getAccount(address);
+        if (!cAcc) return false;
+
+        // Ensure the lock cannot be 'reversed' via negative locks
+        if (amount <= 0) {
+            console.error("SCP-" + this.version + ": Attempted reverse lock " +
+                            "of '" + amount + "' for token '" +
+                            this.name + "' was rejected");
+            return false;
+        }
+
+        // Ensure locked tokens do not exceed the account spendable balance
+        const nSpendable = cAcc.balance - cAcc.lockedBalance;
+        if (amount > nSpendable) {
+            console.error("SCP-" + this.version + ": Attempted lock of '" +
+                            amount + "' for token '" +
+                            this.name + "' exceeds spendable balance of '" +
+                            nSpendable + "'!");
+            return false;
+        }
+
+        // Lock the desired amount
+        cAcc.lockedBalance += amount;
+        cAcc.activity.push({
+            'id': tx.txid,
+            'block': tx.height,
+            'type': 'locked',
+            'amount': amount
+        });
+
+        console.log("SCP-" + this.version + ": User for token '" +
+                    this.name + "' locked '" + amount + ' ' + this.ticker +
+                    "', new spendable balance is '" +
+                    (cAcc.balance - cAcc.lockedBalance) + ' ' + this.ticker +
+                    "'!");
+        return true;
+    }
+
+    // Unlock an amount of tokens inside an SCP-1 account, making them spendable again
+    unlockAccount(address, amount, tx) {
+        // Search for the account, immediately reject if we don't find one
+        const cAcc = this.getAccount(address);
+        if (!cAcc) return false;
+
+        // Ensure the unlock cannot be 'reversed' via negative unlocks
+        if (amount <= 0) {
+            console.error("SCP-" + this.version + ": Attempted reverse unlock " +
+                            "of '" + amount + "' for token '" +
+                            this.name + "' was rejected");
+            return false;
+        }
+
+        // Ensure we have enough locked coins to unlock
+        if (amount > cAcc.lockedBalance) {
+            console.error("SCP-" + this.version + ": Attempted lock of '" +
+                            amount + "' for token '" +
+                            this.name + "' exceeds locked balance of '" +
+                            cAcc.lockedBalance + "'!");
+            return false;
+        }
+
+        // Unock the desired amount
+        cAcc.lockedBalance -= amount;
+        cAcc.activity.push({
+            'id': tx.txid,
+            'block': tx.height,
+            'type': 'unlocked',
+            'amount': amount
+        });
+
+        console.log("SCP-" + this.version + ": User for token '" +
+                    this.name + "' unlocked '" + amount + ' ' + this.ticker +
+                    "', new spendable balance is '" +
+                    (cAcc.balance - cAcc.lockedBalance) + ' ' + this.ticker +
+                    "'!");
         return true;
     }
 
@@ -147,7 +230,7 @@ class SCP1Token {
         if (!this.debitAccount(acc1, amount, tx)) return;
         // Credit the tokens to the second account
         this.creditAccount(acc2, amount, tx);
-        console.log("SCP-1: User for token '" + this.name +
+        console.log("SCP-" + this.version + ": User for token '" + this.name +
                     "' transferred '" + amount + ' ' + this.ticker +
                     "' to another account!\nFrom: (" + acc1 + '), To: (' +
                     acc2 + ')');
@@ -289,7 +372,7 @@ class SCP2Token extends SCP1Token {
             }
         } else {
             ret.note = 'this address does not inherit an account for this ' +
-                       'SCP-2 token';
+                       'SCP-' + this.version + ' token';
         }
         return ret;
     }
@@ -311,6 +394,7 @@ class SCP2Token extends SCP1Token {
             this.owners.push({
                 'address': address,
                 'balance': amount,
+                'lockedBalance': 0,
                 'unclaimed_balance': 0,
                 'lastTxBlock': tx.height,
                 'activity': [
@@ -351,10 +435,14 @@ class SCP2Token extends SCP1Token {
                             "' brings the supply into the negative!");
             return false;
         }
-        // Ensure the account does not spend more than it's available balance
+
+        // Fetch the account
         const cAcc = super.getAccount(address);
         if (!cAcc) return false;
-        if ((cAcc.balance - amount) >= 0) {
+
+        // Ensure the account does not spend more than it's available balance
+        const nSpendable = cAcc.balance - cAcc.lockedBalance;
+        if (nSpendable >= amount) {
             this.supply -= amount;
             cAcc.balance -= amount;
             cAcc.unclaimed_balance = 0;
