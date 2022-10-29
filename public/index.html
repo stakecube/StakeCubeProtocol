@@ -2607,7 +2607,7 @@
                     // SCP-1 CHECKS
                     if (nDeploymentVer === 1 || nDeploymentVer === 2) {
                       // Name
-                      if (domScpTokenName.value.length) {
+                      if (domScpTokenName.value.length > 1) {
                           // Swap spaces for artificial whitespace unicodes
                           domScpTokenName.value = domScpTokenName.value.replace(/ /g, ' ');
                           // Limit to 25 characters
@@ -2617,7 +2617,7 @@
                       }
 
                       // Ticker
-                      if (domScpTokenTicker.value.length) {
+                      if (domScpTokenTicker.value.length > 1) {
                           // Remove all whitespace
                           domScpTokenTicker.value = domScpTokenTicker.value.replace(/ /g, '').trim();
                           // Limit to 6 characters
@@ -2689,8 +2689,8 @@
                                 isComplete = false;
                             }
                             // Min Age must be atleast 1 block
-                            if (nMinAge < 1) {
-                                domScpTokenErrors.innerHTML += 'Min Age: Must be atleast 1 block!<br>';
+                            if (nMinAge <= 1) {
+                                domScpTokenErrors.innerHTML += 'Min Age: Must be atleast 2 blocks!<br>';
                                 isComplete = false;
                             }
                             // Min Age must be a safe integer
@@ -2706,7 +2706,7 @@
                     // SCP-4 CHECKS
                     if (nDeploymentVer === 4) {
                         // Name
-                        if (domScpCollectionName.value.length) {
+                        if (domScpCollectionName.value.length > 1) {
                             // Swap spaces for artificial whitespace unicodes
                             domScpCollectionName.value = domScpCollectionName.value.replace(/ /g, ' ');
                             // Limit to 40 characters
