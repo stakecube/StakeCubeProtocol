@@ -138,7 +138,7 @@ async function send(req, res) {
     const strAddr = req.params.address;
     const strCurrency = req.params.currency;
     const strTo = req.params.to;
-    const nSentSats = Number(req.params.amount) * COIN;
+    const nSentSats = Math.round(Number(req.params.amount) * COIN);
     try {
     // Cache our tokens list, for if needed
         let cTokens = false;
@@ -154,7 +154,7 @@ async function send(req, res) {
         // Ensure the 'amount' is a valid number
         if (Number.isNaN(nSentSats) || !Number.isInteger(nSentSats)) {
             return res.status(400)
-                .send('Sending amount "' + (nSentSats / COIN) +
+                .send('Sending amount (in satoshis) "' + nSentSats +
                         '" is an invalid amount!');
         }
 
@@ -600,7 +600,7 @@ async function burnNFT(req, res) {
             strContract + ' destroy ' + strID);
         // Fee & Change output
         const nFee = ptrWALLET.getFee(cTx.serialize().length);
-        const nChange = cUTXO.sats - nFee
+        const nChange = cUTXO.sats - nFee;
         cTx.addoutput(strPubkey, nChange / COIN);
         // Broadcast
         const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
