@@ -224,7 +224,9 @@ async function send(req, res) {
             const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
             const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
             // Mark UTXOs as spent
-            usedUTXOs.forEach(cUTXO => cUTXO.spent = true);
+            usedUTXOs.forEach(cUTXO => {
+                cUTXO.spent = true;
+            });
             return res.json({
                 'txid': strTXID,
                 'rawTx': strSignedTx
@@ -431,7 +433,9 @@ async function createCollection(req, res) {
         const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
         const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
         // Mark UTXOs as spent
-        usedUTXOs.forEach(cUTXO => cUTXO.spent = true);
+        usedUTXOs.forEach(cUTXO => {
+            cUTXO.spent = true;
+        });
         // Return API data
         return res.json({
             'txid': strTXID,
