@@ -112,7 +112,7 @@ class SCP1Token {
     debitAccount(address, amount, tx) {
         // Ensure expended debit does not bring the supply into the negative
         if ((this.supply - amount) < 0) {
-            console.error("SCP-" + this.version + ": Attempted burn of '" +
+            console.error('SCP-' + this.version + ": Attempted burn of '" +
                              amount + "' for token '" + this.name +
                             "' brings the supply into the negative!");
             return false;
@@ -129,12 +129,12 @@ class SCP1Token {
                 'amount': amount
             });
             this.supply -= amount;
-            console.log("SCP-" + this.version + ": User for token '" +
+            console.log('SCP-' + this.version + ": User for token '" +
                         this.name + "' burned '" + amount + ' ' + this.ticker +
                         "', new balance is '" + cAcc.balance +
                         "', new supply is '" + this.supply + "'!");
         } else {
-            console.log("SCP-" + this.version + ": Attempted burn of token '" +
+            console.log('SCP-' + this.version + ": Attempted burn of token '" +
                         this.name + "' of amount '" + amount +
                         ' ' + this.ticker +
                         "' failed due to insufficient funds!");
@@ -151,7 +151,7 @@ class SCP1Token {
 
         // Ensure the lock cannot be 'reversed' via negative locks
         if (amount <= 0) {
-            console.error("SCP-" + this.version + ": Attempted reverse lock " +
+            console.error('SCP-' + this.version + ': Attempted reverse lock ' +
                             "of '" + amount + "' for token '" +
                             this.name + "' was rejected");
             return false;
@@ -160,7 +160,7 @@ class SCP1Token {
         // Ensure locked tokens do not exceed the account spendable balance
         const nSpendable = cAcc.balance - cAcc.lockedBalance;
         if (amount > nSpendable) {
-            console.error("SCP-" + this.version + ": Attempted lock of '" +
+            console.error('SCP-' + this.version + ": Attempted lock of '" +
                             amount + "' for token '" +
                             this.name + "' exceeds spendable balance of '" +
                             nSpendable + "'!");
@@ -176,7 +176,7 @@ class SCP1Token {
             'amount': amount
         });
 
-        console.log("SCP-" + this.version + ": User for token '" +
+        console.log('SCP-' + this.version + ": User for token '" +
                     this.name + "' locked '" + amount + ' ' + this.ticker +
                     "', new spendable balance is '" +
                     (cAcc.balance - cAcc.lockedBalance) + ' ' + this.ticker +
@@ -192,7 +192,7 @@ class SCP1Token {
 
         // Ensure the unlock cannot be 'reversed' via negative unlocks
         if (amount <= 0) {
-            console.error("SCP-" + this.version + ": Attempted reverse unlock " +
+            console.error('SCP-' + this.version + ': Attempted reverse unlock ' +
                             "of '" + amount + "' for token '" +
                             this.name + "' was rejected");
             return false;
@@ -200,7 +200,7 @@ class SCP1Token {
 
         // Ensure we have enough locked coins to unlock
         if (amount > cAcc.lockedBalance) {
-            console.error("SCP-" + this.version + ": Attempted lock of '" +
+            console.error('SCP-' + this.version + ": Attempted lock of '" +
                             amount + "' for token '" +
                             this.name + "' exceeds locked balance of '" +
                             cAcc.lockedBalance + "'!");
@@ -216,7 +216,7 @@ class SCP1Token {
             'amount': amount
         });
 
-        console.log("SCP-" + this.version + ": User for token '" +
+        console.log('SCP-' + this.version + ": User for token '" +
                     this.name + "' unlocked '" + amount + ' ' + this.ticker +
                     "', new spendable balance is '" +
                     (cAcc.balance - cAcc.lockedBalance) + ' ' + this.ticker +
@@ -230,7 +230,7 @@ class SCP1Token {
         if (!this.debitAccount(acc1, amount, tx)) return;
         // Credit the tokens to the second account
         this.creditAccount(acc2, amount, tx);
-        console.log("SCP-" + this.version + ": User for token '" + this.name +
+        console.log('SCP-' + this.version + ": User for token '" + this.name +
                     "' transferred '" + amount + ' ' + this.ticker +
                     "' to another account!\nFrom: (" + acc1 + '), To: (' +
                     acc2 + ')');

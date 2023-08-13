@@ -138,7 +138,7 @@ async function send(req, res) {
     const strAddr = req.params.address;
     const strCurrency = req.params.currency;
     const strTo = req.params.to;
-    const nSentSats = Number(req.params.amount) * COIN;
+    const nSentSats = Math.round(Number(req.params.amount) * COIN);
     try {
     // Cache our tokens list, for if needed
         let cTokens = false;
@@ -154,7 +154,7 @@ async function send(req, res) {
         // Ensure the 'amount' is a valid number
         if (Number.isNaN(nSentSats) || !Number.isInteger(nSentSats)) {
             return res.status(400)
-                .send('Sending amount "' + (nSentSats / COIN) +
+                .send('Sending amount (in satoshis) "' + nSentSats +
                         '" is an invalid amount!');
         }
 
@@ -224,7 +224,9 @@ async function send(req, res) {
             const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
             const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
             // Mark UTXOs as spent
-            usedUTXOs.forEach(cUTXO => cUTXO.spent = true);
+            usedUTXOs.forEach(cUTXO => {
+                cUTXO.spent = true;
+            });
             return res.json({
                 'txid': strTXID,
                 'rawTx': strSignedTx
@@ -431,7 +433,9 @@ async function createCollection(req, res) {
         const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);
         const strTXID = await ptrWALLET.broadcastTx(strSignedTx);
         // Mark UTXOs as spent
-        usedUTXOs.forEach(cUTXO => cUTXO.spent = true);
+        usedUTXOs.forEach(cUTXO => {
+            cUTXO.spent = true;
+        });
         // Return API data
         return res.json({
             'txid': strTXID,
@@ -600,7 +604,7 @@ async function burnNFT(req, res) {
             strContract + ' destroy ' + strID);
         // Fee & Change output
         const nFee = ptrWALLET.getFee(cTx.serialize().length);
-        const nChange = cUTXO.sats - nFee
+        const nChange = cUTXO.sats - nFee;
         cTx.addoutput(strPubkey, nChange / COIN);
         // Broadcast
         const strSignedTx = await cTx.sign(cWallet.getPrivkey(), 1);

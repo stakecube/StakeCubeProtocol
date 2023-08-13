@@ -1151,7 +1151,7 @@
 
     function sendTransactionGUI() {
       const coinSelection = document.getElementById("sendingCoinVal").value;
-      let nAmountSats = Number(document.getElementById("sendAmount").value.trim()) * COIN;
+      let nAmountSats = Math.round(Number(document.getElementById("sendAmount").value.trim()) * COIN);
       const sendAddress = document.getElementById("sendAddress").value.trim();
       if (!nAmountSats || !Number.isInteger(nAmountSats)) {
         return M.toast({html: 'Please enter a valid amount!', displayLength: 2000});
@@ -1364,7 +1364,7 @@
         const cTx = WALLET.sccjs.wallet.tx.transaction();
         // Inputs
         const strAddr = WALLET.getActiveWallet().getPubkey();
-        const nDeployCost = (nDeployFee * COIN) + 1000;
+        const nDeployCost = Math.round((nDeployFee * COIN) + 1000);
         const usedUTXOs = WALLET.getCoinsToSpend(nDeployCost, false, strAddr);
         const nUTXOs = usedUTXOs.reduce((a, b) => a + b.sats, 0);
         for (const cUTXO of usedUTXOs)
@@ -1376,7 +1376,7 @@
         cTx.addoutput(strDeployFeeDest, nDeployFee);
         // Fee & Change output
         const nFee = WALLET.getFee(cTx.serialize().length);
-        const nSpent = nFee + (nDeployFee * COIN);
+        const nSpent = Math.round(nFee + (nDeployFee * COIN));
         const nChange = nUTXOs - nSpent;
         cTx.addoutput(strAddr, nChange / COIN);
         // Broadcast
@@ -2630,7 +2630,7 @@
                       if (domScpTokenSupply.value.length) {
                           // Remove all whitespace
                           domScpTokenSupply.value = domScpTokenSupply.value.replace(/ /g, '').trim();
-                          const nSupply = Number(domScpTokenSupply.value * COIN);
+                          const nSupply = Math.round(Number(domScpTokenSupply.value.trim()) * COIN);
                           // Supply must be 1 coin minimum
                           if (nSupply < COIN) {
                               domScpTokenErrors.innerHTML += 'Supply: Minimum is 1!<br>';
@@ -2652,18 +2652,18 @@
                         if (domScpTokenPoSReward.value.length) {
                             // Remove all whitespace
                             domScpTokenPoSReward.value = domScpTokenPoSReward.value.replace(/ /g, '').trim();
-                            const nReward = Number(domScpTokenPoSReward.value * COIN);
+                            const nReward = Math.round(Number(domScpTokenPoSReward.value.trim()) * COIN);
                             // Reward must be a number
                             if (!Number.isFinite(nReward)) {
                                 domScpTokenErrors.innerHTML += 'Rewards: Must be a number!<br>';
                                 isComplete = false;
                             }
                             // Reward cannot be smaller than 0.0001 coins
-                            if (nReward < (0.001 * COIN)) {
+                            if (nReward < Math.round(0.001 * COIN)) {
                                 domScpTokenErrors.innerHTML += 'Rewards: Cannot be smaller than 0.0001!<br>';
                                 isComplete = false;
                             }
-                            const nSupply = Number(domScpTokenSupply.value * COIN);
+                            const nSupply = Math.round(Number(domScpTokenSupply.value.trim()) * COIN);
                             // Reward cannot be equal to the max supply
                             if (nReward === nSupply) {
                                 domScpTokenErrors.innerHTML += 'Rewards: Cannot be equal to the max supply!<br>';
@@ -2769,7 +2769,7 @@
                         // Ticker
                         arrParams.push(domScpTokenTicker.value);
                         // Supply
-                        arrParams.push((Number(domScpTokenSupply.value) * COIN).toString());
+                        arrParams.push((Number(domScpTokenSupply.value.trim()) * COIN).toString());
                     }
 
                     // SCP-2 Spec
@@ -2779,9 +2779,9 @@
                         // Ticker
                         arrParams.push(domScpTokenTicker.value);
                         // Supply
-                        arrParams.push((Number(domScpTokenSupply.value) * COIN).toString());
+                        arrParams.push(Math.round(Number(domScpTokenSupply.value.trim()) * COIN).toString());
                         // PoS Reward
-                        arrParams.push((Number(domScpTokenPoSReward.value) * COIN).toString());
+                        arrParams.push(Math.round(Number(domScpTokenPoSReward.value.trim()) * COIN).toString());
                         // Min Stake Age
                         arrParams.push(domScpTokenMinAge.value);
                     }

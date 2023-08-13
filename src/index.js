@@ -32,9 +32,9 @@ let isOutdated = false;
 
 // Main Modules
 let npmPackage;
-let DB, NET,
-    RPC = require("@jskitty/bitcoin-rpc"),
-    TOKENS, NFT, WALLET, UPGRADES, VM;
+let DB; let NET;
+const RPC = require('@jskitty/bitcoin-rpc');
+let TOKENS; let NFT; let WALLET; let UPGRADES; let VM;
 
 // API Modules
 let apiACTIVITY, apiBLOCKCHAIN, apiTOKENS, apiWALLET, apiIO;
