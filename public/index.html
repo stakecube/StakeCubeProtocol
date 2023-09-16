@@ -778,7 +778,7 @@
           const strTypeColour = fReceiveOrStake ? "plus" : "minus";
           const strTypeSymbol = fReceiveOrStake ? "+" : "-";
           const strCoinTicker = cActivity.token ? cActivity.token.ticker : 'SCC';
-          const strExplorerID = strTx ? 'style="cursor: pointer;" onclick="openExternalURL(\'https://scc.ccore.online/transaction/' + strTx + '\')"' : '';
+          const strExplorerID = strTx ? 'style="cursor: pointer;" onclick="openExternalURL(\'https://www.coinexplorer.net/SCC/transaction/' + strTx + '\')"' : '';
           strActivityList += '<div class="mt-4 hover-darker" ' + strExplorerID + '><div class="float-start text-center">' + (fIsNumBlk ? 'Block ' : '') + ' ' + strBlk + '</div><span class="float-end ' + strTypeColour + '-balance-color font-weight-bold" style="position:relative; top:11px;"><i style="text-transform: capitalize;padding-right:5px;">' + strType + '</i> ' + strTypeSymbol + Math.abs(nValue).toLocaleString('en-GB', { maximumFractionDigits: nValue > 1 ? 2 : 8, minimumFractionDigits: 2 }) + ' ' + strCoinTicker + '</span></div><br><br><hr style="margin-top:5px; margin-bottom:5px;" class="font-gray">';
         }
         domActivityList.innerHTML = strActivityList;
@@ -2470,25 +2470,7 @@
                     </div>
                   </div>
                   
-                  <hr style="color: #bcc4d2;">
                   
-                  <div class="row">
-                    <div class="col-9">
-                      <span>Display the SCP Developer menu</span><br>
-                      <span style="font-size:12px; color:#97a1b1;">Enabling this will display the SCP Developer Toolkit menu.<br>This page can be used for creating, deploying and interacting with custom DApps!</span>
-                    </div>
-                    <div class="col-3">
-                      <div>
-                        <div class="row align-items-center justify-content-center" style="height: 100%;">
-                          <div class="col-md-6">
-                            <div class="form-check form-switch">
-                              <input class="form-check-input darkBorder" type="checkbox" value="" id="displayDevMenuSetting" checked="false" setting="displayDevMenu" onclick="toggleSetting(this)">
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
@@ -2553,6 +2535,56 @@
                 </div>
               </div>
             </div>
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="headingThree">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
+                  <span class="darkText">Developer</span>
+                </button>
+              </h2>
+              <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
+                <div class="accordion-body">
+
+                  <div class="row">
+                    <div class="col-6">
+                      <span>nft.storage API key</span><br>
+                      <span style="font-size:12px; color:#97a1b1;">The API key will be used for IPFS upload on <a href="https://nft.storage" target="_blank">nft.storage</a></span>
+                    </div>
+                    <div class="col-1">
+                      <button id="saveApiKey" class="btn btn-layout btn-theme" onclick="setAPI(this, document.getElementById('ipfsApiKeySetting'))">Save</button>
+                    </div>
+                    <div class="col-5">
+                      <div class="omrs-input-group" style="width:100%; margin-bottom: 0px;">
+                        <label class="omrs-input-underlined">
+                          <input id="ipfsApiKeySetting" type="password" setting="ipfsApiKey" >
+                          <span class="omrs-input-label">API Key</span>
+                        </label>
+                      </div>
+                    </div>
+                    
+                  </div>
+                  
+                  <hr style="color: #bcc4d2;">
+                  
+                  <div class="row">
+                    <div class="col-9">
+                      <span>Display the SCP Developer menu</span><br>
+                      <span style="font-size:12px; color:#97a1b1;">Enabling this will display the SCP Developer Toolkit menu.<br>This page can be used for creating, deploying and interacting with custom DApps!</span>
+                    </div>
+                    <div class="col-3">
+                      <div>
+                        <div class="row align-items-center justify-content-center" style="height: 100%;">
+                          <div class="col-md-6">
+                            <div class="form-check form-switch">
+                              <input class="form-check-input darkBorder" type="checkbox" value="" id="displayDevMenuSetting" checked="false" setting="displayDevMenu" onclick="toggleSetting(this)">
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
         </div>
@@ -2570,6 +2602,8 @@
               <div class="card-title font-gray font-weight-bold">Token information</div>
 
               <script>
+               
+                
                 let nDeploymentVer = 0;
                 function changeTokenType(obj) {
                   domScpTokenDeployArea.style.display = 'block';
@@ -2799,6 +2833,7 @@
                     if (arrParams.length > 1)
                         deploySCP(nDeploymentVer, arrParams);
                 }
+                
               </script>
 
               <div class="alert alert-danger-custom" style="font-size:13px; display: none;" id="scpTokenErrorsWidget">
@@ -3139,8 +3174,8 @@
         checkNftInput();
         return await bRawImageBuf;
       }
-
-      let nLastImageLen = 0;
+      let lastImageHash = '0'.repeat(64);
+      //let nLastImageLen = 0;
       let strLastImageCID = '';
       async function nftUpload() {
         // Cannot deploy if the button is disabled (due to unsatisfied inputs)
@@ -3155,10 +3190,16 @@
         cProgress.style.width = '10%';
         await sleep(1000);
         try {
-          const fAlreadyUploaded = bRawImageBuf.length === nLastImageLen;
+          const hash = Array.from(
+            new Uint8Array(await crypto.subtle.digest('SHA-256', bRawImageBuf))
+          ).map(b => b.toString(16).padStart(2, '0')).join('');
+          //console.log(`${lastImageHash} === ${hash}`)
+          const fAlreadyUploaded = lastImageHash === hash;
+          //const fAlreadyUploaded = bRawImageBuf.length === nLastImageLen;
           cProgress.style.width = (fAlreadyUploaded ? '50' : '20') + '%';
           cText.innerText = fAlreadyUploaded ? 'Fetching cached IPFS CID' : 'Uploading image to IPFS';
-          const cRetIPFS = !fAlreadyUploaded ? JSON.parse(await NET.uploadToIPFS(bRawImageBuf)) : undefined;
+          if(!!!ipfsAPI) throw new Error("No IPFS API key in settings.");
+          const cRetIPFS = !fAlreadyUploaded ? JSON.parse(await NET.uploadToIPFS(ipfsAPI, bRawImageBuf)) : undefined;
           try {
             for (let i = 0; i<intervals; i++) {
               const fLastMint = i === intervals - 1;
@@ -3178,7 +3219,11 @@
                                               'Using cached CID' :
                                               'Uploaded new image (' + bRawImageBuf.length + 'b) to IPFS'));
                 // Save the image byte length (this will be used to prevent re-uploads of the same image)
-                nLastImageLen = bRawImageBuf.length;
+                lastImageHash = Array.from(
+                  new Uint8Array(await crypto.subtle.digest('SHA-256', bRawImageBuf))
+                ).map(b => b.toString(16).padStart(2, '0')).join('');
+                //console.log(`lastImageHash: ${lastImageHash}`)
+                //nLastImageLen = bRawImageBuf.length;
                 // Grab the IPFS CID
                 const strCID = fAlreadyUploaded ? strLastImageCID : cRetIPFS.value.cid;
                 strLastImageCID = strCID;
@@ -3426,6 +3471,23 @@
             renderNFTs();
           });
         });
+      }
+
+      const setAPI = async (el1, el2) =>{
+        el1.disabled = true;
+        el2.disabled = true;
+        try {
+          if(!!el2.value){
+            const resp = JSON.parse(await NET.testIPFS(el2.value));             
+          }         
+          setValueSetting(el2);          
+          M.toast({html: 'Saved API key!', displayLength: 2000});
+        } catch (e) {
+          console.log(e)
+          M.toast({html: 'Invalid nft.storage API key!', displayLength: 2000});
+        }
+        el1.disabled = false;
+        el2.disabled = false;
       }
     </script>
 

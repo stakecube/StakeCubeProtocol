@@ -1,7 +1,7 @@
 {
   "name": "stakecubeprotocol",
   "productName": "SCP Wallet",
-  "version": "1.1.9",
+  "version": "1.2.0",
   "description": "The StakeCube Protocol full-node and GUI Wallet",
   "homepage": "https://stakecube.net",
   "repository": {
@@ -24,7 +24,6 @@
     "@electron-forge/maker-rpm": "^6.0.0-beta.54",
     "@electron-forge/maker-squirrel": "^6.0.0-beta.54",
     "@electron-forge/maker-zip": "^6.0.0-beta.54",
-    "better-electron-installer-debian": "^3.2.1",
     "electron": "^8.0.3",
     "electron-reloader": "^1.2.0",
     "eslint": "^7.29.0",
@@ -33,6 +32,9 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^5.1.0",
     "run-script-os": "^1.1.6"
+  },
+  "optionalDependencies": {
+    "better-electron-installer-debian": "^3.2.1"
   },
   "dependencies": {
     "@jskitty/bitcoin-rpc": "^1.0.1",
