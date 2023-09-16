@@ -2,9 +2,9 @@
 
 This guide describes how to install and configure **StakeCube Protocol (SCP)**.
 
-Depending on the field of application and the implementation goals, SCP can be operated with a full-fledged StakeCubeCoin (SCC) node or as a *Lightwallet*. Here we describe both options.
+Depending on the field of application and the implementation goals, SCP can be operated with a full-fledged StakeCubeCoin (SCC) node or as a _Lightwallet_. Here we describe both options.
 
-The full implementation is recommended for situations when full SCP transactions are necessary, like for example withdrawals and deposits of SCC or SCP tokens. 
+The full implementation is recommended for situations when full SCP transactions are necessary, like for example withdrawals and deposits of SCC or SCP tokens.
 
 With the lightwallet option, SCP automatically connects to an SCC node operated by StakeCube.net. With this variant, it is not necessary to synchronize the entire blockchain, but it does not offer full flexibility or security.
 
@@ -19,14 +19,15 @@ Hardware recommendation for full implementation (including SCC):
 - 2 CPU Cores
 - 8 GB RAM
 - 200 GB SSD
- 
+
 Hardware recommendation for SCP (without SCC):
 
 - 1 CPU Core
 - 2 GB RAM
 - 25 GB SSD
 
-> For this guide we used the following system environment: 
+> For this guide we used the following system environment:
+>
 > - Operating system: Ubuntu 20.04 LTS
 > - The installation takes place in the /home/ directory of the server.
 > - Editor: nano (sudo apt install nano)
@@ -34,6 +35,7 @@ Hardware recommendation for SCP (without SCC):
 > - Unzip to unzip archives (sudo apt install unzip)
 
 ## Installation Guide
+
 Updating the operating system:
 
 ```bash
@@ -67,6 +69,7 @@ nano .stakecubecoin/stakecubecoin.conf
 ```
 
 Content of the configuration file:
+
 ```bash
 rpcuser=username
 rpcpassword=password
@@ -89,7 +92,8 @@ cd /etc/systemd/system
 nano scc.service
 ```
 
-Content of the *scc.service* file
+Content of the _scc.service_ file
+
 ```bash
 [Unit]
 Description=scc service
@@ -121,7 +125,7 @@ systemctl enable scc
 systemctl start scc
 ```
 
-Now the program will download the blockchain data in the background. This can take a few hours. 
+Now the program will download the blockchain data in the background. This can take a few hours.
 
 Use the following CLI commands to control the number of network connections, the current block height and the block hash:
 
@@ -131,7 +135,7 @@ scc getblockcount
 scc getblockhash <block>  // scc getblockhash 181818
 ```
 
-Use a blockchain explorer such as https://scc.ccore.online to compare your node with the StakeCubeCoin network.
+Use a blockchain explorer such as hhttps://www.coinexplorer.net/SCC to compare your node with the StakeCubeCoin network.
 
 With this, the installation of SCC is complete.
 
@@ -165,18 +169,19 @@ cd scp/
 npm i
 ```
 
-*Optional*:
+_Optional_:
 Create the SCP configuration file if you use the SCC daemon (full integration):
 
-```bash    
+```bash
 cd ~
 mkdir .config .config/SCPWallet
 cd .config/SCPWallet/
 nano scp.conf
 ```
 
-Content of the *scp.conf* file
-```bash  
+Content of the _scp.conf_ file
+
+```bash
 coredatadir=/home/scc/.stakecubecoin/
 coreconfname=stakecubecoin.conf
 apimodules=activity,blockchain,tokens,wallet,io
@@ -186,14 +191,14 @@ apiport=3000
 
 Start SCP with pm2:
 
-```bash    
+```bash
 cd /home/scp/
 pm2 start src/index.js
 ```
 
-To keep your process intact in the event of expected or unexpected server restarts, save the process: 
+To keep your process intact in the event of expected or unexpected server restarts, save the process:
 
-```bash    
+```bash
 pm2 save
 ```
 
@@ -206,7 +211,6 @@ pm2 logs 0
 A successful installation and connection to your SCC Core wallet will show a message like this one:
 
     Init: Finished - Running as Fullnode! (Syncing)
-
 
 SCP is now installed, set up as a process and ready to use via the interface.
 
@@ -231,11 +235,11 @@ Replace 1.1.1.1 with your IP.
 
 ### Troubleshooting
 
-*Problem:*
+_Problem:_
 
 SCC Node cannot find any connections to the network, does not synchronize or crashes.
 
-*Possible solutions:*
+_Possible solutions:_
 
 1. Bootstrap SCC
 

@@ -2,7 +2,7 @@
 
 Diese Anleitung beschreibt, wie **StakeCube Protocol (SCP)** Installiert und konfiguriert wird.
 
-Je nach Verwendungsgebiet und Ziel der Implementierung kann SCP mit einer vollwertigen StakeCubeCoin (SCC) Node oder als *Lightwallet* Betrieben werden. Beide Optionen werden nachfolgend beschrieben.
+Je nach Verwendungsgebiet und Ziel der Implementierung kann SCP mit einer vollwertigen StakeCubeCoin (SCC) Node oder als _Lightwallet_ Betrieben werden. Beide Optionen werden nachfolgend beschrieben.
 
 Die vollständige Implementierung ist empfohlen, wenn SCP Transaktionen durchgeführt werden müssen; wie die Ein-und Auszahlungen von SCC und Tokens.
 
@@ -12,14 +12,14 @@ Die Lightwallet Option ist gleichzeitig der Fallback-Mechanismus, wenn die lokal
 
 ## Voraussetzung
 
-Für die Installation von SCC und SCP ist eine Linux-Distribution empfohlen. Voller Root-Zugriff ist Voraussetzung. 
+Für die Installation von SCC und SCP ist eine Linux-Distribution empfohlen. Voller Root-Zugriff ist Voraussetzung.
 
 Hardware Empfehlung für vollständige Implementierung (inkl. SCC):
 
 - 2 CPU Kerne
 - 8 GB RAM
 - 200 GB SSD
- 
+
 Hardware Empfehlung für SCP (ohne SCC):
 
 - 1 CPU Kern
@@ -27,13 +27,15 @@ Hardware Empfehlung für SCP (ohne SCC):
 - 25 GB SSD
 
 > Für diese Anleitung wird folgende Systemumgebung genutzt:
+>
 > - Betriebssystem: Ubuntu 20.04 LTS
-> - Die Installation wird im /home/ Verzeichnis des Server durchgeführt. 
+> - Die Installation wird im /home/ Verzeichnis des Server durchgeführt.
 > - Editor: nano ( sudo apt install nano )
 > - Git für SCP Download ( sudo apt install git )
 > - Unzip um Archive zu entpacken ( sudo apt install unzip )
 
 ## Installationsanleitung
+
 Bringen Sie das Betriebssystem auf den aktuellsten Stand:
 
 ```bash
@@ -66,6 +68,7 @@ nano .stakecubecoin/stakecubecoin.conf
 ```
 
 Inhalt der Konfigurationsdatei:
+
 ```bash
 rpcuser=username
 rpcpassword=passwort
@@ -88,7 +91,8 @@ cd /etc/systemd/system
 nano scc.service
 ```
 
-Inhalt der *scc.service* Datei
+Inhalt der _scc.service_ Datei
+
 ```bash
 [Unit]
 Description=scc service
@@ -120,7 +124,7 @@ systemctl enable scc
 systemctl start scc
 ```
 
-Nun wird das Programm die Blockchain-Daten im Hintergrund herunterladen. Dies kann einige Stunden in Anspruch nehmen. 
+Nun wird das Programm die Blockchain-Daten im Hintergrund herunterladen. Dies kann einige Stunden in Anspruch nehmen.
 
 Kontrollieren Sie mit folgenden CLI Befehlen die Anzahl der Verbindungen zum Netzwerk, die aktuelle Blockhöhe und den Blockhash:
 
@@ -130,9 +134,9 @@ scc getblockcount
 scc getblockhash <block>  // scc getblockhash 181818
 ```
 
-Nutzen Sie einen Blockchain-Explorer wie https://scc.ccore.online, um Ihre Node mit dem StakeCubeCoin Netzwerk zu vergleichen.
+Nutzen Sie einen Blockchain-Explorer wie https://www.coinexplorer.net/SCC, um Ihre Node mit dem StakeCubeCoin Netzwerk zu vergleichen.
 
-Damit ist die Installation für SCC abgeschlossen. 
+Damit ist die Installation für SCC abgeschlossen.
 
 Sie finden mögliche Fehlerbehebungen am Ende dieses Dokuments.
 
@@ -164,18 +168,19 @@ cd scp/
 npm i
 ```
 
-*Optional*:  
+_Optional_:  
 Erstellen Sie die SCP Konfigurations-Datei, wenn Sie den SCC Daemon (vollständige Integration) nutzen:
 
-```bash    
+```bash
 cd ~
 mkdir .config .config/SCPWallet
 cd .config/SCPWallet/
 nano scp.conf
 ```
 
-Inhalt der *scp.conf*
-```bash  
+Inhalt der _scp.conf_
+
+```bash
 coredatadir=/home/scc/.stakecubecoin/
 coreconfname=stakecubecoin.conf
 ```
@@ -183,17 +188,17 @@ coreconfname=stakecubecoin.conf
 Starten Sie SCP mit pm2:
 
 ```bash
-cd /home/scp/ 
+cd /home/scp/
 pm2 start src/index.js
 ```
 
 Speichern Sie den Prozess, um Ihre Prozessliste über erwartete oder unerwartete Neustarts des Servers hinweg intakt zu halten:
 
-```bash    
+```bash
 pm2 save
 ```
 
-Rufen Sie die Log-Datei auf: 
+Rufen Sie die Log-Datei auf:
 
 ```bash
 pm2 logs 0
@@ -203,8 +208,7 @@ Eine erfolgreiche Installation und Verbindung zur Ihrer SCC Core wallet zeigt ä
 
     Init: Finished - Running as Fullnode! (Syncing)
 
-
-Damit ist SCP installiert, als Prozess eingerichtet und bereit zur Nutzung per Schnittstelle. 
+Damit ist SCP installiert, als Prozess eingerichtet und bereit zur Nutzung per Schnittstelle.
 
 ### Zugriff sicherer machen
 
@@ -227,11 +231,11 @@ Ersetzen Sie 1.1.1.1 durch Ihre IP.
 
 ### Fehlersuche und -behebung
 
-*Problem:*
+_Problem:_
 
 SCC Node findet keine Verbindungen zum Netzwerk, synchronisiert nicht oder stürzt ab.
 
-*Mögliche Lösungen:*
+_Mögliche Lösungen:_
 
 1. Bootstrap SCC
 
