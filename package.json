@@ -1,7 +1,7 @@
 {
   "name": "stakecubeprotocol",
   "productName": "SCP Wallet",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "The StakeCube Protocol full-node and GUI Wallet",
   "homepage": "https://stakecube.net",
   "repository": {
@@ -10,7 +10,7 @@
   },
   "main": "main.js",
   "scripts": {
-    "start": "electron-forge start",
+    "start": "electron-forge start -- --no-sandbox",
     "package": "electron-forge package",
     "make": "run-script-os",
     "make:linux": "npm run package && better-electron-installer-debian --src out/$npm_package_name-linux-x64 --dest out/make/deb --arch amd64 --config build-confs/deb.json",

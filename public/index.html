@@ -813,6 +813,7 @@
         // Calculate if minting additional NFTs is possible
         const fCanMint = (cColl.creator === WALLET.getActiveWallet().getPubkey() && ((cColl.mints < cColl.maxMints) || cColl.maxMints === -1));
         // Construct the render structure
+        // TODO: Allow minting NFTS once a new upload solution is in place
         strRendering += `
                 <tr>
                   <td style="cursor:pointer" onclick="switchToViewCollection();renderNFTs(${cColl.index});">${formatName(cColl.collectionName, 40)}</td>
@@ -820,7 +821,7 @@
                   <td title="${cColl.maxMints > 0 ? (cColl.maxMints - cColl.burnedNFTs).toLocaleString('en-GB') : "This collection has no NFT cap"}">${cColl.maxMints === -1 ? 'Unlimited' : formatAmount(cColl.maxMints - cColl.burnedNFTs)}</td>
                   <td><span class="subtext">${cColl.protected ? 'Yes' : 'No'}</span></td>
                   <td style="padding-top: 11px;">
-                    ${fCanMint ? '<i class="fas fa-plus" style="margin-left: 10px;' + (cColl.mempool ? 'opacity:0.4;' : 'cursor: pointer;') + '" ' + (cColl.mempool ? 'title="Collection is confirming, you can mint once fully confirmed!"' : 'onclick="nSelectedCollection=' + cColl.index + ';switchToNftCreator();" title="Mint NFTs"') + '></i>' : ''}
+                    ${false ? '<i class="fas fa-plus" style="margin-left: 10px;' + (cColl.mempool ? 'opacity:0.4;' : 'cursor: pointer;') + '" ' + (cColl.mempool ? 'title="Collection is confirming, you can mint once fully confirmed!"' : 'onclick="nSelectedCollection=' + cColl.index + ';switchToNftCreator();" title="Mint NFTs"') + '></i>' : ''}
                   </td>
                 </tr>`;
       }
@@ -858,7 +859,7 @@
             if (strLastNftSearch.length && !(cNFT.name.toLowerCase().includes(strLastNftSearch) || strLastNftSearch.includes(cNFT.nft) || strLastNftSearch.includes(cNFT.collection) || strLastNftSearch.includes(cNFT.imgUrl))) continue;
             strRendering += `
               <div class="col-3">
-                <div class="card card-prop mb-3 nftCard" style="background: url(https://cloudflare-ipfs.com/ipfs/${cNFT.imgUrl}) no-repeat center;">
+                <div class="card card-prop mb-3 nftCard" style="background: url(https://ipfs.qrypt.tech/ipfs/${cNFT.imgUrl}) no-repeat center;">
                   <div id="nft-${cNFT.nft}" class="card-body refresh-button" onclick="switchToViewNFT('${cNFT.nft}')">
                     <span class="badge nftname" title="${formatName(cNFT.name, 40)}">${formatName(cNFT.name, 26)}</span>
                   </div>
@@ -894,7 +895,7 @@
             if (strLastNftSearch.length && !(cNFT.name.toLowerCase().includes(strLastNftSearch) || cNFT.owner.toLowerCase().includes(strLastNftSearch) || strLastNftSearch.includes(cNFT.id) || strLastNftSearch.includes(cNFT.imgUrl))) continue;
             strRendering += `
               <div class="col-3">
-                <div class="card card-prop mb-3 nftCard" style="background: url(https://cloudflare-ipfs.com/ipfs/${cNFT.imgUrl}) no-repeat center;${cNFT.owner !== strAddr ? `opacity:0.5;` : ``}">
+                <div class="card card-prop mb-3 nftCard" style="background: url(https://ipfs.qrypt.tech/ipfs/${cNFT.imgUrl}) no-repeat center;${cNFT.owner !== strAddr ? `opacity:0.5;` : ``}">
                   <div id="nft-${cNFT.id}" class="card-body refresh-button" onclick="switchToViewNFT('${cNFT.id}')">
                     <span class="badge nftname" title="${formatName(cNFT.name, 40)}">${formatName(cNFT.name, 20)}</span>
                     ${cNFT.owner === strAddr ? `<i class="far fa-check-circle" style="position:absolute;right:0.75em;top:1.15em;color:#13c372eb!important;" title="You own this NFT!"></i>` : ``}
@@ -991,7 +992,7 @@
       // Render all elements
       if (!isCached) {
         domNftDetailTitle.innerText = cNFT.name;
-        domNftDetailImg.src = 'https://cloudflare-ipfs.com/ipfs/' + cNFT.imgUrl;
+        domNftDetailImg.src = 'https://ipfs.qrypt.tech/ipfs/' + cNFT.imgUrl;
         domNftDetailID.innerText = cNFT.nft || cNFT.id;
         domNftDetailCollection.setAttribute('onclick', 'switchToViewCollection();renderNFTs(' + cColl.index + ');');
         domNftDetailImageID.innerText = cNFT.imgUrl;
@@ -2543,7 +2544,7 @@
               </h2>
               <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionExample">
                 <div class="accordion-body">
-
+                  <!--  TODO: allow API key setting once a new upload solution is in place
                   <div class="row">
                     <div class="col-6">
                       <span>nft.storage API key</span><br>
@@ -2564,7 +2565,7 @@
                   </div>
                   
                   <hr style="color: #bcc4d2;">
-                  
+                -->
                   <div class="row">
                     <div class="col-9">
                       <span>Display the SCP Developer menu</span><br>
@@ -2844,7 +2845,7 @@
                 <option selected disabled>Token type</option>
                 <option value="1">SCP-1</option>
                 <option value="2">SCP-2</option>
-                <option value="4">SCP-4</option>
+                <option value="4">SCP-4</option> 
               </select>
 
               <div class="col-md-12">
@@ -2982,7 +2983,7 @@
         <h4 class="mb-5 theme-color-secondary font-weight-bold" id="collectionName">My NFTs</h4>
 
         <div class="float-end" style="margin-top:-50px;">
-          <button type="button" id="scpNftMintBtn" class="btn btn-theme btn-sm" style="margin-right:0.5em;" onclick="switchToNftCreator()">Mint NFT</button>
+          <button type="button" id="scpNftMintBtn" class="btn btn-theme btn-sm" style="margin-right:0.5em;" onclick="switchToNftCreator()" disabled>Mint NFT</button>
           <button type="button" class="btn btn-theme btn-sm" onclick="switchToCollections()">Explore All Collections</button>
         </div>
 
